@@ -465,7 +465,7 @@
             <button class="toggle-btn" id="gfx-high">High</button>
             <button class="toggle-btn" id="gfx-ultra">Ultra</button>
           </div>
-          <p class="settings-hint">Ultra adds bloom, floor reflections, light shafts and ambient particles. Needs a strong GPU.</p>
+          <p class="settings-hint">Ultra adds a sky shader, rim lighting, ambient occlusion, bloom, reflections and anti-aliasing. Needs a strong GPU.</p>
         </div>
       </div>
     </aside>
@@ -3021,16 +3021,10 @@
     leftArmGroup.visible = false;
     camera.add(leftArmGroup);
 
-    // ---- Ultra graphics: planar reflections, bloom + grading post pass, ambient particles, light shafts ----
+    // ---- Ultra graphics: shader-driven look (sky dome, material rim/bounce light, SSAO, bloom, grading, FXAA) ----
     var ULTRA_MAP_STYLE = {
-      arena:       {particles:['#ffe3a0','#ffffff'], rise:0.15,  twinkle:0.4, additive:true,  count:260, size:1.1, reflect:0.22, shaft:'#fff1c9'},
-      jungle:      {particles:['#d9ff6b','#fff29a','#9dffb0'], rise:0.0, twinkle:1.0, additive:true, count:320, size:1.4, reflect:0.34, shaft:'#e6ffd2'},
-      city:        {particles:['#ff8a3d','#ffb347','#ffd27a'], rise:0.55, twinkle:0.7, additive:true, count:240, size:1.0, reflect:0.42, shaft:'#ffe2c0'},
-      colosseum:   {particles:['#ffe2a8','#fff4d6'], rise:0.1,  twinkle:0.3, additive:true,  count:240, size:1.0, reflect:0.18, shaft:'#fff0c8'},
-      arctic:      {particles:['#ffffff','#e8f4ff'], rise:-0.7, twinkle:0.0, additive:false, count:520, size:1.3, reflect:0.40, shaft:'#f2f8ff'},
-      radioactive: {particles:['#9dff4a','#c8ff7a','#6bff9a'], rise:0.2, twinkle:0.9, additive:true, count:300, size:1.3, reflect:0.36, shaft:'#d8ffb0'},
-      cargo:       {particles:['#e4f6ff','#ffffff'], rise:0.05, twinkle:0.3, additive:true,  count:220, size:0.9, reflect:0.30, shaft:'#f4fbff'},
-      temple:      {particles:['#ffe9a8','#a8ffcf','#fff6d8'], rise:0.12, twinkle:0.8, additive:true, count:280, size:1.2, reflect:0.25, shaft:'#fff0c4'}
+      arena:{reflect:0.10}, jungle:{reflect:0.06}, city:{reflect:0.22}, colosseum:{reflect:0.0},
+      arctic:{reflect:0.26}, radioactive:{reflect:0.16}, cargo:{reflect:0.12}, temple:{reflect:0.05}
     };
     var ultra = (function(){
       var group = new THREE.Group();
@@ -3038,6 +3032,7 @@
       scene.add(group);
       var timeUniform = {value:0};
       var mapKey = null;
+      var sunAxis = dir.position.clone().normalize();
 
       // Planar floor reflection (adapted from three.js' Reflector), drawn as a translucent wet-look overlay.
       var reflRT = new THREE.WebGLRenderTarget(512, 512, {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBFormat});
@@ -3128,146 +3123,73 @@
         reflector.visible = true;
       };
 
-      // Soft round sprite texture shared by particles and mist
-      function makeSoftTexture(size, noisy){
-        var c = document.createElement('canvas'); c.width = c.height = size;
-        var ctx = c.getContext('2d');
-        if (!noisy){
-          var g = ctx.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);
-          g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(1,'rgba(255,255,255,0)');
-          ctx.fillStyle = g; ctx.fillRect(0,0,size,size);
-        } else {
-          for (var i=0;i<26;i++){
-            var x = size*(0.2+Math.random()*0.6), y = size*(0.3+Math.random()*0.4), rr = size*(0.12+Math.random()*0.2);
-            var g2 = ctx.createRadialGradient(x,y,0,x,y,rr);
-            g2.addColorStop(0,'rgba(255,255,255,0.22)'); g2.addColorStop(1,'rgba(255,255,255,0)');
-            ctx.fillStyle = g2; ctx.fillRect(0,0,size,size);
-          }
-        }
-        return new THREE.CanvasTexture(c);
-      }
-
-      // Ambient particles (fireflies / embers / snow / dust depending on map)
-      var PARTICLE_MAX = 600;
-      var pGeo = new THREE.BufferGeometry();
-      var pPos = new Float32Array(PARTICLE_MAX*3), pCol = new Float32Array(PARTICLE_MAX*3),
-          pPhase = new Float32Array(PARTICLE_MAX), pSize = new Float32Array(PARTICLE_MAX);
-      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
-      pGeo.setAttribute('color', new THREE.BufferAttribute(pCol,3));
-      pGeo.setAttribute('aPhase', new THREE.BufferAttribute(pPhase,1));
-      pGeo.setAttribute('aSize', new THREE.BufferAttribute(pSize,1));
-      pGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0,3,0), 30);
-      var pMat = new THREE.ShaderMaterial({
-        uniforms:{ uTime:timeUniform, uRise:{value:0}, uTwinkle:{value:0.5}, uPixelRatio:{value:1}, uIntensity:{value:1.4} },
-        vertexShader:[
-          'attribute vec3 color; attribute float aPhase; attribute float aSize;',
-          'uniform float uTime; uniform float uRise; uniform float uTwinkle; uniform float uPixelRatio;',
-          'varying vec3 vColor; varying float vAlpha;',
-          'void main(){',
-          '  vec3 p = position; float t = uTime; float ph = aPhase * 6.2831;',
-          '  p.x += sin(t*0.35 + ph) * 0.7 + sin(t*1.1 + ph*3.0) * 0.12;',
-          '  p.z += cos(t*0.3 + ph*1.7) * 0.7 + cos(t*0.9 + ph*2.3) * 0.12;',
-          '  p.y = mod(p.y + t * uRise * (0.6 + aPhase*0.8), 7.0) + 0.05 + sin(t*0.8 + ph*2.0) * 0.25;',
-          '  vec4 mv = modelViewMatrix * vec4(p, 1.0);',
-          '  gl_Position = projectionMatrix * mv;',
-          '  float d = -mv.z;',
-          '  gl_PointSize = min(aSize * uPixelRatio * (40.0 / max(d, 0.5)), 24.0 * uPixelRatio);',
-          '  float tw = 0.5 + 0.5 * sin(t * (1.3 + aPhase*2.5) + ph * 7.0);',
-          '  vAlpha = mix(1.0, tw*tw, uTwinkle) * (1.0 - smoothstep(18.0, 42.0, d)) * smoothstep(1.0, 3.0, d);',
-          '  float edge = min(p.y, 7.0 - p.y);',
-          '  vAlpha *= smoothstep(0.0, 0.6, edge);',
-          '  vColor = color;',
-          '}'
-        ].join('\n'),
+      // Gradient sky dome with a soft sun and horizon haze; follows the camera
+      var skyMat = new THREE.ShaderMaterial({
+        uniforms:{ zenith:{value:new THREE.Color()}, horizon:{value:new THREE.Color()}, ground:{value:new THREE.Color()},
+                   sunDir:{value:sunAxis.clone()}, sunColor:{value:new THREE.Color('#fff1d6')} },
+        vertexShader:'varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
         fragmentShader:[
-          'uniform float uIntensity; varying vec3 vColor; varying float vAlpha;',
+          'uniform vec3 zenith; uniform vec3 horizon; uniform vec3 ground; uniform vec3 sunDir; uniform vec3 sunColor;',
+          'varying vec3 vDir;',
           'void main(){',
-          '  float d = length(gl_PointCoord - 0.5);',
-          '  float core = smoothstep(0.5, 0.0, d);',
-          '  float a = core*core * vAlpha;',
-          '  if (a < 0.01) discard;',
-          '  gl_FragColor = vec4(vColor * uIntensity * (0.6 + core), a);',
+          '  vec3 d = normalize(vDir); float y = d.y;',
+          '  vec3 c = mix(horizon, zenith, smoothstep(0.0, 0.6, y));',
+          '  c = mix(c, ground, smoothstep(0.0, -0.25, y));',
+          '  float s = max(dot(d, sunDir), 0.0);',
+          '  c += sunColor * (pow(s, 900.0) * 3.0 + pow(s, 40.0) * 0.28 + pow(s, 6.0) * 0.1);',
+          '  c = mix(c, horizon * 1.04, exp(-abs(y) * 14.0) * 0.45);',
+          '  gl_FragColor = vec4(c, 1.0);',
           '}'
         ].join('\n'),
-        transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+        side:THREE.BackSide, depthWrite:false
       });
-      var particles = new THREE.Points(pGeo, pMat);
-      particles.frustumCulled = false;
-      group.add(particles);
+      var sky = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 16), skyMat);
+      sky.renderOrder = -10;
+      sky.frustumCulled = false;
+      group.add(sky);
 
-      // Volumetric-looking light shafts, cylindrically billboarded along the sun direction
-      var shaftTex = (function(){
-        var c = document.createElement('canvas'); c.width = 64; c.height = 256;
-        var ctx = c.getContext('2d');
-        var gv = ctx.createLinearGradient(0,0,0,256);
-        gv.addColorStop(0,'rgba(255,255,255,0)'); gv.addColorStop(0.35,'rgba(255,255,255,0.9)');
-        gv.addColorStop(0.8,'rgba(255,255,255,0.55)'); gv.addColorStop(1,'rgba(255,255,255,0)');
-        ctx.fillStyle = gv; ctx.fillRect(0,0,64,256);
-        ctx.globalCompositeOperation = 'destination-in';
-        var gh = ctx.createLinearGradient(0,0,64,0);
-        gh.addColorStop(0,'rgba(0,0,0,0)'); gh.addColorStop(0.5,'rgba(0,0,0,1)'); gh.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle = gh; ctx.fillRect(0,0,64,256);
-        return new THREE.CanvasTexture(c);
-      })();
-      var shaftMat = new THREE.ShaderMaterial({
-        uniforms:{ map:{value:shaftTex}, color:{value:new THREE.Color('#fff1c9')}, opacity:{value:0.11}, uTime:timeUniform },
-        vertexShader:[
-          'varying vec2 vUv; varying float vDepth; varying float vSeed;',
-          'void main(){ vUv = uv; vSeed = modelMatrix[3].x*0.37 + modelMatrix[3].z*0.73;',
-          '  vec4 mv = modelViewMatrix * vec4(position,1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }'
-        ].join('\n'),
-        fragmentShader:[
-          'uniform sampler2D map; uniform vec3 color; uniform float opacity; uniform float uTime;',
-          'varying vec2 vUv; varying float vDepth; varying float vSeed;',
-          'void main(){',
-          '  float a = texture2D(map, vUv).a;',
-          '  float pulse = 0.75 + 0.25 * sin(uTime*0.6 + vSeed*5.0);',
-          '  a *= opacity * pulse * smoothstep(1.0, 5.0, vDepth) * (1.0 - smoothstep(30.0, 48.0, vDepth));',
-          '  gl_FragColor = vec4(color, a);',
-          '}'
-        ].join('\n'),
-        transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide
-      });
-      var sunAxis = dir.position.clone().normalize();
-      var shafts = [];
-      var shaftGeo = new THREE.PlaneGeometry(1, 1);
-      for (var si=0; si<8; si++){
-        var shaft = new THREE.Mesh(shaftGeo, shaftMat);
-        var w = 1.4 + Math.random()*2.2, len = 16 + Math.random()*6;
-        var gx = (Math.random()-0.5)*26, gz = (Math.random()-0.5)*26;
-        shaft.userData.base = new THREE.Vector3(gx, 0, gz).addScaledVector(sunAxis, len*0.5);
-        shaft.userData.w = w; shaft.userData.len = len;
-        shaft.position.copy(shaft.userData.base);
-        shaft.matrixAutoUpdate = false;
-        shaft.frustumCulled = false;
-        group.add(shaft);
-        shafts.push(shaft);
+      // Material upgrade injected into every MeshStandardMaterial while Ultra is on:
+      // hemisphere sky/ground bounce light plus a sun-tinted rim (fresnel) highlight.
+      var matUniforms = {
+        uSkyTint:{value:new THREE.Color()}, uGroundTint:{value:new THREE.Color()},
+        uRimColor:{value:new THREE.Color('#fff0d8')}, uRimStrength:{value:0.32}
+      };
+      var MATERIAL_GLSL = [
+        '{',
+        '  vec3 uN = normalize(normal);',
+        '  vec3 uV = normalize(vViewPosition);',
+        '  vec3 uUp = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);',
+        '  float uHemi = dot(uN, uUp) * 0.5 + 0.5;',
+        '  reflectedLight.indirectDiffuse += diffuseColor.rgb * mix(uGroundTint, uSkyTint, uHemi) * 0.22;',
+        '  float uRim = pow(1.0 - clamp(dot(uN, uV), 0.0, 1.0), 3.0);',
+        '  reflectedLight.directSpecular += uRimColor * uRim * uRimStrength * (0.3 + 0.7 * uHemi);',
+        '}'
+      ].join('\n');
+      function ultraCompile(shader){
+        shader.uniforms.uSkyTint = matUniforms.uSkyTint;
+        shader.uniforms.uGroundTint = matUniforms.uGroundTint;
+        shader.uniforms.uRimColor = matUniforms.uRimColor;
+        shader.uniforms.uRimStrength = matUniforms.uRimStrength;
+        shader.fragmentShader = 'uniform vec3 uSkyTint; uniform vec3 uGroundTint; uniform vec3 uRimColor; uniform float uRimStrength;\n' +
+          shader.fragmentShader.replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n' + MATERIAL_GLSL);
       }
-      var tmpN = new THREE.Vector3(), tmpX = new THREE.Vector3(), tmpBasis = new THREE.Matrix4();
-      function orientShafts(cam){
-        shafts.forEach(function(s){
-          tmpN.subVectors(cam.position, s.userData.base);
-          tmpN.addScaledVector(sunAxis, -tmpN.dot(sunAxis));
-          if (tmpN.lengthSq() < 1e-6) tmpN.set(0,0,1);
-          tmpN.normalize();
-          tmpX.crossVectors(sunAxis, tmpN).normalize();
-          tmpBasis.makeBasis(tmpX.multiplyScalar(s.userData.w), sunAxis.clone().multiplyScalar(s.userData.len), tmpN);
-          tmpBasis.setPosition(s.userData.base);
-          s.matrix.copy(tmpBasis);
-          s.matrixWorldNeedsUpdate = true;
+      function forEachMaterial(fn){
+        scene.traverse(function(o){
+          if (!o.material) return;
+          if (Array.isArray(o.material)) o.material.forEach(fn); else fn(o.material);
         });
       }
-
-      // Low drifting ground mist
-      var mistTex = makeSoftTexture(128, true);
-      var mistMat = new THREE.SpriteMaterial({map:mistTex, color:'#ffffff', transparent:true, opacity:0.5, depthWrite:false, fog:false});
-      var mists = [];
-      for (var mi=0; mi<14; mi++){
-        var m = new THREE.Sprite(mistMat);
-        m.scale.set(9 + Math.random()*6, 2.2 + Math.random()*1.4, 1);
-        m.position.set((Math.random()-0.5)*30, 0.5 + Math.random()*0.5, (Math.random()-0.5)*30);
-        m.userData.speed = 0.15 + Math.random()*0.25;
-        group.add(m); mists.push(m);
+      function patchMaterial(m){
+        if (!m.isMeshStandardMaterial || m.userData.ultraPatched) return;
+        m.userData.ultraPatched = true;
+        m.onBeforeCompile = ultraCompile;
+        m.needsUpdate = true;
+      }
+      function unpatchMaterial(m){
+        if (!m.userData.ultraPatched) return;
+        m.userData.ultraPatched = false;
+        m.onBeforeCompile = THREE.Material.prototype.onBeforeCompile;
+        m.needsUpdate = true;
       }
 
       // Environment map so metals and glossy surfaces pick up the sky
@@ -3297,42 +3219,88 @@
         if (!cfg || mapKey === cfg.id) return;
         mapKey = cfg.id;
         var st = ULTRA_MAP_STYLE[cfg.ground] || ULTRA_MAP_STYLE.arena;
-        var cols = st.particles.map(function(c){ return new THREE.Color(c); });
-        var count = Math.min(st.count, PARTICLE_MAX);
-        for (var i=0;i<PARTICLE_MAX;i++){
-          pPos[i*3] = (Math.random()-0.5)*30;
-          pPos[i*3+1] = Math.random()*7;
-          pPos[i*3+2] = (Math.random()-0.5)*30;
-          var c = cols[i % cols.length];
-          pCol[i*3] = c.r; pCol[i*3+1] = c.g; pCol[i*3+2] = c.b;
-          pPhase[i] = Math.random();
-          pSize[i] = st.size * (0.5 + Math.random()*0.8);
-        }
-        pGeo.attributes.position.needsUpdate = true;
-        pGeo.attributes.color.needsUpdate = true;
-        pGeo.attributes.aPhase.needsUpdate = true;
-        pGeo.attributes.aSize.needsUpdate = true;
-        pGeo.setDrawRange(0, count);
-        pMat.uniforms.uRise.value = st.rise;
-        pMat.uniforms.uTwinkle.value = st.twinkle;
-        pMat.blending = st.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
-        pMat.uniforms.uIntensity.value = st.additive ? 1.4 : 1.0;
-        pMat.needsUpdate = true;
+        var hsl = {};
+        var zen = new THREE.Color(cfg.sky); zen.getHSL(hsl);
+        zen.setHSL(hsl.h, Math.min(1, hsl.s * 1.35 + 0.1), hsl.l * 0.78);
+        skyMat.uniforms.zenith.value.copy(zen);
+        skyMat.uniforms.horizon.value.set(cfg.fogColor);
+        skyMat.uniforms.ground.value.set(cfg.fogColor).lerp(new THREE.Color(cfg.floor), 0.5);
+        matUniforms.uSkyTint.value.set(cfg.sky).multiplyScalar(0.55);
+        matUniforms.uGroundTint.value.set(cfg.floor).multiplyScalar(0.35);
         reflMat.uniforms.strength.value = st.reflect;
         reflMat.uniforms.fogNear.value = cfg.fogNear;
         reflMat.uniforms.fogFar.value = cfg.fogFar;
-        shaftMat.uniforms.color.value.set(st.shaft);
-        mistMat.color.set(cfg.fogColor);
-        mistMat.opacity = cfg.ground === 'arctic' ? 0.35 : 0.5;
+        reflector.visible = st.reflect > 0;
         buildEnvMap(cfg);
         if (group.visible) scene.environment = envRT.texture;
       }
 
-      // Post-processing: scene -> bright pass -> 2-level gaussian bloom -> composite (grade, vignette, CA, grain)
+      // Post-processing:
+      // scene (+depth) -> SSAO (half res, blurred) -> bright pass -> 2-level bloom -> composite (AO, bloom, grade, vignette) -> FXAA
       var fsVert = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
       var postScene = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
       var quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2));
       quad.frustumCulled = false; postScene.add(quad);
+
+      var AO_SAMPLES = 16;
+      var aoKernel = [];
+      for (var ki=0; ki<AO_SAMPLES; ki++){
+        var kv = new THREE.Vector3(Math.random()*2-1, Math.random()*2-1, Math.random()).normalize();
+        var ks = ki / AO_SAMPLES;
+        kv.multiplyScalar((0.1 + 0.9*ks*ks) * (0.5 + Math.random()*0.5));
+        aoKernel.push(kv);
+      }
+      var aoMat = new THREE.ShaderMaterial({
+        defines:{ AO_SAMPLES:AO_SAMPLES },
+        uniforms:{ tDepth:{value:null}, proj:{value:new THREE.Matrix4()}, projInv:{value:new THREE.Matrix4()},
+                   texel:{value:new THREE.Vector2()}, radius:{value:0.55}, kernel:{value:aoKernel} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDepth; uniform mat4 proj; uniform mat4 projInv; uniform vec2 texel; uniform float radius;',
+          'uniform vec3 kernel[AO_SAMPLES]; varying vec2 vUv;',
+          'vec3 viewPos(vec2 uv){ float d = texture2D(tDepth, uv).x; vec4 v = projInv * vec4(uv*2.0-1.0, d*2.0-1.0, 1.0); return v.xyz / v.w; }',
+          'float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }',
+          'vec2 snap(vec2 uv){ return (floor(uv / texel) + 0.5) * texel; }',
+          'void main(){',
+          '  vec2 uv0 = snap(vUv);',
+          '  float d = texture2D(tDepth, uv0).x;',
+          '  if (d >= 0.99999){ gl_FragColor = vec4(1.0); return; }',
+          '  vec3 p = viewPos(uv0);',
+          '  vec3 pr = viewPos(uv0 + vec2(texel.x, 0.0)), pl = viewPos(uv0 - vec2(texel.x, 0.0));',
+          '  vec3 pu = viewPos(uv0 + vec2(0.0, texel.y)), pd = viewPos(uv0 - vec2(0.0, texel.y));',
+          '  vec3 dx = abs(pr.z - p.z) < abs(p.z - pl.z) ? pr - p : p - pl;',
+          '  vec3 dy = abs(pu.z - p.z) < abs(p.z - pd.z) ? pu - p : p - pd;',
+          '  vec3 n = normalize(cross(dx, dy));',
+          '  vec2 cell = mod(floor(gl_FragCoord.xy), 4.0);',
+          '  float a = (cell.x + cell.y * 4.0 + hash(floor(gl_FragCoord.xy / 4.0)) * 0.5) / 16.0 * 6.2831853;',
+          '  vec3 rv = vec3(cos(a), sin(a), 0.0);',
+          '  vec3 t = normalize(rv - n * dot(rv, n)); vec3 b = cross(n, t); mat3 tbn = mat3(t, b, n);',
+          '  float occ = 0.0; float bias = 0.02 + 0.004 * -p.z + 2.5 * max(abs(dx.z), abs(dy.z));',
+          '  for (int i = 0; i < AO_SAMPLES; i++){',
+          '    vec3 s = p + tbn * kernel[i] * radius;',
+          '    vec4 o = proj * vec4(s, 1.0); vec2 suv = o.xy / o.w * 0.5 + 0.5;',
+          '    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) continue;',
+          '    float sz = viewPos(snap(suv)).z;',
+          '    float range = 1.0 - smoothstep(radius * 0.5, radius * 1.5, abs(p.z - sz));',
+          '    occ += (sz >= s.z + bias ? 1.0 : 0.0) * range;',
+          '  }',
+          '  float ao = 1.0 - occ / float(AO_SAMPLES);',
+          '  float facing = abs(dot(n, normalize(-p)));',
+          '  ao = mix(1.0, ao, smoothstep(0.12, 0.4, facing) * smoothstep(0.9, 1.6, -p.z));',
+          '  gl_FragColor = vec4(vec3(mix(ao, 1.0, smoothstep(10.0, 28.0, -p.z))), 1.0);',
+          '}'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
+      var aoBlurMat = new THREE.ShaderMaterial({
+        uniforms:{ tDiffuse:{value:null}, texel:{value:new THREE.Vector2()} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDiffuse; uniform vec2 texel; varying vec2 vUv;',
+          'void main(){ float s = 0.0;',
+          '  for (int x = -2; x < 2; x++) for (int y = -2; y < 2; y++) s += texture2D(tDiffuse, vUv + vec2(float(x), float(y)) * texel).r;',
+          '  gl_FragColor = vec4(vec3(s / 16.0), 1.0); }'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
       var brightMat = new THREE.ShaderMaterial({
         uniforms:{ tDiffuse:{value:null}, threshold:{value:0.86}, knee:{value:0.12} },
         vertexShader:fsVert,
@@ -3358,52 +3326,75 @@
         ].join('\n'), depthTest:false, depthWrite:false
       });
       var compositeMat = new THREE.ShaderMaterial({
-        uniforms:{ tScene:{value:null}, tBloomA:{value:null}, tBloomB:{value:null}, bloomStrength:{value:0.7},
-                   uTime:timeUniform, resolution:{value:new THREE.Vector2(1,1)} },
+        uniforms:{ tScene:{value:null}, tAO:{value:null}, tBloomA:{value:null}, tBloomB:{value:null},
+                   aoStrength:{value:0.85}, bloomStrength:{value:0.45} },
         vertexShader:fsVert,
         fragmentShader:[
-          'uniform sampler2D tScene; uniform sampler2D tBloomA; uniform sampler2D tBloomB;',
-          'uniform float bloomStrength; uniform float uTime; uniform vec2 resolution; varying vec2 vUv;',
-          'float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }',
+          'uniform sampler2D tScene; uniform sampler2D tAO; uniform sampler2D tBloomA; uniform sampler2D tBloomB;',
+          'uniform float aoStrength; uniform float bloomStrength; varying vec2 vUv;',
           'void main(){',
-          '  vec2 d = vUv - 0.5; float r2 = dot(d, d);',
-          '  float ca = 0.006 * r2;',
-          '  vec3 col;',
-          '  col.r = texture2D(tScene, vUv + d * ca).r;',
-          '  col.g = texture2D(tScene, vUv).g;',
-          '  col.b = texture2D(tScene, vUv - d * ca).b;',
-          '  vec3 bloom = texture2D(tBloomA, vUv).rgb * 0.7 + texture2D(tBloomB, vUv).rgb * 1.0;',
-          '  col += bloom * bloomStrength;',
+          '  vec3 col = texture2D(tScene, vUv).rgb;',
+          '  float ao = texture2D(tAO, vUv).r;',
+          '  col *= mix(1.0, ao * ao, aoStrength);',
+          '  col += (texture2D(tBloomA, vUv).rgb * 0.7 + texture2D(tBloomB, vUv).rgb) * bloomStrength;',
           '  float l = dot(col, vec3(0.2126, 0.7152, 0.0722));',
-          '  col = mix(vec3(l), col, 1.16);',
-          '  col += vec3(-0.012, 0.01, 0.028) * (1.0 - smoothstep(0.0, 0.55, l));',
-          '  col *= mix(vec3(1.0), vec3(1.06, 1.0, 0.93), smoothstep(0.45, 1.0, l));',
-          '  col = (col - 0.5) * 1.07 + 0.5;',
-          '  col *= 1.0 - 0.55 * smoothstep(0.12, 0.6, r2);',
-          '  col += (hash(vUv * resolution + fract(uTime) * 91.7) - 0.5) * 0.025;',
+          '  col = mix(vec3(l), col, 1.2);',
+          '  col *= mix(vec3(0.97, 0.99, 1.05), vec3(1.05, 1.01, 0.95), smoothstep(0.2, 0.9, l));',
+          '  col = (col - 0.5) * 1.06 + 0.52;',
+          '  vec2 dv = vUv - 0.5;',
+          '  col *= 1.0 - 0.3 * smoothstep(0.2, 0.75, dot(dv, dv) * 2.0);',
           '  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);',
           '}'
         ].join('\n'), depthTest:false, depthWrite:false
       });
+      var fxaaMat = new THREE.ShaderMaterial({
+        uniforms:{ tDiffuse:{value:null}, texel:{value:new THREE.Vector2()} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDiffuse; uniform vec2 texel; varying vec2 vUv;',
+          'void main(){',
+          '  vec3 luma = vec3(0.299, 0.587, 0.114);',
+          '  vec3 rgbNW = texture2D(tDiffuse, vUv + vec2(-1.0, -1.0) * texel).rgb;',
+          '  vec3 rgbNE = texture2D(tDiffuse, vUv + vec2( 1.0, -1.0) * texel).rgb;',
+          '  vec3 rgbSW = texture2D(tDiffuse, vUv + vec2(-1.0,  1.0) * texel).rgb;',
+          '  vec3 rgbSE = texture2D(tDiffuse, vUv + vec2( 1.0,  1.0) * texel).rgb;',
+          '  vec3 rgbM = texture2D(tDiffuse, vUv).rgb;',
+          '  float lNW = dot(rgbNW, luma), lNE = dot(rgbNE, luma), lSW = dot(rgbSW, luma), lSE = dot(rgbSE, luma), lM = dot(rgbM, luma);',
+          '  float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));',
+          '  float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));',
+          '  vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), ((lNW + lSW) - (lNE + lSE)));',
+          '  float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 1.0/128.0);',
+          '  float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);',
+          '  dir = clamp(dir * rcp, -8.0, 8.0) * texel;',
+          '  vec3 rgbA = 0.5 * (texture2D(tDiffuse, vUv + dir * (1.0/3.0 - 0.5)).rgb + texture2D(tDiffuse, vUv + dir * (2.0/3.0 - 0.5)).rgb);',
+          '  vec3 rgbB = rgbA * 0.5 + 0.25 * (texture2D(tDiffuse, vUv - dir * 0.5).rgb + texture2D(tDiffuse, vUv + dir * 0.5).rgb);',
+          '  float lB = dot(rgbB, luma);',
+          '  gl_FragColor = vec4((lB < lMin || lB > lMax) ? rgbA : rgbB, 1.0);',
+          '}'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
 
-      var rtOpts = {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat};
-      var MSRT = (renderer.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget) ? THREE.WebGLMultisampleRenderTarget : THREE.WebGLRenderTarget;
-      var sceneRT = new MSRT(1, 1, rtOpts);
-      if (sceneRT.samples !== undefined) sceneRT.samples = 4;
-      var halfA = new THREE.WebGLRenderTarget(1,1,Object.assign({depthBuffer:false}, rtOpts));
-      var halfB = new THREE.WebGLRenderTarget(1,1,Object.assign({depthBuffer:false}, rtOpts));
-      var quarterA = new THREE.WebGLRenderTarget(1,1,Object.assign({depthBuffer:false}, rtOpts));
-      var quarterB = new THREE.WebGLRenderTarget(1,1,Object.assign({depthBuffer:false}, rtOpts));
+      var rtOpts = {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat, depthBuffer:false};
+      var sceneRT = new THREE.WebGLRenderTarget(1, 1, {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat});
+      sceneRT.depthTexture = new THREE.DepthTexture(1, 1);
+      sceneRT.depthTexture.type = renderer.capabilities.isWebGL2 ? THREE.FloatType : THREE.UnsignedIntType;
+      var aoRT = new THREE.WebGLRenderTarget(1,1,rtOpts), aoBlurRT = new THREE.WebGLRenderTarget(1,1,rtOpts);
+      var halfA = new THREE.WebGLRenderTarget(1,1,rtOpts), halfB = new THREE.WebGLRenderTarget(1,1,rtOpts);
+      var quarterA = new THREE.WebGLRenderTarget(1,1,rtOpts), quarterB = new THREE.WebGLRenderTarget(1,1,rtOpts);
+      var compRT = new THREE.WebGLRenderTarget(1,1,rtOpts);
       var sizeVec = new THREE.Vector2();
       function resize(){
         renderer.getDrawingBufferSize(sizeVec);
         var w = Math.max(1, sizeVec.x), h = Math.max(1, sizeVec.y);
-        sceneRT.setSize(w, h);
-        halfA.setSize(Math.ceil(w/2), Math.ceil(h/2)); halfB.setSize(Math.ceil(w/2), Math.ceil(h/2));
+        var hw = Math.ceil(w/2), hh = Math.ceil(h/2);
+        sceneRT.setSize(w, h); compRT.setSize(w, h);
+        aoRT.setSize(hw, hh); aoBlurRT.setSize(hw, hh);
+        halfA.setSize(hw, hh); halfB.setSize(hw, hh);
         quarterA.setSize(Math.ceil(w/4), Math.ceil(h/4)); quarterB.setSize(Math.ceil(w/4), Math.ceil(h/4));
-        reflRT.setSize(Math.ceil(w/2), Math.ceil(h/2));
-        compositeMat.uniforms.resolution.value.set(w, h);
-        pMat.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+        reflRT.setSize(hw, hh);
+        aoMat.uniforms.texel.value.set(1/w, 1/h);
+        aoBlurMat.uniforms.texel.value.set(1/hw, 1/hh);
+        fxaaMat.uniforms.texel.value.set(1/w, 1/h);
       }
       function pass(mat, target){
         quad.material = mat;
@@ -3418,15 +3409,24 @@
         blurMat.uniforms.direction.value.set(0, 1/tmp.height);
         pass(blurMat, dst);
       }
+      var frameCount = 0;
       function render(cam){
         timeUniform.value = performance.now() / 1000;
-        orientShafts(cam);
-        mists.forEach(function(m){
-          m.position.x += m.userData.speed * 0.016;
-          if (m.position.x > 17) m.position.x = -17;
-        });
+        if ((frameCount++ % 30) === 0) forEachMaterial(patchMaterial);
+        renderer.getDrawingBufferSize(sizeVec);
+        if (sizeVec.x !== sceneRT.width || sizeVec.y !== sceneRT.height) resize();
+        sky.position.copy(cam.position);
+
         renderer.setRenderTarget(sceneRT);
         renderer.render(scene, cam);
+
+        aoMat.uniforms.tDepth.value = sceneRT.depthTexture;
+        aoMat.uniforms.proj.value.copy(cam.projectionMatrix);
+        aoMat.uniforms.projInv.value.copy(cam.projectionMatrixInverse);
+        pass(aoMat, aoRT);
+        aoBlurMat.uniforms.tDiffuse.value = aoRT.texture;
+        pass(aoBlurMat, aoBlurRT);
+
         brightMat.uniforms.tDiffuse.value = sceneRT.texture;
         pass(brightMat, halfA);
         blur(halfA, halfB, halfA);
@@ -3437,15 +3437,21 @@
         blurMat.uniforms.direction.value.set(0, 1/quarterB.height);
         pass(blurMat, quarterA);
         blur(quarterA, quarterB, quarterA);
+
         compositeMat.uniforms.tScene.value = sceneRT.texture;
+        compositeMat.uniforms.tAO.value = aoBlurRT.texture;
         compositeMat.uniforms.tBloomA.value = halfA.texture;
         compositeMat.uniforms.tBloomB.value = quarterA.texture;
-        pass(compositeMat, null);
+        pass(compositeMat, compRT);
+        fxaaMat.uniforms.tDiffuse.value = compRT.texture;
+        pass(fxaaMat, null);
       }
 
       function setEnabled(on){
+        if (group.visible === on) return;
         group.visible = on;
-        if (on){ setMap(currentEnvCfgForUltra); resize(); }
+        if (on){ setMap(currentEnvCfgForUltra); resize(); forEachMaterial(patchMaterial); frameCount = 1; }
+        else forEachMaterial(unpatchMaterial);
         scene.environment = (on && envRT) ? envRT.texture : null;
       }
 
@@ -3503,10 +3509,10 @@
       var hi = S.highGraphics;
       renderer.shadowMap.type = hi ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
       renderer.toneMapping = hi ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
-      renderer.toneMappingExposure = ul ? 0.82 : hi ? 0.85 : 1;
+      renderer.toneMappingExposure = ul ? 0.74 : hi ? 0.85 : 1;
       ambient.intensity = ul ? 0.2 : hi ? 0.55 : 1.15;
-      dir.intensity = hi ? 2.3 : 2.3;
-      dir.color.set(hi ? '#fff2d0' : '#ffffff');
+      dir.intensity = ul ? 2.6 : 2.3;
+      dir.color.set(ul ? '#ffe9c6' : hi ? '#fff2d0' : '#ffffff');
       var newSize = ul ? 2048 : hi ? 1536 : 768;
       if (dir.shadow.mapSize.width !== newSize){
         dir.shadow.mapSize.set(newSize, newSize);
@@ -3514,7 +3520,7 @@
       }
       hemiLight.intensity = ul ? 0.25 : 0.45;
       hemiLight.visible = hi;
-      sunGlare.visible = hi;
+      sunGlare.visible = hi && !ul;
       armGroup.visible = hi;
       canvas.style.filter = (hi && !ul) ? 'saturate(1.18) contrast(1.1) brightness(0.97)' : 'none';
       ultra.setEnabled(ul);
@@ -3699,7 +3705,7 @@
         for (var h=0; h<hits.length; h++){ if (hits[h].object.userData && hits[h].object.userData.botId){ target = hits[h].object; break; } }
         var endPoint = hits.length ? hits[0].point.clone() : camera.position.clone().add(dir.clone().multiplyScalar(60));
         spawnBullet(muzzleWorld, endPoint, w.explosive ? '#ff7a3d' : '#f2c94c');
-        if (S.graphicsMode === 'ultra' && hits.length && !w.explosive) spawnSparks(hits[0].point, target ? '#ff4a3a' : '#ffc860', 10, 3.5, 380);
+        if (S.graphicsMode === 'ultra' && hits.length && !w.explosive) spawnSparks(hits[0].point, target ? '#ff4a3a' : '#ffc860', 5, 3, 300);
         if (target){
           dealDamage('player', target.userData.botId, target.userData.head ? Math.round(w.dmg*1.9) : w.dmg);
         }
@@ -3740,7 +3746,7 @@
       scene.add(boomLight);
       explosionFX.push({kind:'light', mesh:boomLight, mat:null, geo:null, born:now0, life:240, baseIntensity:7});
 
-      if (S.graphicsMode === 'ultra') spawnSparks(point, color || '#ff9a3d', 80, 9, 950);
+      if (S.graphicsMode === 'ultra') spawnSparks(point, color || '#ff9a3d', 36, 8, 800);
 
       var debrisCount = 5;
       for (var d=0; d<debrisCount; d++){
