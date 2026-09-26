@@ -66,6 +66,14 @@
   .cosmetic-item button:hover:not(:disabled){border-color:var(--primary);}
   .cosmetic-item button:disabled{opacity:.4;cursor:not-allowed;}
   .cosmetic-item button.equip-btn{border-color:var(--primary);color:var(--primary);}
+  .rank-popup-card{width:min(360px,94vw);text-align:center;}
+  .rank-trophy-display{margin:4px auto 10px;color:var(--muted-foreground);transition:color 160ms ease;}
+  .rank-name-display{margin:0 0 6px;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;
+    font-family:ui-sans-serif,system-ui,sans-serif;transition:color 160ms ease;}
+  .rank-progress-text{margin:0 0 12px;font-size:11px;color:var(--muted-foreground);text-transform:uppercase;
+    letter-spacing:.1em;}
+  .rank-progress-track{height:8px;width:100%;background:var(--card);border:1px solid var(--border);}
+  .rank-progress-fill{height:100%;width:0%;background:var(--muted-foreground);transition:width 200ms ease,background 160ms ease;}
   .brand-row{display:flex;align-items:center;gap:12px;}
   .brand-badge{display:flex;align-items:center;justify-content:center;width:40px;height:40px;
     border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);}
@@ -189,6 +197,23 @@
     color:var(--muted-foreground);padding:8px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
     cursor:pointer;font-family:inherit;}
   .keybinds-reset-btn:hover{border-color:var(--primary);color:var(--primary);}
+  .settings-hint{margin:10px 0 0;font-size:10.5px;line-height:1.5;color:var(--muted-foreground);}
+  .settings-view{display:none;}
+  .settings-view.active{display:block;}
+  .settings-tab-list{display:grid;gap:8px;}
+  .settings-tab-btn{display:flex;align-items:center;justify-content:space-between;width:100%;
+    border:1px solid var(--border);background:var(--card);color:var(--foreground);padding:14px 16px;
+    text-align:left;cursor:pointer;font-family:inherit;transition:border-color .12s,background .12s;}
+  .settings-tab-btn:hover{border-color:var(--primary);background:rgba(216,90,31,.08);}
+  .settings-tab-btn h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  .settings-tab-btn p{margin:3px 0 0;font-size:11px;color:var(--muted-foreground);}
+  .settings-tab-btn .tab-arrow{color:var(--muted-foreground);font-size:16px;}
+  .settings-tab-btn:hover h4,.settings-tab-btn:hover .tab-arrow{color:var(--primary);}
+  .settings-back-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);
+    background:transparent;color:var(--muted-foreground);padding:6px 12px;font-size:10px;
+    text-transform:uppercase;letter-spacing:.12em;cursor:pointer;font-family:inherit;}
+  .settings-back-btn:hover{border-color:var(--primary);color:var(--primary);}
   .mode-card{border:1px solid var(--border);background:var(--card);padding:1.25rem;text-align:left;
     color:var(--foreground);transition:background .12s,color .12s,border-color .12s;}
   .mode-card:hover{border-color:var(--primary);background:var(--primary);color:var(--primary-foreground);}
@@ -379,38 +404,69 @@
     <button id="account-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 52px);" title="Account: Guest">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </button>
+    <button id="rank-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 104px);" title="Rank: Iron">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+    </button>
     <div id="drawer-backdrop"></div>
 
     <aside id="settings-drawer" class="drawer-right">
-      <div class="drawer-head">
-        <span class="section-label" style="margin:0;">Settings</span>
-        <button id="settings-close" class="drawer-close-btn">&times;</button>
-      </div>
-      <div class="loadout-section" style="margin-top:0;">
-        <span class="section-label">Graphics</span>
-        <div class="toggle-row">
-          <button class="toggle-btn selected" id="gfx-standard">Standard</button>
-          <button class="toggle-btn" id="gfx-high">High</button>
+      <div id="settings-view-main" class="settings-view active">
+        <div class="drawer-head">
+          <span class="section-label" style="margin:0;">Settings</span>
+          <button id="settings-close" class="drawer-close-btn">&times;</button>
+        </div>
+        <div class="settings-tab-list">
+          <button class="settings-tab-btn" data-settings-view="customization">
+            <div><h4>Customization</h4><p>Keybinds, sensitivity, damage indicator</p></div>
+            <span class="tab-arrow">&rsaquo;</span>
+          </button>
+          <button class="settings-tab-btn" data-settings-view="graphics">
+            <div><h4>Graphics</h4><p>Visual quality</p></div>
+            <span class="tab-arrow">&rsaquo;</span>
+          </button>
         </div>
       </div>
-      <div class="loadout-section">
-        <span class="section-label">Sensitivity</span>
-        <div class="sensitivity-row">
-          <input type="range" id="sensitivity-slider" min="0.3" max="2.5" step="0.05" value="1">
-          <span id="sensitivity-value">1.00x</span>
+
+      <div id="settings-view-customization" class="settings-view">
+        <div class="drawer-head">
+          <button class="settings-back-btn" data-settings-view="main">&lsaquo; Back</button>
+          <span class="section-label" style="margin:0;">Customization</span>
+        </div>
+        <div class="loadout-section" style="margin-top:0;">
+          <span class="section-label">Sensitivity</span>
+          <div class="sensitivity-row">
+            <input type="range" id="sensitivity-slider" min="0.3" max="2.5" step="0.05" value="1">
+            <span id="sensitivity-value">1.00x</span>
+          </div>
+        </div>
+        <div class="loadout-section">
+          <span class="section-label">Damage Indicator</span>
+          <div class="toggle-row">
+            <button class="toggle-btn selected" id="dmg-indicator-on">On</button>
+            <button class="toggle-btn" id="dmg-indicator-off">Off</button>
+          </div>
+        </div>
+        <div class="loadout-section">
+          <span class="section-label">Keybinds</span>
+          <div id="keybinds-list"></div>
+          <button id="keybinds-reset" class="keybinds-reset-btn">Reset to Defaults</button>
         </div>
       </div>
-      <div class="loadout-section">
-        <span class="section-label">HUD</span>
-        <div class="toggle-row">
-          <button class="toggle-btn selected" id="dmg-indicator-on">Damage Indicator: On</button>
-          <button class="toggle-btn" id="dmg-indicator-off">Off</button>
+
+      <div id="settings-view-graphics" class="settings-view">
+        <div class="drawer-head">
+          <button class="settings-back-btn" data-settings-view="main">&lsaquo; Back</button>
+          <span class="section-label" style="margin:0;">Graphics</span>
         </div>
-      </div>
-      <div class="loadout-section">
-        <span class="section-label">Keybinds</span>
-        <div id="keybinds-list"></div>
-        <button id="keybinds-reset" class="keybinds-reset-btn">Reset to Defaults</button>
+        <div class="loadout-section" style="margin-top:0;">
+          <span class="section-label">Graphics</span>
+          <div class="toggle-row">
+            <button class="toggle-btn selected" id="gfx-standard">Standard</button>
+            <button class="toggle-btn" id="gfx-high">High</button>
+            <button class="toggle-btn" id="gfx-ultra">Ultra</button>
+          </div>
+          <p class="settings-hint">Ultra adds a sky shader, rim lighting, ambient occlusion, bloom, reflections and anti-aliasing. Needs a strong GPU.</p>
+        </div>
       </div>
     </aside>
 
@@ -471,6 +527,21 @@
       </div>
     </div>
 
+    <div id="rank-popup" class="popup-overlay">
+      <div class="popup-card rank-popup-card">
+        <div class="drawer-head">
+          <span class="section-label" style="margin:0;">Rank</span>
+          <button id="rank-popup-close" class="drawer-close-btn">&times;</button>
+        </div>
+        <div id="rank-trophy-display" class="rank-trophy-display">
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        </div>
+        <p id="rank-name" class="rank-name-display">Iron</p>
+        <p id="rank-progress" class="rank-progress-text">Win 10 matches to rank up</p>
+        <div class="rank-progress-track"><div id="rank-progress-fill" class="rank-progress-fill"></div></div>
+      </div>
+    </div>
+
     <div id="cosmetics-popup" class="popup-overlay">
       <div class="popup-card cosmetics-card">
         <div class="drawer-head">
@@ -491,10 +562,6 @@
       <header class="brand-row">
         <div class="brand-badge">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
-        </div>
-        <div>
-          <p class="eyebrow">ARENA PROTOCOL</p>
-          <p class="eyebrow accent">SERVER 08 // ONLINE</p>
         </div>
       </header>
 
@@ -952,7 +1019,8 @@
   var DEFAULT_PROFILE = {
     credits:0,
     owned:['uni_default','helm_none','visor_amber'],
-    equipped:{uniform:'uni_default', helmet:'helm_none', visor:'visor_amber'}
+    equipped:{uniform:'uni_default', helmet:'helm_none', visor:'visor_amber'},
+    matchWins:0
   };
 
   function loadProfile(){
@@ -960,7 +1028,10 @@
       var raw = localStorage.getItem('octakill_profile');
       if (raw){
         var p = JSON.parse(raw);
-        if (p && p.owned && p.equipped && typeof p.credits === 'number') return p;
+        if (p && p.owned && p.equipped && typeof p.credits === 'number'){
+          if (typeof p.matchWins !== 'number') p.matchWins = 0;
+          return p;
+        }
       }
     } catch(e){}
     return JSON.parse(JSON.stringify(DEFAULT_PROFILE));
@@ -970,6 +1041,50 @@
     pushCloudProfile();
   }
   var PROFILE = loadProfile();
+
+  // ---- Ranks ----
+  var RANKS = [
+    {id:'iron', name:'Iron', color:'#8d9096'},
+    {id:'bronze', name:'Bronze', color:'#b3702f'},
+    {id:'silver', name:'Silver', color:'#c9cdd3'},
+    {id:'gold', name:'Gold', color:'#e8b923'},
+    {id:'platinum', name:'Platinum', color:'#f4f6f2'},
+    {id:'emerald', name:'Emerald', color:'#2ecc71'},
+    {id:'ruby', name:'Ruby', color:'#e0273f'},
+    {id:'sapphire', name:'Sapphire', color:'#2244a8'},
+    {id:'diamond', name:'Diamond', color:'#7fe3f5'}
+  ];
+  var WINS_PER_RANK = 10;
+
+  function getRankInfo(){
+    var wins = PROFILE.matchWins || 0;
+    var index = Math.min(Math.floor(wins / WINS_PER_RANK), RANKS.length - 1);
+    var isMaxRank = index === RANKS.length - 1;
+    var winsInRank = wins - index * WINS_PER_RANK;
+    return {
+      rank: RANKS[index],
+      isMaxRank: isMaxRank,
+      winsInRank: winsInRank,
+      winsToNext: isMaxRank ? 0 : WINS_PER_RANK - winsInRank
+    };
+  }
+
+  function updateRankButtonTitle(){
+    if (!el['rank-popup-btn']) return;
+    el['rank-popup-btn'].title = 'Rank: ' + getRankInfo().rank.name;
+  }
+
+  function renderRankPopup(){
+    var info = getRankInfo();
+    el['rank-trophy-display'].style.color = info.rank.color;
+    el['rank-name'].textContent = info.rank.name;
+    el['rank-name'].style.color = info.rank.color;
+    el['rank-progress'].textContent = info.isMaxRank
+      ? 'Max rank achieved'
+      : info.winsToNext + ' more win' + (info.winsToNext === 1 ? '' : 's') + ' to rank up';
+    el['rank-progress-fill'].style.background = info.rank.color;
+    el['rank-progress-fill'].style.width = (info.isMaxRank ? 100 : (info.winsInRank / WINS_PER_RANK * 100)) + '%';
+  }
 
   // ---- Accounts (Supabase) ----
   var SUPABASE_URL = 'https://epmabpxqnjgjeeawuuug.supabase.co';
@@ -1008,9 +1123,12 @@
     PROFILE.credits = row.credits;
     PROFILE.owned = row.owned;
     PROFILE.equipped = row.equipped;
+    PROFILE.matchWins = typeof row.match_wins === 'number' ? row.match_wins : 0;
     try { localStorage.setItem('octakill_profile', JSON.stringify(PROFILE)); } catch(e){}
     updateCreditsDisplay();
+    updateRankButtonTitle();
     if (el['cosmetics-popup'].classList.contains('open')) renderCosmeticsShop();
+    if (el['rank-popup'].classList.contains('open')) renderRankPopup();
     buildCharModel();
   }
 
@@ -1023,6 +1141,7 @@
       credits: PROFILE.credits,
       owned: PROFILE.owned,
       equipped: PROFILE.equipped,
+      match_wins: PROFILE.matchWins,
       updated_at: new Date().toISOString()
     }).then(function(res){
       cloudSyncInFlight = false;
@@ -1222,9 +1341,8 @@
   function awardMatchCredits(sorted, forcedWinnerId){
     var player = S.fighters[0];
     if (!player) return 0;
-    var reward = 0;
+    var reward = 0, won = false;
     if (isTeamMode()){
-      var won;
       if (forcedWinnerId) won = forcedWinnerId === ('TEAM_'+player.team.toUpperCase());
       else {
         var oScore = computeTeamScore('orange'), bScore = computeTeamScore('blue');
@@ -1236,16 +1354,20 @@
     } else if (S.mode === 'duel'){
       var pIdx = -1;
       for (var d=0;d<sorted.length;d++){ if (sorted[d].id === 'player'){ pIdx = d; break; } }
-      reward = pIdx === 0 ? 100 : 0;
+      won = pIdx === 0;
+      reward = won ? 100 : 0;
     } else {
       var idx = -1;
       for (var i=0;i<sorted.length;i++){ if (sorted[i].id === 'player'){ idx = i; break; } }
+      won = idx === 0;
       reward = idx===0 ? 100 : idx===1 ? 50 : idx===2 ? 25 : 0;
     }
-    if (reward > 0){
+    if (won) PROFILE.matchWins = (PROFILE.matchWins || 0) + 1;
+    if (reward > 0 || won){
       PROFILE.credits += reward;
       saveProfile();
       updateCreditsDisplay();
+      updateRankButtonTitle();
     }
     return reward;
   }
@@ -1557,7 +1679,7 @@
   }
 
   var el = {};
-  ['menu','countdown-screen','results','game','callsign','loadout-grid','map-grid','gfx-standard','gfx-high',
+  ['menu','countdown-screen','results','game','callsign','loadout-grid','map-grid','gfx-standard','gfx-high','gfx-ultra',
    'sensitivity-slider','sensitivity-value','keybinds-list','keybinds-reset','dmg-indicator-on','dmg-indicator-off',
    'music-toggle',
    'char-preview-canvas','panel-credits',
@@ -1565,6 +1687,7 @@
    'account-popup','account-popup-btn','account-popup-close',
    'account-guest-view','account-logged-in-view','account-username','account-password','account-error',
    'account-signup-btn','account-login-btn','account-logout-btn','account-current-username',
+   'rank-popup','rank-popup-btn','rank-popup-close','rank-trophy-display','rank-name','rank-progress','rank-progress-fill',
    'settings-toggle','settings-close','drawer-backdrop','settings-drawer',
    'loadout-popup','loadout-popup-btn','loadout-popup-close','loadout-current-name',
    'maps-popup','maps-popup-btn','maps-popup-close','maps-current-name',
@@ -1674,7 +1797,7 @@
     screen:'menu', mode:'ffa', modeChoice:'ffa', callsign:defaultPlayerName, fighters:[],
     time:180, countdown:3, reloading:false, reloadStart:0,
     feed:[], locked:false, paused:false,
-    loadoutId:'assaulter', mapId:'arena', highGraphics:false, slot:'primary',
+    loadoutId:'assaulter', mapId:'arena', highGraphics:false, graphicsMode:'standard', slot:'primary',
     weaponState:{ primary:{ammo:0,reserve:0}, secondary:{ammo:0,reserve:0} },
     tacticalReady:true, mouseHeld:false, aiming:false, crouching:false, spawnProtectedUntil:0
   };
@@ -1760,13 +1883,16 @@
   renderMapGrid();
   updateMapLabel();
 
-  function setGraphicsMode(hi){
-    S.highGraphics = hi;
-    el['gfx-standard'].classList.toggle('selected', !hi);
-    el['gfx-high'].classList.toggle('selected', hi);
+  function setGraphicsMode(mode){
+    S.graphicsMode = mode;
+    S.highGraphics = mode !== 'standard';
+    el['gfx-standard'].classList.toggle('selected', mode === 'standard');
+    el['gfx-high'].classList.toggle('selected', mode === 'high');
+    el['gfx-ultra'].classList.toggle('selected', mode === 'ultra');
     if (three && three.applyGraphicsMode) three.applyGraphicsMode();
   }
-  el['gfx-standard'].addEventListener('click', function(){ setGraphicsMode(false); });
+  el['gfx-standard'].addEventListener('click', function(){ setGraphicsMode('standard'); });
+  el['gfx-ultra'].addEventListener('click', function(){ setGraphicsMode('ultra'); });
 
   el['sensitivity-slider'].value = SETTINGS.sensitivity;
   el['sensitivity-value'].textContent = SETTINGS.sensitivity.toFixed(2) + 'x';
@@ -1801,7 +1927,7 @@
   document.addEventListener('pointerdown', unlockAudioOnce);
   document.addEventListener('keydown', unlockAudioOnce);
 
-  el['gfx-high'].addEventListener('click', function(){ setGraphicsMode(true); });
+  el['gfx-high'].addEventListener('click', function(){ setGraphicsMode('high'); });
 
   function closeAllPopups(){
     el['settings-drawer'].classList.remove('open');
@@ -1811,13 +1937,30 @@
     el['mode-popup'].classList.remove('open');
     el['cosmetics-popup'].classList.remove('open');
     el['account-popup'].classList.remove('open');
+    el['rank-popup'].classList.remove('open');
   }
   function openAccountPopup(){
     closeAllPopups();
     setAccountError('');
     el['account-popup'].classList.add('open');
   }
+  function openRankPopup(){
+    closeAllPopups();
+    renderRankPopup();
+    el['rank-popup'].classList.add('open');
+  }
+  function showSettingsView(name){
+    if (name !== 'customization' && rebindingAction){ rebindingAction = null; renderKeybinds(); }
+    Array.prototype.forEach.call(el['settings-drawer'].querySelectorAll('.settings-view'), function(v){
+      v.classList.toggle('active', v.id === 'settings-view-' + name);
+    });
+    el['settings-drawer'].scrollTop = 0;
+  }
+  Array.prototype.forEach.call(el['settings-drawer'].querySelectorAll('[data-settings-view]'), function(btn){
+    btn.addEventListener('click', function(){ showSettingsView(btn.getAttribute('data-settings-view')); });
+  });
   function openSettingsDrawer(){
+    showSettingsView('main');
     el['settings-drawer'].classList.add('open');
     el['drawer-backdrop'].classList.add('open');
   }
@@ -1856,6 +1999,9 @@
   el['account-popup-btn'].addEventListener('click', openAccountPopup);
   el['account-popup-close'].addEventListener('click', closeAllPopups);
   el['account-popup'].addEventListener('click', function(e){ if (e.target === el['account-popup']) closeAllPopups(); });
+  el['rank-popup-btn'].addEventListener('click', openRankPopup);
+  el['rank-popup-close'].addEventListener('click', closeAllPopups);
+  el['rank-popup'].addEventListener('click', function(e){ if (e.target === el['rank-popup']) closeAllPopups(); });
   el['account-signup-btn'].addEventListener('click', handleSignUp);
   el['account-login-btn'].addEventListener('click', handleLogIn);
   el['account-logout-btn'].addEventListener('click', handleLogOut);
@@ -1882,6 +2028,7 @@
   renderModeList();
   updateModeLabel();
   updateCreditsDisplay();
+  updateRankButtonTitle();
   initCharPreview();
   window.addEventListener('resize', resizeCharPreview);
   el['menu'].addEventListener('pointerdown', markMenuInteraction);
@@ -2413,6 +2560,7 @@
     var raycastTargets = [];
     var envRaycastTargets = [];
     var envGroup = null;
+    var currentEnvCfgForUltra = null;
 
     function buildThemeProps(cfg, group){
       if (cfg.ground === 'jungle'){
@@ -2584,6 +2732,8 @@
       var cfg = null;
       for (var i=0;i<MAPS.length;i++){ if (MAPS[i].id===mapId){ cfg = MAPS[i]; break; } }
       if (!cfg) cfg = MAPS[0];
+      currentEnvCfgForUltra = cfg;
+      if (ultra && ultra.isEnabled()) ultra.setMap(cfg);
 
       if (envGroup){
         scene.remove(envGroup);
@@ -2871,24 +3021,509 @@
     leftArmGroup.visible = false;
     camera.add(leftArmGroup);
 
+    // ---- Ultra graphics: shader-driven look (sky dome, material rim/bounce light, SSAO, bloom, grading, FXAA) ----
+    var ULTRA_MAP_STYLE = {
+      arena:{reflect:0.10}, jungle:{reflect:0.06}, city:{reflect:0.22}, colosseum:{reflect:0.0},
+      arctic:{reflect:0.26}, radioactive:{reflect:0.16}, cargo:{reflect:0.12}, temple:{reflect:0.05}
+    };
+    var ultra = (function(){
+      var group = new THREE.Group();
+      group.visible = false;
+      scene.add(group);
+      var timeUniform = {value:0};
+      var mapKey = null;
+      var sunAxis = dir.position.clone().normalize();
+
+      // Planar floor reflection (adapted from three.js' Reflector), drawn as a translucent wet-look overlay.
+      var reflRT = new THREE.WebGLRenderTarget(512, 512, {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBFormat});
+      reflRT.texture.generateMipmaps = false;
+      var reflTexMatrix = new THREE.Matrix4();
+      var reflMat = new THREE.ShaderMaterial({
+        uniforms:{
+          tDiffuse:{value:reflRT.texture}, textureMatrix:{value:reflTexMatrix}, time:timeUniform,
+          strength:{value:0.3}, tint:{value:new THREE.Color('#ffffff')}, fogNear:{value:20}, fogFar:{value:50}
+        },
+        vertexShader:[
+          'uniform mat4 textureMatrix;',
+          'varying vec4 vUv; varying vec3 vWorld; varying float vDepth;',
+          'void main(){',
+          '  vUv = textureMatrix * vec4(position,1.0);',
+          '  vec4 wp = modelMatrix * vec4(position,1.0); vWorld = wp.xyz;',
+          '  vec4 mv = viewMatrix * wp; vDepth = -mv.z;',
+          '  gl_Position = projectionMatrix * mv;',
+          '}'
+        ].join('\n'),
+        fragmentShader:[
+          'uniform sampler2D tDiffuse; uniform float time; uniform float strength; uniform vec3 tint;',
+          'uniform float fogNear; uniform float fogFar;',
+          'varying vec4 vUv; varying vec3 vWorld; varying float vDepth;',
+          'void main(){',
+          '  vec3 V = normalize(cameraPosition - vWorld);',
+          '  float fres = pow(1.0 - clamp(V.y, 0.0, 1.0), 2.5);',
+          '  vec2 rip = vec2(sin(vWorld.x*2.3 + time*0.9) + sin(vWorld.z*3.1 - time*1.3),',
+          '                  cos(vWorld.z*2.7 + time*0.8) + cos(vWorld.x*3.4 + time*1.1)) * 0.0012;',
+          '  vec4 uv = vUv; uv.xy += rip * uv.w;',
+          '  vec3 refl = texture2DProj(tDiffuse, uv).rgb * tint;',
+          '  float fogFade = 1.0 - smoothstep(fogNear, fogFar, vDepth);',
+          '  float a = strength * mix(0.35, 1.0, fres) * fogFade;',
+          '  gl_FragColor = vec4(refl, a);',
+          '}'
+        ].join('\n'),
+        transparent:true, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-1
+      });
+      var reflector = new THREE.Mesh(new THREE.PlaneGeometry(32, 32), reflMat);
+      reflector.rotation.x = -Math.PI/2;
+      reflector.position.y = 0.004;
+      reflector.renderOrder = 1;
+      group.add(reflector);
+
+      var reflPlane = new THREE.Plane(), reflNormal = new THREE.Vector3(), reflPos = new THREE.Vector3(),
+          camPos = new THREE.Vector3(), rotM = new THREE.Matrix4(), lookAt = new THREE.Vector3(),
+          clipPlane = new THREE.Vector4(), view = new THREE.Vector3(), target = new THREE.Vector3(),
+          q = new THREE.Vector4(), virtualCam = new THREE.PerspectiveCamera();
+      reflector.onBeforeRender = function(r, sc, cam){
+        reflPos.setFromMatrixPosition(reflector.matrixWorld);
+        camPos.setFromMatrixPosition(cam.matrixWorld);
+        rotM.extractRotation(reflector.matrixWorld);
+        reflNormal.set(0,0,1).applyMatrix4(rotM);
+        view.subVectors(reflPos, camPos);
+        if (view.dot(reflNormal) > 0) return;
+        view.reflect(reflNormal).negate().add(reflPos);
+        rotM.extractRotation(cam.matrixWorld);
+        lookAt.set(0,0,-1).applyMatrix4(rotM).add(camPos);
+        target.subVectors(reflPos, lookAt).reflect(reflNormal).negate().add(reflPos);
+        virtualCam.position.copy(view);
+        virtualCam.up.set(0,1,0).applyMatrix4(rotM).reflect(reflNormal);
+        virtualCam.lookAt(target);
+        virtualCam.far = cam.far;
+        virtualCam.updateMatrixWorld();
+        virtualCam.projectionMatrix.copy(cam.projectionMatrix);
+        reflTexMatrix.set(0.5,0,0,0.5, 0,0.5,0,0.5, 0,0,0.5,0.5, 0,0,0,1);
+        reflTexMatrix.multiply(virtualCam.projectionMatrix).multiply(virtualCam.matrixWorldInverse).multiply(reflector.matrixWorld);
+        reflPlane.setFromNormalAndCoplanarPoint(reflNormal, reflPos).applyMatrix4(virtualCam.matrixWorldInverse);
+        clipPlane.set(reflPlane.normal.x, reflPlane.normal.y, reflPlane.normal.z, reflPlane.constant);
+        var pm = virtualCam.projectionMatrix;
+        q.x = (Math.sign(clipPlane.x) + pm.elements[8]) / pm.elements[0];
+        q.y = (Math.sign(clipPlane.y) + pm.elements[9]) / pm.elements[5];
+        q.z = -1.0;
+        q.w = (1.0 + pm.elements[10]) / pm.elements[14];
+        clipPlane.multiplyScalar(2.0 / clipPlane.dot(q));
+        pm.elements[2] = clipPlane.x; pm.elements[6] = clipPlane.y;
+        pm.elements[10] = clipPlane.z + 1.0 - 0.003; pm.elements[14] = clipPlane.w;
+        reflector.visible = false;
+        var prevRT = r.getRenderTarget();
+        var prevShadowAuto = r.shadowMap.autoUpdate;
+        r.shadowMap.autoUpdate = false;
+        r.setRenderTarget(reflRT);
+        r.state.buffers.depth.setMask(true);
+        if (r.autoClear === false) r.clear();
+        r.render(sc, virtualCam);
+        r.shadowMap.autoUpdate = prevShadowAuto;
+        r.setRenderTarget(prevRT);
+        reflector.visible = true;
+      };
+
+      // Gradient sky dome with a soft sun and horizon haze; follows the camera
+      var skyMat = new THREE.ShaderMaterial({
+        uniforms:{ zenith:{value:new THREE.Color()}, horizon:{value:new THREE.Color()}, ground:{value:new THREE.Color()},
+                   sunDir:{value:sunAxis.clone()}, sunColor:{value:new THREE.Color('#fff1d6')} },
+        vertexShader:'varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader:[
+          'uniform vec3 zenith; uniform vec3 horizon; uniform vec3 ground; uniform vec3 sunDir; uniform vec3 sunColor;',
+          'varying vec3 vDir;',
+          'void main(){',
+          '  vec3 d = normalize(vDir); float y = d.y;',
+          '  vec3 c = mix(horizon, zenith, smoothstep(0.0, 0.6, y));',
+          '  c = mix(c, ground, smoothstep(0.0, -0.25, y));',
+          '  float s = max(dot(d, sunDir), 0.0);',
+          '  c += sunColor * (pow(s, 900.0) * 3.0 + pow(s, 40.0) * 0.28 + pow(s, 6.0) * 0.1);',
+          '  c = mix(c, horizon * 1.04, exp(-abs(y) * 14.0) * 0.45);',
+          '  gl_FragColor = vec4(c, 1.0);',
+          '}'
+        ].join('\n'),
+        side:THREE.BackSide, depthWrite:false
+      });
+      var sky = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 16), skyMat);
+      sky.renderOrder = -10;
+      sky.frustumCulled = false;
+      group.add(sky);
+
+      // Material upgrade injected into every MeshStandardMaterial while Ultra is on:
+      // hemisphere sky/ground bounce light plus a sun-tinted rim (fresnel) highlight.
+      var matUniforms = {
+        uSkyTint:{value:new THREE.Color()}, uGroundTint:{value:new THREE.Color()},
+        uRimColor:{value:new THREE.Color('#fff0d8')}, uRimStrength:{value:0.32}
+      };
+      var MATERIAL_GLSL = [
+        '{',
+        '  vec3 uN = normalize(normal);',
+        '  vec3 uV = normalize(vViewPosition);',
+        '  vec3 uUp = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);',
+        '  float uHemi = dot(uN, uUp) * 0.5 + 0.5;',
+        '  reflectedLight.indirectDiffuse += diffuseColor.rgb * mix(uGroundTint, uSkyTint, uHemi) * 0.22;',
+        '  float uRim = pow(1.0 - clamp(dot(uN, uV), 0.0, 1.0), 3.0);',
+        '  reflectedLight.directSpecular += uRimColor * uRim * uRimStrength * (0.3 + 0.7 * uHemi);',
+        '}'
+      ].join('\n');
+      function ultraCompile(shader){
+        shader.uniforms.uSkyTint = matUniforms.uSkyTint;
+        shader.uniforms.uGroundTint = matUniforms.uGroundTint;
+        shader.uniforms.uRimColor = matUniforms.uRimColor;
+        shader.uniforms.uRimStrength = matUniforms.uRimStrength;
+        shader.fragmentShader = 'uniform vec3 uSkyTint; uniform vec3 uGroundTint; uniform vec3 uRimColor; uniform float uRimStrength;\n' +
+          shader.fragmentShader.replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n' + MATERIAL_GLSL);
+      }
+      function forEachMaterial(fn){
+        scene.traverse(function(o){
+          if (!o.material) return;
+          if (Array.isArray(o.material)) o.material.forEach(fn); else fn(o.material);
+        });
+      }
+      function patchMaterial(m){
+        if (!m.isMeshStandardMaterial || m.userData.ultraPatched) return;
+        m.userData.ultraPatched = true;
+        m.onBeforeCompile = ultraCompile;
+        m.needsUpdate = true;
+      }
+      function unpatchMaterial(m){
+        if (!m.userData.ultraPatched) return;
+        m.userData.ultraPatched = false;
+        m.onBeforeCompile = THREE.Material.prototype.onBeforeCompile;
+        m.needsUpdate = true;
+      }
+
+      // Environment map so metals and glossy surfaces pick up the sky
+      var pmrem = new THREE.PMREMGenerator(renderer);
+      var envRT = null;
+      function buildEnvMap(cfg){
+        var c = document.createElement('canvas'); c.width = 256; c.height = 128;
+        var ctx = c.getContext('2d');
+        var g = ctx.createLinearGradient(0,0,0,128);
+        g.addColorStop(0, cfg.sky); g.addColorStop(0.5, cfg.fogColor); g.addColorStop(1, cfg.floor);
+        ctx.fillStyle = g; ctx.fillRect(0,0,256,128);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,256,128);
+        var sunU = (Math.atan2(sunAxis.x, -sunAxis.z) / (Math.PI*2) + 0.5) * 256;
+        var sunV = (0.5 - Math.asin(sunAxis.y) / Math.PI) * 128;
+        var sg = ctx.createRadialGradient(sunU, sunV, 0, sunU, sunV, 22);
+        sg.addColorStop(0, 'rgba(255,245,220,1)'); sg.addColorStop(1, 'rgba(255,245,220,0)');
+        ctx.fillStyle = sg; ctx.fillRect(0,0,256,128);
+        var tex = new THREE.CanvasTexture(c);
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        var rt = pmrem.fromEquirectangular(tex);
+        tex.dispose();
+        if (envRT) envRT.dispose();
+        envRT = rt;
+      }
+
+      function setMap(cfg){
+        if (!cfg || mapKey === cfg.id) return;
+        mapKey = cfg.id;
+        var st = ULTRA_MAP_STYLE[cfg.ground] || ULTRA_MAP_STYLE.arena;
+        var hsl = {};
+        var zen = new THREE.Color(cfg.sky); zen.getHSL(hsl);
+        zen.setHSL(hsl.h, Math.min(1, hsl.s * 1.35 + 0.1), hsl.l * 0.78);
+        skyMat.uniforms.zenith.value.copy(zen);
+        skyMat.uniforms.horizon.value.set(cfg.fogColor);
+        skyMat.uniforms.ground.value.set(cfg.fogColor).lerp(new THREE.Color(cfg.floor), 0.5);
+        matUniforms.uSkyTint.value.set(cfg.sky).multiplyScalar(0.55);
+        matUniforms.uGroundTint.value.set(cfg.floor).multiplyScalar(0.35);
+        reflMat.uniforms.strength.value = st.reflect;
+        reflMat.uniforms.fogNear.value = cfg.fogNear;
+        reflMat.uniforms.fogFar.value = cfg.fogFar;
+        reflector.visible = st.reflect > 0;
+        buildEnvMap(cfg);
+        if (group.visible) scene.environment = envRT.texture;
+      }
+
+      // Post-processing:
+      // scene (+depth) -> SSAO (half res, blurred) -> bright pass -> 2-level bloom -> composite (AO, bloom, grade, vignette) -> FXAA
+      var fsVert = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+      var postScene = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+      var quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2));
+      quad.frustumCulled = false; postScene.add(quad);
+
+      var AO_SAMPLES = 16;
+      var aoKernel = [];
+      for (var ki=0; ki<AO_SAMPLES; ki++){
+        var kv = new THREE.Vector3(Math.random()*2-1, Math.random()*2-1, Math.random()).normalize();
+        var ks = ki / AO_SAMPLES;
+        kv.multiplyScalar((0.1 + 0.9*ks*ks) * (0.5 + Math.random()*0.5));
+        aoKernel.push(kv);
+      }
+      var aoMat = new THREE.ShaderMaterial({
+        defines:{ AO_SAMPLES:AO_SAMPLES },
+        uniforms:{ tDepth:{value:null}, proj:{value:new THREE.Matrix4()}, projInv:{value:new THREE.Matrix4()},
+                   texel:{value:new THREE.Vector2()}, radius:{value:0.55}, kernel:{value:aoKernel} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDepth; uniform mat4 proj; uniform mat4 projInv; uniform vec2 texel; uniform float radius;',
+          'uniform vec3 kernel[AO_SAMPLES]; varying vec2 vUv;',
+          'vec3 viewPos(vec2 uv){ float d = texture2D(tDepth, uv).x; vec4 v = projInv * vec4(uv*2.0-1.0, d*2.0-1.0, 1.0); return v.xyz / v.w; }',
+          'float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }',
+          'vec2 snap(vec2 uv){ return (floor(uv / texel) + 0.5) * texel; }',
+          'void main(){',
+          '  vec2 uv0 = snap(vUv);',
+          '  float d = texture2D(tDepth, uv0).x;',
+          '  if (d >= 0.99999){ gl_FragColor = vec4(1.0); return; }',
+          '  vec3 p = viewPos(uv0);',
+          '  vec3 pr = viewPos(uv0 + vec2(texel.x, 0.0)), pl = viewPos(uv0 - vec2(texel.x, 0.0));',
+          '  vec3 pu = viewPos(uv0 + vec2(0.0, texel.y)), pd = viewPos(uv0 - vec2(0.0, texel.y));',
+          '  vec3 dx = abs(pr.z - p.z) < abs(p.z - pl.z) ? pr - p : p - pl;',
+          '  vec3 dy = abs(pu.z - p.z) < abs(p.z - pd.z) ? pu - p : p - pd;',
+          '  vec3 n = normalize(cross(dx, dy));',
+          '  vec2 cell = mod(floor(gl_FragCoord.xy), 4.0);',
+          '  float a = (cell.x + cell.y * 4.0 + hash(floor(gl_FragCoord.xy / 4.0)) * 0.5) / 16.0 * 6.2831853;',
+          '  vec3 rv = vec3(cos(a), sin(a), 0.0);',
+          '  vec3 t = normalize(rv - n * dot(rv, n)); vec3 b = cross(n, t); mat3 tbn = mat3(t, b, n);',
+          '  float occ = 0.0; float bias = 0.02 + 0.004 * -p.z + 2.5 * max(abs(dx.z), abs(dy.z));',
+          '  for (int i = 0; i < AO_SAMPLES; i++){',
+          '    vec3 s = p + tbn * kernel[i] * radius;',
+          '    vec4 o = proj * vec4(s, 1.0); vec2 suv = o.xy / o.w * 0.5 + 0.5;',
+          '    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) continue;',
+          '    float sz = viewPos(snap(suv)).z;',
+          '    float range = 1.0 - smoothstep(radius * 0.5, radius * 1.5, abs(p.z - sz));',
+          '    occ += (sz >= s.z + bias ? 1.0 : 0.0) * range;',
+          '  }',
+          '  float ao = 1.0 - occ / float(AO_SAMPLES);',
+          '  float facing = abs(dot(n, normalize(-p)));',
+          '  ao = mix(1.0, ao, smoothstep(0.12, 0.4, facing) * smoothstep(0.9, 1.6, -p.z));',
+          '  gl_FragColor = vec4(vec3(mix(ao, 1.0, smoothstep(10.0, 28.0, -p.z))), 1.0);',
+          '}'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
+      var aoBlurMat = new THREE.ShaderMaterial({
+        uniforms:{ tDiffuse:{value:null}, texel:{value:new THREE.Vector2()} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDiffuse; uniform vec2 texel; varying vec2 vUv;',
+          'void main(){ float s = 0.0;',
+          '  for (int x = -2; x < 2; x++) for (int y = -2; y < 2; y++) s += texture2D(tDiffuse, vUv + vec2(float(x), float(y)) * texel).r;',
+          '  gl_FragColor = vec4(vec3(s / 16.0), 1.0); }'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
+      var brightMat = new THREE.ShaderMaterial({
+        uniforms:{ tDiffuse:{value:null}, threshold:{value:0.86}, knee:{value:0.12} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDiffuse; uniform float threshold; uniform float knee; varying vec2 vUv;',
+          'void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = dot(c, vec3(0.2126, 0.7152, 0.0722));',
+          '  float soft = clamp(l - threshold + knee, 0.0, 2.0*knee); soft = soft*soft / (4.0*knee + 1e-4);',
+          '  float w = max(soft, l - threshold) / max(l, 1e-4);',
+          '  gl_FragColor = vec4(c * w, 1.0); }'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
+      var blurMat = new THREE.ShaderMaterial({
+        uniforms:{ tDiffuse:{value:null}, direction:{value:new THREE.Vector2(1,0)} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDiffuse; uniform vec2 direction; varying vec2 vUv;',
+          'void main(){',
+          '  vec2 o1 = direction * 1.3846153846, o2 = direction * 3.2307692308;',
+          '  vec3 c = texture2D(tDiffuse, vUv).rgb * 0.2270270270;',
+          '  c += texture2D(tDiffuse, vUv + o1).rgb * 0.3162162162; c += texture2D(tDiffuse, vUv - o1).rgb * 0.3162162162;',
+          '  c += texture2D(tDiffuse, vUv + o2).rgb * 0.0702702703; c += texture2D(tDiffuse, vUv - o2).rgb * 0.0702702703;',
+          '  gl_FragColor = vec4(c, 1.0); }'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
+      var compositeMat = new THREE.ShaderMaterial({
+        uniforms:{ tScene:{value:null}, tAO:{value:null}, tBloomA:{value:null}, tBloomB:{value:null},
+                   aoStrength:{value:0.85}, bloomStrength:{value:0.45} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tScene; uniform sampler2D tAO; uniform sampler2D tBloomA; uniform sampler2D tBloomB;',
+          'uniform float aoStrength; uniform float bloomStrength; varying vec2 vUv;',
+          'void main(){',
+          '  vec3 col = texture2D(tScene, vUv).rgb;',
+          '  float ao = texture2D(tAO, vUv).r;',
+          '  col *= mix(1.0, ao * ao, aoStrength);',
+          '  col += (texture2D(tBloomA, vUv).rgb * 0.7 + texture2D(tBloomB, vUv).rgb) * bloomStrength;',
+          '  float l = dot(col, vec3(0.2126, 0.7152, 0.0722));',
+          '  col = mix(vec3(l), col, 1.2);',
+          '  col *= mix(vec3(0.97, 0.99, 1.05), vec3(1.05, 1.01, 0.95), smoothstep(0.2, 0.9, l));',
+          '  col = (col - 0.5) * 1.06 + 0.52;',
+          '  vec2 dv = vUv - 0.5;',
+          '  col *= 1.0 - 0.3 * smoothstep(0.2, 0.75, dot(dv, dv) * 2.0);',
+          '  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);',
+          '}'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
+      var fxaaMat = new THREE.ShaderMaterial({
+        uniforms:{ tDiffuse:{value:null}, texel:{value:new THREE.Vector2()} },
+        vertexShader:fsVert,
+        fragmentShader:[
+          'uniform sampler2D tDiffuse; uniform vec2 texel; varying vec2 vUv;',
+          'void main(){',
+          '  vec3 luma = vec3(0.299, 0.587, 0.114);',
+          '  vec3 rgbNW = texture2D(tDiffuse, vUv + vec2(-1.0, -1.0) * texel).rgb;',
+          '  vec3 rgbNE = texture2D(tDiffuse, vUv + vec2( 1.0, -1.0) * texel).rgb;',
+          '  vec3 rgbSW = texture2D(tDiffuse, vUv + vec2(-1.0,  1.0) * texel).rgb;',
+          '  vec3 rgbSE = texture2D(tDiffuse, vUv + vec2( 1.0,  1.0) * texel).rgb;',
+          '  vec3 rgbM = texture2D(tDiffuse, vUv).rgb;',
+          '  float lNW = dot(rgbNW, luma), lNE = dot(rgbNE, luma), lSW = dot(rgbSW, luma), lSE = dot(rgbSE, luma), lM = dot(rgbM, luma);',
+          '  float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));',
+          '  float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));',
+          '  vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), ((lNW + lSW) - (lNE + lSE)));',
+          '  float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 1.0/128.0);',
+          '  float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);',
+          '  dir = clamp(dir * rcp, -8.0, 8.0) * texel;',
+          '  vec3 rgbA = 0.5 * (texture2D(tDiffuse, vUv + dir * (1.0/3.0 - 0.5)).rgb + texture2D(tDiffuse, vUv + dir * (2.0/3.0 - 0.5)).rgb);',
+          '  vec3 rgbB = rgbA * 0.5 + 0.25 * (texture2D(tDiffuse, vUv - dir * 0.5).rgb + texture2D(tDiffuse, vUv + dir * 0.5).rgb);',
+          '  float lB = dot(rgbB, luma);',
+          '  gl_FragColor = vec4((lB < lMin || lB > lMax) ? rgbA : rgbB, 1.0);',
+          '}'
+        ].join('\n'), depthTest:false, depthWrite:false
+      });
+
+      var rtOpts = {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat, depthBuffer:false};
+      var sceneRT = new THREE.WebGLRenderTarget(1, 1, {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat});
+      sceneRT.depthTexture = new THREE.DepthTexture(1, 1);
+      sceneRT.depthTexture.type = renderer.capabilities.isWebGL2 ? THREE.FloatType : THREE.UnsignedIntType;
+      var aoRT = new THREE.WebGLRenderTarget(1,1,rtOpts), aoBlurRT = new THREE.WebGLRenderTarget(1,1,rtOpts);
+      var halfA = new THREE.WebGLRenderTarget(1,1,rtOpts), halfB = new THREE.WebGLRenderTarget(1,1,rtOpts);
+      var quarterA = new THREE.WebGLRenderTarget(1,1,rtOpts), quarterB = new THREE.WebGLRenderTarget(1,1,rtOpts);
+      var compRT = new THREE.WebGLRenderTarget(1,1,rtOpts);
+      var sizeVec = new THREE.Vector2();
+      function resize(){
+        renderer.getDrawingBufferSize(sizeVec);
+        var w = Math.max(1, sizeVec.x), h = Math.max(1, sizeVec.y);
+        var hw = Math.ceil(w/2), hh = Math.ceil(h/2);
+        sceneRT.setSize(w, h); compRT.setSize(w, h);
+        aoRT.setSize(hw, hh); aoBlurRT.setSize(hw, hh);
+        halfA.setSize(hw, hh); halfB.setSize(hw, hh);
+        quarterA.setSize(Math.ceil(w/4), Math.ceil(h/4)); quarterB.setSize(Math.ceil(w/4), Math.ceil(h/4));
+        reflRT.setSize(hw, hh);
+        aoMat.uniforms.texel.value.set(1/w, 1/h);
+        aoBlurMat.uniforms.texel.value.set(1/hw, 1/hh);
+        fxaaMat.uniforms.texel.value.set(1/w, 1/h);
+      }
+      function pass(mat, target){
+        quad.material = mat;
+        renderer.setRenderTarget(target);
+        renderer.render(postScene, postCam);
+      }
+      function blur(src, tmp, dst){
+        blurMat.uniforms.tDiffuse.value = src.texture;
+        blurMat.uniforms.direction.value.set(1/src.width, 0);
+        pass(blurMat, tmp);
+        blurMat.uniforms.tDiffuse.value = tmp.texture;
+        blurMat.uniforms.direction.value.set(0, 1/tmp.height);
+        pass(blurMat, dst);
+      }
+      var frameCount = 0;
+      function render(cam){
+        timeUniform.value = performance.now() / 1000;
+        if ((frameCount++ % 30) === 0) forEachMaterial(patchMaterial);
+        renderer.getDrawingBufferSize(sizeVec);
+        if (sizeVec.x !== sceneRT.width || sizeVec.y !== sceneRT.height) resize();
+        sky.position.copy(cam.position);
+
+        renderer.setRenderTarget(sceneRT);
+        renderer.render(scene, cam);
+
+        aoMat.uniforms.tDepth.value = sceneRT.depthTexture;
+        aoMat.uniforms.proj.value.copy(cam.projectionMatrix);
+        aoMat.uniforms.projInv.value.copy(cam.projectionMatrixInverse);
+        pass(aoMat, aoRT);
+        aoBlurMat.uniforms.tDiffuse.value = aoRT.texture;
+        pass(aoBlurMat, aoBlurRT);
+
+        brightMat.uniforms.tDiffuse.value = sceneRT.texture;
+        pass(brightMat, halfA);
+        blur(halfA, halfB, halfA);
+        blurMat.uniforms.tDiffuse.value = halfA.texture;
+        blurMat.uniforms.direction.value.set(1/halfA.width, 0);
+        pass(blurMat, quarterB);
+        blurMat.uniforms.tDiffuse.value = quarterB.texture;
+        blurMat.uniforms.direction.value.set(0, 1/quarterB.height);
+        pass(blurMat, quarterA);
+        blur(quarterA, quarterB, quarterA);
+
+        compositeMat.uniforms.tScene.value = sceneRT.texture;
+        compositeMat.uniforms.tAO.value = aoBlurRT.texture;
+        compositeMat.uniforms.tBloomA.value = halfA.texture;
+        compositeMat.uniforms.tBloomB.value = quarterA.texture;
+        pass(compositeMat, compRT);
+        fxaaMat.uniforms.tDiffuse.value = compRT.texture;
+        pass(fxaaMat, null);
+      }
+
+      function setEnabled(on){
+        if (group.visible === on) return;
+        group.visible = on;
+        if (on){ setMap(currentEnvCfgForUltra); resize(); forEachMaterial(patchMaterial); frameCount = 1; }
+        else forEachMaterial(unpatchMaterial);
+        scene.environment = (on && envRT) ? envRT.texture : null;
+      }
+
+      return {setEnabled:setEnabled, setMap:setMap, render:render, resize:resize, isEnabled:function(){ return group.visible; }};
+    })();
+
+    // Additive spark burst; motion is evaluated on the GPU from the spark's age
+    function spawnSparks(point, color, count, speed, life){
+      var geo = new THREE.BufferGeometry();
+      var vel = new Float32Array(count*3), seed = new Float32Array(count), pos = new Float32Array(count*3);
+      for (var i=0;i<count;i++){
+        var th = Math.random()*Math.PI*2, ph = Math.acos(Math.random()*1.6 - 0.6);
+        var sp = speed * (0.35 + Math.random()*0.65);
+        vel[i*3] = Math.sin(ph)*Math.cos(th)*sp; vel[i*3+1] = Math.cos(ph)*sp; vel[i*3+2] = Math.sin(ph)*Math.sin(th)*sp;
+        seed[i] = Math.random();
+        pos[i*3] = point.x; pos[i*3+1] = point.y; pos[i*3+2] = point.z;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+      geo.setAttribute('aVel', new THREE.BufferAttribute(vel,3));
+      geo.setAttribute('aSeed', new THREE.BufferAttribute(seed,1));
+      var mat = new THREE.ShaderMaterial({
+        uniforms:{ uAge:{value:0}, uLife:{value:life/1000}, uColor:{value:new THREE.Color(color)}, uPixelRatio:{value:renderer.getPixelRatio()} },
+        vertexShader:[
+          'attribute vec3 aVel; attribute float aSeed; uniform float uAge; uniform float uLife; uniform float uPixelRatio;',
+          'varying float vFade;',
+          'void main(){',
+          '  float t = uAge * (0.7 + aSeed*0.3);',
+          '  vec3 p = position + aVel * t + vec3(0.0, -9.0, 0.0) * t * t * 0.5;',
+          '  p.y = max(p.y, 0.03);',
+          '  vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;',
+          '  vFade = 1.0 - clamp(t / (uLife * (0.6 + aSeed*0.4)), 0.0, 1.0);',
+          '  gl_PointSize = (1.5 + aSeed*2.5) * uPixelRatio * (30.0 / max(-mv.z, 0.5)) * vFade;',
+          '}'
+        ].join('\n'),
+        fragmentShader:[
+          'uniform vec3 uColor; varying float vFade;',
+          'void main(){ float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d) * vFade;',
+          '  if (a < 0.01) discard; gl_FragColor = vec4(mix(uColor, vec3(1.0, 0.97, 0.85), 0.5) * 2.0, a); }'
+        ].join('\n'),
+        transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+      });
+      var pts = new THREE.Points(geo, mat);
+      pts.frustumCulled = false;
+      scene.add(pts);
+      explosionFX.push({kind:'sparks', mesh:pts, mat:mat, geo:geo, born:performance.now(), life:life});
+    }
+
+    function renderFrame(cam){
+      if (S.graphicsMode === 'ultra') ultra.render(cam);
+      else renderer.render(scene, cam);
+    }
+
     function applyGraphicsMode(){
+      var ul = S.graphicsMode === 'ultra';
       var hi = S.highGraphics;
       renderer.shadowMap.type = hi ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
       renderer.toneMapping = hi ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
-      renderer.toneMappingExposure = hi ? 0.85 : 1;
-      ambient.intensity = hi ? 0.55 : 1.15;
-      dir.intensity = hi ? 2.3 : 2.3;
-      dir.color.set(hi ? '#fff2d0' : '#ffffff');
-      var newSize = hi ? 1536 : 768;
+      renderer.toneMappingExposure = ul ? 0.74 : hi ? 0.85 : 1;
+      ambient.intensity = ul ? 0.2 : hi ? 0.55 : 1.15;
+      dir.intensity = ul ? 2.6 : 2.3;
+      dir.color.set(ul ? '#ffe9c6' : hi ? '#fff2d0' : '#ffffff');
+      var newSize = ul ? 2048 : hi ? 1536 : 768;
       if (dir.shadow.mapSize.width !== newSize){
         dir.shadow.mapSize.set(newSize, newSize);
         if (dir.shadow.map){ dir.shadow.map.dispose(); dir.shadow.map = null; }
       }
-      hemiLight.intensity = 0.45;
+      hemiLight.intensity = ul ? 0.25 : 0.45;
       hemiLight.visible = hi;
-      sunGlare.visible = hi;
+      sunGlare.visible = hi && !ul;
       armGroup.visible = hi;
-      canvas.style.filter = hi ? 'saturate(1.18) contrast(1.1) brightness(0.97)' : 'none';
+      canvas.style.filter = (hi && !ul) ? 'saturate(1.18) contrast(1.1) brightness(0.97)' : 'none';
+      ultra.setEnabled(ul);
     }
     applyGraphicsMode();
 
@@ -3070,6 +3705,7 @@
         for (var h=0; h<hits.length; h++){ if (hits[h].object.userData && hits[h].object.userData.botId){ target = hits[h].object; break; } }
         var endPoint = hits.length ? hits[0].point.clone() : camera.position.clone().add(dir.clone().multiplyScalar(60));
         spawnBullet(muzzleWorld, endPoint, w.explosive ? '#ff7a3d' : '#f2c94c');
+        if (S.graphicsMode === 'ultra' && hits.length && !w.explosive) spawnSparks(hits[0].point, target ? '#ff4a3a' : '#ffc860', 5, 3, 300);
         if (target){
           dealDamage('player', target.userData.botId, target.userData.head ? Math.round(w.dmg*1.9) : w.dmg);
         }
@@ -3109,6 +3745,8 @@
       boomLight.position.copy(point);
       scene.add(boomLight);
       explosionFX.push({kind:'light', mesh:boomLight, mat:null, geo:null, born:now0, life:240, baseIntensity:7});
+
+      if (S.graphicsMode === 'ultra') spawnSparks(point, color || '#ff9a3d', 36, 8, 800);
 
       var debrisCount = 5;
       for (var d=0; d<debrisCount; d++){
@@ -3430,6 +4068,7 @@
     window.addEventListener('resize', function(){
       camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      if (ultra.isEnabled()) ultra.resize();
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
@@ -3444,7 +4083,7 @@
       grenades:grenades, mines:mines, smokeZones:smokeZones, explosionFX:explosionFX,
       performShot:performShot, explodeAt:explodeAt, spawnSmoke:spawnSmoke, triggerFlash:triggerFlash,
       updateWeaponVisual:updateWeaponVisual, buildEnvironment:buildEnvironment, currentMapId:S.mapId,
-      applyGraphicsMode:applyGraphicsMode, touchMove:touchMove, armGroup:armGroup, leftArmGroup:leftArmGroup, checkLineOfSight:checkLineOfSight
+      applyGraphicsMode:applyGraphicsMode, renderFrame:renderFrame, touchMove:touchMove, armGroup:armGroup, leftArmGroup:leftArmGroup, checkLineOfSight:checkLineOfSight
     };
   }
 
@@ -3635,7 +4274,7 @@
     if (nowMs - lastFrameTimestamp < FRAME_INTERVAL_MS) return;
     lastFrameTimestamp = nowMs;
     var delta = Math.min(three.clock.getDelta(), 0.05);
-    if (S.paused){ three.renderer.render(three.scene, three.camera); return; }
+    if (S.paused){ three.renderFrame(three.camera); return; }
     var elapsed = three.clock.elapsedTime;
     var camera = three.camera, keys = three.keys;
     var player = S.fighters[0];
@@ -3926,6 +4565,8 @@
         ex.mat.opacity = 0.75 * (1-frac);
       } else if (ex.kind === 'light'){
         ex.mesh.intensity = ex.baseIntensity * (1-frac);
+      } else if (ex.kind === 'sparks'){
+        ex.mat.uniforms.uAge.value = exAge/1000;
       } else if (ex.kind === 'debris'){
         ex.vel.y -= 14*delta;
         ex.mesh.position.addScaledVector(ex.vel, delta);
@@ -3940,7 +4581,7 @@
       }
     }
 
-    three.renderer.render(three.scene, camera);
+    three.renderFrame(camera);
   }
 
   updateAmmoDisplay(); updateHpDisplay();
