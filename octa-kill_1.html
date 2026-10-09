@@ -7,17 +7,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 <style>
+  /* Octakill palette: orange = identity, midnight blue = structure, cyan = modern accents, soft white = readability */
   :root{
-    --background:#171816; --foreground:#f0eee6; --card:#242622;
-    --primary:#d85a1f; --primary-foreground:#f0eee6;
-    --muted:#353732; --muted-foreground:#9b9e95;
-    --border:#555951; --team-blue:#3f83c5;
+    --background:#0f1828; --foreground:#F4F4F0; --card:#17243B;
+    --primary:#F36B21; --primary-hover:#ff7d36; --primary-foreground:#F4F4F0;
+    --accent:#42D9E8; --accent-soft:rgba(66,217,232,.14);
+    --muted:#22324d; --muted-foreground:#94a3b8;
+    --border:#2c3d5c; --team-blue:#3f83c5;
+    --panel:rgba(15,24,40,.62);
   }
   *{box-sizing:border-box;}
-  button{transition:transform 120ms ease;}
-  button:hover{transform:scale(1.06);}
-  .mode-item, .loadout-card, .map-card, .cosmetic-item{border-radius:10px;transition:transform 120ms ease;}
-  .mode-item:hover, .loadout-card:hover, .map-card:hover, .cosmetic-item:hover{transform:scale(1.03);}
+  button{transition:transform 140ms ease, border-color 140ms ease, background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;}
+  button:hover{transform:translateY(-1px);}
+  button:active{transform:translateY(0);}
+  button:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .mode-item, .loadout-card, .map-card, .cosmetic-item{border-radius:10px;
+    transition:transform 140ms ease, border-color 140ms ease, background-color 140ms ease;}
+  .mode-item:hover, .loadout-card:hover, .map-card:hover, .cosmetic-item:hover{transform:translateY(-2px);}
   html,body{margin:0;padding:0;min-height:100%;background:var(--background);color:var(--foreground);
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-x:hidden;overflow-y:auto;}
   #root{position:relative;width:100%;min-height:100vh;min-height:100dvh;}
@@ -30,9 +36,9 @@
   #menu{display:flex;overflow:hidden;background:var(--background);}
   #menu-bg-canvas{position:absolute;inset:0;width:100%;height:100%;filter:blur(18px);
     transform:scale(1.08);opacity:1;}
-  .menu-grid{position:absolute;inset:0;opacity:.4;
-    background-image:linear-gradient(to right, rgba(85,89,81,.25) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(85,89,81,.25) 1px, transparent 1px);
+  .menu-grid{position:absolute;inset:0;opacity:.35;
+    background-image:linear-gradient(to right, rgba(66,217,232,.10) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(66,217,232,.10) 1px, transparent 1px);
     background-size:48px 48px;}
   .menu-inner{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:space-between;
     width:100%;padding:2.5rem;min-height:100vh;}
@@ -55,7 +61,7 @@
   .cosmetics-category-label:first-child{margin-top:0;}
   .cosmetics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
   .cosmetic-item{border:1px solid var(--border);background:var(--card);padding:12px;text-align:left;}
-  .cosmetic-item.equipped{border-color:var(--primary);background:rgba(216,90,31,.12);}
+  .cosmetic-item.equipped{border-color:var(--primary);background:rgba(243,107,33,.12);}
   .cosmetic-swatch{width:100%;height:36px;margin-bottom:8px;border:1px solid var(--border);}
   .cosmetic-item h4{margin:0;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--foreground);
     font-family:ui-sans-serif,system-ui,sans-serif;}
@@ -63,7 +69,7 @@
   .cosmetic-item button{margin-top:8px;width:100%;border:1px solid var(--border);background:var(--background);
     color:var(--foreground);padding:7px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;
     cursor:pointer;font-family:inherit;}
-  .cosmetic-item button:hover:not(:disabled){border-color:var(--primary);}
+  .cosmetic-item button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
   .cosmetic-item button:disabled{opacity:.4;cursor:not-allowed;}
   .cosmetic-item button.equip-btn{border-color:var(--primary);color:var(--primary);}
   .rank-popup-card{width:min(360px,94vw);text-align:center;}
@@ -90,9 +96,13 @@
   .callsign-label{display:block;max-width:20rem;margin-top:2rem;}
   .callsign-label span{display:block;margin-bottom:8px;font-size:11px;text-transform:uppercase;letter-spacing:.2em;
     color:var(--muted-foreground);}
-  #callsign{height:48px;width:100%;border:1px solid var(--border);background:var(--card);padding:0 16px;
+  #callsign{height:48px;width:100%;border:1px solid var(--border);background:var(--card);padding:0 16px;border-radius:10px;
     font-family:inherit;font-size:14px;color:var(--foreground);outline:none;}
-  #callsign:focus{border-color:var(--primary);}
+  #callsign:hover{border-color:#3d5378;}
+  #callsign:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  #account-username, #account-password{height:44px;width:100%;border:1px solid var(--border);background:var(--card);
+    padding:0 14px;font-family:inherit;font-size:14px;color:var(--foreground);outline:none;border-radius:10px;}
+  #account-username:focus, #account-password:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
   .mode-grid{margin-top:1.5rem;max-width:42rem;display:grid;gap:12px;grid-template-columns:1fr;}
   @media (min-width:640px){ .mode-grid{grid-template-columns:1fr 1fr;} }
 
@@ -101,21 +111,23 @@
   .drawer-toggle-btn{position:absolute;top:2.5rem;z-index:5;display:flex;align-items:center;gap:8px;
     border:1px solid var(--border);background:var(--card);color:var(--foreground);padding:10px 16px;
     font-size:11px;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;font-family:inherit;}
-  
+  .drawer-toggle-btn:hover{border-color:var(--accent);color:var(--accent);}
   .drawer-toggle-left{left:2rem;}
   .drawer-toggle-right{right:2rem;}
   .icon-only-btn{padding:0;width:42px;height:42px;justify-content:center;border-radius:50%;}
-  .icon-only-btn:hover{transform:scale(1.06) rotate(45deg);transition:transform 220ms ease;}
+  .icon-only-btn:hover{transform:translateY(-1px);}
+  #settings-toggle svg{transition:transform 260ms ease;}
+  #settings-toggle:hover svg{transform:rotate(45deg);}
   .epilepsy-notice{margin-top:1.5rem;max-width:26rem;font-size:11px;line-height:1.6;
     color:var(--muted-foreground);}
   #music-toggle{position:fixed;left:16px;top:16px;z-index:60;width:38px;height:38px;
-    border:1px solid var(--border);background:rgba(23,24,22,.75);color:var(--foreground);
-    cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
-  #music-toggle:hover{border-color:var(--primary);}
+    border:1px solid var(--border);background:rgba(23,36,59,.75);color:var(--foreground);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #music-toggle:hover{border-color:var(--accent);color:var(--accent);}
   #music-toggle .icon-off{display:none;}
   #music-toggle.muted .icon-on{display:none;}
   #music-toggle.muted .icon-off{display:block;color:var(--muted-foreground);}
-  #drawer-backdrop{position:fixed;inset:0;background:rgba(5,6,5,.55);opacity:0;pointer-events:none;
+  #drawer-backdrop{position:fixed;inset:0;background:rgba(6,10,20,.55);opacity:0;pointer-events:none;
     transition:opacity 200ms ease;z-index:39;}
   #drawer-backdrop.open{opacity:1;pointer-events:auto;}
   .drawer-left{position:fixed;left:0;top:0;bottom:0;width:min(440px,90vw);background:var(--background);
@@ -129,28 +141,37 @@
   .drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
   .drawer-close-btn{background:none;border:1px solid var(--border);color:var(--foreground);width:32px;height:32px;
     font-size:18px;line-height:1;cursor:pointer;}
+  .drawer-close-btn:hover{border-color:var(--accent);color:var(--accent);}
   
-  .play-btn{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--primary);
+  .menu-actions{display:flex;flex-direction:column;gap:10px;max-width:22rem;margin-top:1.5rem;}
+  .play-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--primary);
     color:var(--primary-foreground);border:none;padding:16px 40px;font-size:15px;font-weight:800;
-    text-transform:uppercase;letter-spacing:.08em;cursor:pointer;font-family:inherit;width:100%;max-width:22rem;}
-  
-  .popup-trigger-btn{display:block;width:100%;max-width:22rem;border:1px solid var(--border);background:var(--card);
-    color:var(--foreground);padding:11px 20px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
-    cursor:pointer;font-family:inherit;text-align:center;}
-  .popup-trigger-btn:first-of-type{margin-top:1.25rem;margin-bottom:10px;}
-  .popup-trigger-btn:last-of-type{margin-top:10px;}
-  
+    text-transform:uppercase;letter-spacing:.08em;cursor:pointer;font-family:inherit;width:100%;max-width:22rem;
+    box-shadow:0 4px 14px rgba(243,107,33,.25);}
+  .play-btn:hover{background:var(--primary-hover);box-shadow:0 6px 20px rgba(243,107,33,.38);}
+  .play-btn svg{transition:transform 160ms ease;}
+  .play-btn:hover svg{transform:translateX(2px);}
+
+  .popup-trigger-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;max-width:22rem;
+    border:1px solid var(--border);background:var(--panel);
+    color:var(--muted-foreground);padding:12px 18px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    cursor:pointer;font-family:inherit;text-align:left;}
+  .popup-trigger-btn:hover{border-color:var(--accent);color:var(--foreground);background:var(--card);}
+  .popup-trigger-btn + .popup-trigger-btn{margin-top:10px;}
+  .menu-actions .popup-trigger-btn + .popup-trigger-btn{margin-top:0;}
+  #account-popup .popup-trigger-btn{justify-content:center;color:var(--foreground);}
   .popup-trigger-btn span{color:var(--primary);font-weight:700;}
   .popup-overlay{display:none;position:fixed;inset:0;z-index:45;align-items:center;justify-content:center;
-    background:rgba(5,6,5,.6);padding:1.5rem;}
+    background:rgba(6,10,20,.6);padding:1.5rem;}
   .popup-overlay.open{display:flex;}
-  .popup-card{background:var(--background);border:1px solid var(--border);padding:1.5rem;
+  .popup-card{background:var(--background);border:1px solid var(--border);border-radius:14px;padding:1.5rem;
+    box-shadow:0 18px 50px rgba(0,0,0,.45);
     max-width:min(640px,94vw);max-height:85vh;overflow-y:auto;}
   .mode-list-popup{display:flex;flex-direction:column;gap:8px;}
   .mode-item{border:1px solid var(--border);background:var(--card);padding:10px 14px;cursor:pointer;
-    text-align:left;transition:border-color .12s;}
-  .mode-item:hover{border-color:var(--primary);}
-  .mode-item.selected{border-color:var(--primary);background:rgba(216,90,31,.14);}
+    text-align:left;}
+  .mode-item:hover{border-color:var(--accent);}
+  .mode-item.selected{border-color:var(--primary);background:rgba(243,107,33,.14);}
   .mode-item h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;color:var(--foreground);
     font-family:ui-sans-serif,system-ui,sans-serif;}
   .mode-item.selected h4{color:var(--primary);}
@@ -159,9 +180,9 @@
     color:var(--muted-foreground);}
   .loadout-grid{display:grid;gap:8px;grid-template-columns:1fr 1fr;}
   .loadout-card{border:1px solid var(--border);background:var(--card);padding:12px 14px;text-align:left;
-    color:var(--foreground);cursor:pointer;transition:border-color .12s,background .12s;}
-  .loadout-card:hover{border-color:var(--primary);}
-  .loadout-card.selected{border-color:var(--primary);background:rgba(216,90,31,.14);}
+    color:var(--foreground);cursor:pointer;}
+  .loadout-card:hover{border-color:var(--accent);}
+  .loadout-card.selected{border-color:var(--primary);background:rgba(243,107,33,.14);}
   .loadout-card h3{margin:0 0 6px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;
     font-family:ui-sans-serif,system-ui,sans-serif;color:var(--foreground);}
   .loadout-card.selected h3{color:var(--primary);}
@@ -170,50 +191,53 @@
     text-transform:uppercase;font-size:9px;letter-spacing:.05em;}
   .map-grid{display:grid;gap:8px;grid-template-columns:1fr 1fr;}
   .map-card{border:1px solid var(--border);background:var(--card);cursor:pointer;text-align:left;
-    overflow:hidden;transition:border-color .12s;}
-  .map-card:hover{border-color:var(--primary);}
-  .map-card.selected{border-color:var(--primary);}
-  .map-card .map-swatch{height:44px;}
+    overflow:hidden;}
+  .map-card:hover{border-color:var(--accent);}
+  .map-card.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary);}
+  .map-card .map-swatch{position:relative;height:52px;}
+  .map-card .map-swatch i{position:absolute;bottom:0;height:5px;}
+  .map-card .map-swatch i.trim{left:0;width:65%;}
+  .map-card .map-swatch i.accent{right:0;width:35%;background:var(--primary);}
   .map-card .map-label{padding:8px 10px;font-size:11px;font-weight:700;text-transform:uppercase;
     letter-spacing:.03em;color:var(--foreground);}
   .map-card.selected .map-label{color:var(--primary);}
   .toggle-row{display:flex;gap:8px;}
   .toggle-btn{padding:10px 20px;border:1px solid var(--border);background:var(--card);color:var(--foreground);
     font-size:11px;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;font-family:inherit;}
-  
-  .toggle-btn.selected{border-color:var(--primary);background:rgba(216,90,31,.14);color:var(--primary);}
+  .toggle-btn:hover:not(.selected){border-color:var(--accent);color:var(--accent);}
+  .toggle-btn.selected{border-color:var(--primary);background:rgba(243,107,33,.14);color:var(--primary);}
   .sensitivity-row{display:flex;align-items:center;gap:12px;}
-  .sensitivity-row input[type="range"]{flex:1;accent-color:var(--primary);}
-  #sensitivity-value{font-size:12px;color:var(--primary);font-weight:700;min-width:44px;text-align:right;}
+  .sensitivity-row input[type="range"]{flex:1;accent-color:var(--accent);}
+  #sensitivity-value{font-size:12px;color:var(--accent);font-weight:700;min-width:44px;text-align:right;}
   .keybind-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;
     border-bottom:1px solid var(--border);font-size:12px;}
   .keybind-row:last-child{border-bottom:none;}
   .keybind-btn{border:1px solid var(--border);background:var(--card);color:var(--foreground);
     padding:6px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;
     font-family:inherit;min-width:64px;}
-  
+  .keybind-btn:hover{border-color:var(--accent);color:var(--accent);}
   .keybind-btn.rebinding{border-color:var(--primary);color:var(--primary);animation:tactical-pulse 900ms ease-in-out infinite;}
   .keybinds-reset-btn{margin-top:12px;width:100%;border:1px solid var(--border);background:transparent;
     color:var(--muted-foreground);padding:8px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
     cursor:pointer;font-family:inherit;}
-  .keybinds-reset-btn:hover{border-color:var(--primary);color:var(--primary);}
+  .keybinds-reset-btn:hover{border-color:var(--accent);color:var(--accent);}
   .settings-hint{margin:10px 0 0;font-size:10.5px;line-height:1.5;color:var(--muted-foreground);}
   .settings-view{display:none;}
   .settings-view.active{display:block;}
   .settings-tab-list{display:grid;gap:8px;}
   .settings-tab-btn{display:flex;align-items:center;justify-content:space-between;width:100%;
     border:1px solid var(--border);background:var(--card);color:var(--foreground);padding:14px 16px;
-    text-align:left;cursor:pointer;font-family:inherit;transition:border-color .12s,background .12s;}
-  .settings-tab-btn:hover{border-color:var(--primary);background:rgba(216,90,31,.08);}
+    text-align:left;cursor:pointer;font-family:inherit;}
+  .settings-tab-btn:hover{border-color:var(--accent);background:var(--accent-soft);}
   .settings-tab-btn h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
     font-family:ui-sans-serif,system-ui,sans-serif;}
   .settings-tab-btn p{margin:3px 0 0;font-size:11px;color:var(--muted-foreground);}
   .settings-tab-btn .tab-arrow{color:var(--muted-foreground);font-size:16px;}
-  .settings-tab-btn:hover h4,.settings-tab-btn:hover .tab-arrow{color:var(--primary);}
+  .settings-tab-btn:hover h4,.settings-tab-btn:hover .tab-arrow{color:var(--accent);}
   .settings-back-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);
     background:transparent;color:var(--muted-foreground);padding:6px 12px;font-size:10px;
     text-transform:uppercase;letter-spacing:.12em;cursor:pointer;font-family:inherit;}
-  .settings-back-btn:hover{border-color:var(--primary);color:var(--primary);}
+  .settings-back-btn:hover{border-color:var(--accent);color:var(--accent);}
   .mode-card{border:1px solid var(--border);background:var(--card);padding:1.25rem;text-align:left;
     color:var(--foreground);transition:background .12s,color .12s,border-color .12s;}
   .mode-card:hover{border-color:var(--primary);background:var(--primary);color:var(--primary-foreground);}
@@ -225,7 +249,7 @@
   .menu-footer{display:flex;flex-wrap:wrap;align-items:center;gap:20px;font-size:10px;text-transform:uppercase;
     letter-spacing:.2em;color:var(--muted-foreground);}
   .feedback-line{margin-left:auto;color:var(--primary);}
-  .footer-link{color:var(--primary);text-decoration:none;font-weight:700;}
+  .footer-link{color:var(--accent);text-decoration:none;font-weight:700;}
   .footer-link:hover{text-decoration:underline;}
 
   #countdown-screen, #results{display:flex;align-items:center;justify-content:center;text-align:center;
@@ -235,7 +259,7 @@
   #countdown-sub{margin-top:1rem;font-size:14px;color:var(--muted-foreground);}
 
   #results{padding:24px;}
-  .results-card{width:100%;max-width:42rem;border:1px solid var(--border);background:var(--card);
+  .results-card{width:100%;max-width:42rem;border:1px solid var(--border);border-radius:14px;background:var(--card);
     padding:2rem;text-align:left;}
   .results-card svg{color:var(--primary);}
   .results-card .eyebrow{margin-top:1.25rem;font-size:11px;}
@@ -252,6 +276,8 @@
     border:none;padding:12px 20px;font-size:12px;font-weight:700;text-transform:uppercase;}
   .btn-ghost{border:1px solid var(--border);background:transparent;color:var(--foreground);padding:12px 20px;
     font-size:12px;text-transform:uppercase;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-primary:hover{background:var(--primary-hover);}
 
   @media (max-width:480px), (max-height:600px){
     #countdown-num{font-size:5.5rem;}
@@ -265,27 +291,27 @@
   #three-canvas.captured{cursor:none;}
   #hud{position:absolute;inset:0;z-index:20;user-select:none;pointer-events:none;}
   #hud header{display:flex;align-items:flex-start;justify-content:space-between;padding:16px;}
-  .hud-clock{border-left:2px solid var(--primary);background:rgba(23,24,22,.75);padding:8px 12px;backdrop-filter:blur(2px);}
-  .hud-clock p:first-child{margin:0;font-size:9px;letter-spacing:.2em;color:var(--muted-foreground);}
+  .hud-clock{border-left:2px solid var(--primary);background:rgba(23,36,59,.75);padding:8px 12px;}
+  .hud-clock p:first-child{margin:0;font-size:9px;letter-spacing:.2em;color:var(--accent);}
   .hud-clock p:last-child{margin:4px 0 0;font-size:20px;font-weight:700;}
-  .hud-teams{display:flex;border:1px solid var(--border);background:rgba(23,24,22,.8);backdrop-filter:blur(2px);}
+  .hud-teams{display:flex;border:1px solid var(--border);background:rgba(23,36,59,.8);}
   .hud-teams > div{padding:8px 20px;text-align:center;}
   .hud-teams .vs{border-left:1px solid var(--border);border-right:1px solid var(--border);padding:12px;color:var(--muted-foreground);}
   .hud-teams .lbl{margin:0;font-size:9px;}
   .hud-teams .val{margin:0;font-size:20px;font-weight:900;}
-  .hud-target{background:rgba(23,24,22,.75);padding:8px 16px;font-size:12px;backdrop-filter:blur(2px);}
+  .hud-target{background:var(--panel);border-left:2px solid var(--accent);padding:8px 16px;font-size:12px;letter-spacing:.08em;color:var(--accent);}
   .hud-target b{color:var(--primary);}
   #roster{position:absolute;right:16px;top:80px;width:160px;border:1px solid var(--border);
-    background:rgba(23,24,22,.7);padding:8px;backdrop-filter:blur(2px);}
-  #roster .lbl{margin:0 0 8px;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted-foreground);}
+    background:rgba(23,36,59,.7);padding:8px;}
+  #roster .lbl{margin:0 0 8px;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);}
   .roster-row{display:flex;justify-content:space-between;padding:2px 4px;font-size:10px;}
   .roster-row.me{background:var(--primary);color:var(--primary-foreground);}
   .roster-row span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #feed{position:absolute;left:16px;top:96px;width:320px;display:flex;flex-direction:column;gap:6px;}
-  .feed-row{width:fit-content;background:rgba(23,24,22,.72);padding:7px 14px;font-size:14px;font-weight:600;
-    backdrop-filter:blur(2px);border-left:2px solid transparent;}
+  .feed-row{width:fit-content;background:rgba(23,36,59,.72);padding:7px 14px;font-size:14px;font-weight:600;
+    border-left:2px solid transparent;}
   .feed-row.mine{color:var(--primary);border-left-color:var(--primary);}
-  .feed-row.other{color:var(--muted-foreground);}
+  .feed-row.other{color:#c9d3e0;}
 
   #crosshair-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
   .crosshair{position:relative;width:34px;height:34px;transition:transform 80ms ease;}
@@ -296,7 +322,7 @@
   .crosshair span:nth-child(4){width:2px;height:8px;left:16px;bottom:0;}
   .crosshair.hit{transform:translate(0,0) scale(1.25) rotate(45deg);}
   .crosshair.hit span{background:var(--primary);}
-  #damage-vignette{position:absolute;inset:0;box-shadow:inset 0 0 110px 25px rgba(216,90,31,.72);
+  #damage-vignette{position:absolute;inset:0;box-shadow:inset 0 0 110px 25px rgba(243,107,33,.72);
     animation:damage-flash 140ms ease-out;opacity:0;}
   @keyframes damage-flash{ from{opacity:1;} to{opacity:.25;} }
   #damage-indicators{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none;z-index:14;}
@@ -304,9 +330,9 @@
     opacity:0;transition:opacity 260ms linear;}
   .dmg-indicator svg{display:block;width:100%;height:100%;}
   .dmg-indicator.show{opacity:.55;}
-  #white-flash{position:absolute;inset:0;background:#f2f0e6;opacity:0;pointer-events:none;}
+  #white-flash{position:absolute;inset:0;background:#F4F4F0;opacity:0;pointer-events:none;}
   #no-aim-toast{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);
-    background:rgba(23,24,22,.82);border:1px solid var(--border);padding:8px 16px;
+    background:rgba(23,36,59,.82);border:1px solid var(--border);padding:8px 16px;
     font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--foreground);
     opacity:0;pointer-events:none;transition:opacity 160ms ease;max-width:80vw;text-align:center;}
   #no-aim-toast.show{opacity:1;}
@@ -324,7 +350,7 @@
   .hp-row-top{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:6px;}
   .hp-num-top{font-size:2.6rem;font-weight:900;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.6);}
   .hp-unit-top{font-size:14px;color:var(--muted-foreground);}
-  .hp-bar-top{height:14px;width:280px;max-width:70vw;background:var(--card);border:1px solid var(--border);
+  .hp-bar-top{height:14px;width:280px;max-width:70vw;background:rgba(6,10,20,.55);border:1px solid var(--border);border-radius:4px;padding:1px;
     margin:0 auto;}
   .shield-badge{margin-bottom:6px;font-size:12px;font-weight:700;color:var(--team-blue);}
   .crouch-badge{margin-bottom:6px;font-size:10px;font-weight:700;color:var(--primary);
@@ -332,25 +358,26 @@
   .spawn-protection-badge{margin-bottom:6px;font-size:10px;font-weight:700;color:var(--team-blue);
     text-transform:uppercase;letter-spacing:.08em;animation:tactical-pulse 700ms ease-in-out infinite;}
   .tactical-indicator{display:flex;align-items:center;gap:6px;font-size:10px;
-    text-transform:uppercase;letter-spacing:.12em;color:var(--muted-foreground);}
+    text-transform:uppercase;letter-spacing:.12em;color:var(--accent);}
   .tactical-indicator.used{opacity:.35;text-decoration:line-through;}
   .tactical-indicator.armed{color:var(--primary);opacity:1;animation:tactical-pulse 900ms ease-in-out infinite;}
   @keyframes tactical-pulse{ 0%,100%{opacity:1;} 50%{opacity:.55;} }
   .key-hint{color:var(--muted-foreground);font-size:9px;opacity:.7;}
-  .hp-bar-fill{height:100%;background:var(--primary);transition:width .15s;}
+  .hp-bar-fill{height:100%;background:var(--primary);transition:width .15s;border-radius:3px;}
+  .hud-vitals, .ammo-block{background:var(--panel);border:1px solid rgba(66,217,232,.12);border-radius:12px;padding:10px 14px;}
   .ammo-block{text-align:right;}
   .weapon-name{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:10px;
-    text-transform:uppercase;letter-spacing:.2em;color:var(--muted-foreground);}
-  .ammo-num{margin:0;font-size:2.5rem;font-weight:900;}
+    text-transform:uppercase;letter-spacing:.2em;color:var(--accent);}
+  .ammo-num{margin:0;font-size:2.5rem;font-weight:900;color:var(--foreground);}
   .ammo-num small{font-size:1.1rem;color:var(--muted-foreground);}
 
   #reload-indicator{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);z-index:30;
-    background:rgba(23,24,22,.8);padding:4px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.15em;
+    background:rgba(23,36,59,.8);padding:4px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.15em;
     color:var(--primary);pointer-events:none;}
   #eliminated{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(circle at center, rgba(23,24,22,.35) 0%, rgba(8,9,8,.82) 100%);}
-  #eliminated .box{text-align:center;border:1px solid var(--border);background:rgba(23,24,22,.85);
-    padding:2.5rem 3.5rem;backdrop-filter:blur(3px);animation:elim-in 260ms ease-out;}
+    background:radial-gradient(circle at center, rgba(23,36,59,.35) 0%, rgba(6,10,20,.82) 100%);}
+  #eliminated .box{text-align:center;border:1px solid var(--border);background:rgba(23,36,59,.85);
+    padding:2.5rem 3.5rem;animation:elim-in 260ms ease-out;}
   @keyframes elim-in{ from{opacity:0;transform:scale(.9);} to{opacity:1;transform:scale(1);} }
   #eliminated svg{width:56px;height:56px;}
   #eliminated p:first-of-type{margin:18px 0 0;font-size:34px;font-weight:900;text-transform:uppercase;
@@ -358,8 +385,8 @@
   #eliminated p:last-of-type{margin:6px 0 0;font-size:13px;text-transform:uppercase;letter-spacing:.15em;
     color:var(--muted-foreground);}
   #pause-overlay{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
-    background:rgba(23,24,22,.85);backdrop-filter:blur(2px);pointer-events:auto;}
-  .pause-card{width:280px;border:1px solid var(--border);background:var(--card);padding:1.75rem;}
+    background:rgba(23,36,59,.85);pointer-events:auto;}
+  .pause-card{width:280px;border:1px solid var(--border);border-radius:14px;background:var(--card);padding:1.75rem;}
   .pause-card h2{margin:4px 0 1.5rem;text-align:center;font-size:22px;font-weight:900;text-transform:uppercase;
     letter-spacing:-.02em;font-family:ui-sans-serif,system-ui,sans-serif;}
   .pause-card button{margin-bottom:10px;}
@@ -368,20 +395,20 @@
   #mobile-controls{position:absolute;inset:0;z-index:25;pointer-events:auto;}
   #look-zone{position:absolute;inset:0;touch-action:none;}
   #joystick-base{position:absolute;left:24px;bottom:110px;width:120px;height:120px;border-radius:50%;
-    background:rgba(23,24,22,.35);border:2px solid rgba(240,238,230,.25);touch-action:none;}
+    background:rgba(23,36,59,.35);border:2px solid rgba(244,244,240,.25);touch-action:none;}
   #joystick-knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px;border-radius:50%;
-    background:rgba(240,238,230,.5);border:2px solid rgba(240,238,230,.7);pointer-events:none;
+    background:rgba(244,244,240,.5);border:2px solid rgba(244,244,240,.7);pointer-events:none;
     transition:transform 40ms linear;}
-  .mb-btn{position:absolute;border-radius:50%;border:2px solid rgba(240,238,230,.5);
-    background:rgba(23,24,22,.55);color:var(--foreground);font-size:11px;font-weight:700;
+  .mb-btn{position:absolute;border-radius:50%;border:2px solid rgba(244,244,240,.5);
+    background:rgba(23,36,59,.55);color:var(--foreground);font-size:11px;font-weight:700;
     text-transform:uppercase;letter-spacing:.05em;touch-action:none;user-select:none;}
-  .mb-btn:active{background:rgba(216,90,31,.4);}
+  .mb-btn:active{background:rgba(243,107,33,.4);}
   #mb-fire{right:26px;bottom:96px;width:92px;height:92px;font-size:13px;
-    background:rgba(216,90,31,.35);border-color:var(--primary);}
+    background:rgba(243,107,33,.35);border-color:var(--primary);}
   #mb-jump{right:132px;bottom:150px;width:56px;height:56px;}
   #mb-reload{right:20px;bottom:200px;width:56px;height:56px;}
   #mb-aim{right:132px;bottom:64px;width:56px;height:56px;}
-  #mb-aim.active{background:rgba(216,90,31,.5);border-color:var(--primary);}
+  #mb-aim.active{background:rgba(243,107,33,.5);border-color:var(--primary);}
   #mb-swap{right:20px;bottom:262px;width:52px;height:52px;font-size:10px;}
   #mb-pause{right:16px;top:16px;width:40px;height:40px;font-size:16px;z-index:30;}
 </style>
@@ -574,13 +601,15 @@
           <input id="callsign" maxlength="16" value="Player_0000" />
         </label>
 
-        <button id="loadout-popup-btn" class="popup-trigger-btn">Loadout: <span id="loadout-current-name"></span></button>
-        <button id="maps-popup-btn" class="popup-trigger-btn">Map: <span id="maps-current-name"></span></button>
-        <button id="play-btn" class="play-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-          Play
-        </button>
-        <button id="mode-popup-btn" class="popup-trigger-btn">Mode: <span id="mode-current-name"></span></button>
+        <div class="menu-actions">
+          <button id="loadout-popup-btn" class="popup-trigger-btn">Loadout <span id="loadout-current-name"></span></button>
+          <button id="maps-popup-btn" class="popup-trigger-btn">Map <span id="maps-current-name"></span></button>
+          <button id="play-btn" class="play-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            Play
+          </button>
+          <button id="mode-popup-btn" class="popup-trigger-btn">Mode <span id="mode-current-name"></span></button>
+        </div>
       </div>
 
       <footer class="menu-footer">
@@ -670,13 +699,13 @@
             <line x1="180" y1="100" x2="180" y2="108" stroke="#2f3a2a" stroke-width="1.4"/>
             <line x1="160" y1="100" x2="160" y2="108" stroke="#2f3a2a" stroke-width="1.4"/>
             <line x1="140" y1="100" x2="140" y2="108" stroke="#2f3a2a" stroke-width="1.4"/>
-            <circle cx="100" cy="100" r="1.8" fill="#d85a1f"/>
+            <circle cx="100" cy="100" r="1.8" fill="#F36B21"/>
           </svg>
         </div>
       </div>
 
       <footer>
-        <div>
+        <div class="hud-vitals">
           <div class="hp-row-top" style="justify-content:flex-start;">
             <span class="hp-num-top" id="hp-num">100</span><span class="hp-unit-top">HP</span>
             <span id="shield-badge" class="shield-badge hidden">+0</span>
@@ -747,7 +776,7 @@
   var SPAWNS = [[-12,1,-12],[12,1,12],[-12,1,12],[12,1,-12],[0,1,-13],[0,1,13],[-13,1,0],[13,1,0]];
 
   var WEAPONS = {
-    ar:      {name:'Assault Rifle',    dmg:22, rate:110, mag:30, reserve:120, reload:1200, auto:true,  scale:1.0,  color:'#2a2c28', accent:'#d85a1f', archetype:'rifle',   noise:26, aimable:true, aimFov:48},
+    ar:      {name:'Assault Rifle',    dmg:22, rate:110, mag:30, reserve:120, reload:1200, auto:true,  scale:1.0,  color:'#2a2c28', accent:'#F36B21', archetype:'rifle',   noise:26, aimable:true, aimFov:48},
     p9:      {name:'9mm Pistol',       dmg:26, rate:260, mag:12, reserve:48,  reload:900,  auto:false, scale:0.62, color:'#e8e6de', accent:'#242622', archetype:'pistol',  noise:20},
     sniper:  {name:'Sniper Rifle',     dmg:95, rate:950, mag:5,  reserve:20,  reload:1600, auto:false, scale:1.35, color:'#1f2f24', accent:'#3f83c5', archetype:'sniper',  noise:34, aimable:true, aimFov:20, scoped:true},
     revolver:{name:'Revolver',         dmg:48, rate:450, mag:6,  reserve:30,  reload:1300, auto:false, scale:0.68, color:'#c7c7bd', accent:'#8a2f10', archetype:'revolver',noise:24, aimable:true, aimFov:52},
@@ -758,7 +787,7 @@
     minigun: {name:'Minigun',          dmg:12, rate:55,  mag:80, reserve:160, reload:2600, auto:true,  scale:1.5,  color:'#1c1c1c', accent:'#e8b23d', archetype:'minigun', noise:32, twoHanded:true},
     glock:   {name:'Glock',            dmg:23, rate:230, mag:15, reserve:60,  reload:900,  auto:false, scale:0.6,  color:'#242422', accent:'#e8e6de', archetype:'pistol',  noise:20},
     tactrif: {name:'Tactical Rifle',   dmg:29, rate:180, mag:20, reserve:80,  reload:1250, auto:true,  scale:0.95, color:'#33362f', accent:'#3f83c5', archetype:'rifle',   noise:24, aimable:true, aimFov:46},
-    machinep:{name:'Machine Pistol',   dmg:15, rate:85,  mag:20, reserve:80,  reload:950,  auto:true,  scale:0.6,  color:'#28282a', accent:'#d85a1f', archetype:'smg',     noise:18},
+    machinep:{name:'Machine Pistol',   dmg:15, rate:85,  mag:20, reserve:80,  reload:950,  auto:true,  scale:0.6,  color:'#28282a', accent:'#F36B21', archetype:'smg',     noise:18},
     silsmg:  {name:'Silenced SMG',     dmg:15, rate:80,  mag:25, reserve:100, reload:1050, auto:true,  scale:0.85, color:'#20211d', accent:'#454742', archetype:'smg',     noise:8, suppressed:true},
     silp:    {name:'Silenced Pistol',  dmg:25, rate:240, mag:10, reserve:40,  reload:900,  auto:false, scale:0.68, color:'#20211d', accent:'#454742', archetype:'pistol',  noise:8, suppressed:true},
     rocket:  {name:'Rocket Launcher',  dmg:110,rate:1400,mag:1,  reserve:4,   reload:2200, auto:false, scale:1.4,  color:'#3a3020', accent:'#8a2f10', explosive:true, splash:4.5, archetype:'rocket', noise:36, aimable:true, aimFov:50, twoHanded:true}
@@ -766,9 +795,9 @@
 
 
   var LOADOUTS = [
-    {id:'assaulter', name:'The Assaulter', primary:'ar', secondary:'p9', tactical:{type:'grenade', name:'Frag Grenade', radius:5, damage:70, fuse:1.4, color:'#d85a1f'}},
+    {id:'assaulter', name:'The Assaulter', primary:'ar', secondary:'p9', tactical:{type:'grenade', name:'Frag Grenade', radius:5, damage:70, fuse:1.4, color:'#F36B21'}},
     {id:'scout', name:'The Sniper', primary:'sniper', secondary:'revolver', tactical:{type:'smoke', name:'Smoke Grenade', radius:6, duration:6, color:'#9a9a92'}},
-    {id:'rusher', name:'The Rusher / Breacher', primary:'shotgun', secondary:'microsmg', tactical:{type:'flash', name:'Flashbang', radius:7, duration:3, color:'#f2f0e6'}},
+    {id:'rusher', name:'The Rusher / Breacher', primary:'shotgun', secondary:'microsmg', tactical:{type:'flash', name:'Flashbang', radius:7, duration:3, color:'#F4F4F0'}},
     {id:'gunner', name:'The Run-and-Gunner', primary:'smg', secondary:'heavyp', tactical:{type:'knife', name:'Combat Knife', range:2.4, damage:85, thrown:false, color:'#c7c7bd'}},
     {id:'juggernaut', name:'The Juggernaut', primary:'minigun', secondary:'glock', tactical:{type:'grenade', name:'Heavy Grenade', radius:6.5, damage:95, fuse:1.6, color:'#8a2f10'}},
     {id:'marksman', name:'The Marksman', primary:'tactrif', secondary:'machinep', tactical:{type:'mine', name:'Claymore Mine', radius:2.8, damage:95, arm:1, color:'#2c2e2a'}},
@@ -776,15 +805,16 @@
     {id:'rocketeer', name:'The Rocketeer', primary:'rocket', secondary:'shotgun', tactical:{type:'shield', name:'Armor Plate', amount:60, color:'#3f83c5'}}
   ];
 
+  // Each map has its own secondary palette (sky/floor/wall/cover/trim); Octakill orange stays the recurring accent.
   var MAPS = [
-    {id:'arena',      name:'Arena',            sky:'#8fbfe0', fogColor:'#a9d3ec', fogNear:22, fogFar:52, floor:'#353732', wall:'#242622', cover:'#555951', coverAccent:'#d85a1f', ground:'arena',       clouds:true},
-    {id:'jungle',     name:'Jungle',           sky:'#bfe6c9', fogColor:'#cdeed2', fogNear:16, fogFar:42, floor:'#3d5c34', wall:'#2f4a28', cover:'#4a6b3a', coverAccent:'#6b4a2c', ground:'jungle',      clouds:true},
-    {id:'city',       name:'Abandoned City',   sky:'#93a3ad', fogColor:'#8a97a0', fogNear:14, fogFar:40, floor:'#4a4b47', wall:'#5a5b56', cover:'#6b6c66', coverAccent:'#8a3f22', ground:'city',        clouds:false},
-    {id:'colosseum',  name:'Colosseum',        sky:'#a9cdea', fogColor:'#e8d9b0', fogNear:20, fogFar:50, floor:'#a8674a', wall:'#d9cfb8', cover:'#c4baa2', coverAccent:'#7a2a1f', ground:'colosseum',   clouds:true},
-    {id:'arctic',     name:'Arctic',           sky:'#dce8f0', fogColor:'#eef6fa', fogNear:16, fogFar:44, floor:'#e4ecf0', wall:'#c3d4de', cover:'#aec2cc', coverAccent:'#3d7fb8', ground:'arctic',      clouds:true},
-    {id:'radioactive',name:'Radioactive',      sky:'#6b7268', fogColor:'#5f6b5a', fogNear:13, fogFar:36, floor:'#46493f', wall:'#34362f', cover:'#54574c', coverAccent:'#7ed321', ground:'radioactive', clouds:false},
-    {id:'cargo',      name:'Cargo Ship',       sky:'#a8c8d8', fogColor:'#bcdae6', fogNear:20, fogFar:56, floor:'#5c5850', wall:'#3a3d38', cover:'#6b6558', coverAccent:'#a8461f', ground:'cargo',       clouds:true},
-    {id:'temple',     name:'Ancient Temple',   sky:'#e8d4a0', fogColor:'#f0e2bc', fogNear:18, fogFar:48, floor:'#7a7568', wall:'#655f52', cover:'#5c584c', coverAccent:'#5c7a3f', ground:'temple',      clouds:true}
+    {id:'arena',      name:'Arena',            sky:'#7cb6e8', fogColor:'#a4d0f0', fogNear:22, fogFar:52, floor:'#3b4048', wall:'#4b5b72', cover:'#6a727d', coverAccent:'#F36B21', trim:'#42D9E8', ground:'arena',       clouds:true},
+    {id:'jungle',     name:'Jungle',           sky:'#b4e4d2', fogColor:'#c6ecdc', fogNear:16, fogFar:42, floor:'#3f5f38', wall:'#2c5450', cover:'#4d6e3d', coverAccent:'#F36B21', trim:'#d8b878', ground:'jungle',      clouds:true},
+    {id:'city',       name:'Abandoned City',   sky:'#8a90c4', fogColor:'#7a7ba8', fogNear:14, fogFar:40, floor:'#3d3a50', wall:'#4a4566', cover:'#5e5a7c', coverAccent:'#F36B21', trim:'#6fb4ff', ground:'city',        clouds:false},
+    {id:'colosseum',  name:'Colosseum',        sky:'#9fcaee', fogColor:'#ead9b0', fogNear:20, fogFar:50, floor:'#b0704e', wall:'#d9cfb8', cover:'#c4baa2', coverAccent:'#F36B21', trim:'#2f6f9e', ground:'colosseum',   clouds:true},
+    {id:'arctic',     name:'Arctic',           sky:'#cfe4f2', fogColor:'#eaf5fb', fogNear:16, fogFar:44, floor:'#e4ecf0', wall:'#b4cadb', cover:'#9fb8c8', coverAccent:'#F36B21', trim:'#42D9E8', ground:'arctic',      clouds:true},
+    {id:'radioactive',name:'Radioactive',      sky:'#62705f', fogColor:'#56654f', fogNear:13, fogFar:36, floor:'#40453a', wall:'#30382e', cover:'#525a49', coverAccent:'#F36B21', trim:'#7ed321', ground:'radioactive', clouds:false},
+    {id:'cargo',      name:'Cargo Ship',       sky:'#94d3d8', fogColor:'#b4e2e2', fogNear:20, fogFar:56, floor:'#a08664', wall:'#3a3d38', cover:'#6b6558', coverAccent:'#F36B21', trim:'#2bb3a8', ground:'cargo',       clouds:true},
+    {id:'temple',     name:'Ancient Temple',   sky:'#ecd59c', fogColor:'#f2e3bc', fogNear:18, fogFar:48, floor:'#c2a57a', wall:'#7f735e', cover:'#9a8a6c', coverAccent:'#F36B21', trim:'#2fa79a', ground:'temple',      clouds:true}
   ];
 
   var GAME_MODES = [
@@ -1720,9 +1750,9 @@
     var octaW = ctx.measureText('OCTA').width;
     var startX = 4;
     var baseY = cv.height/2 + 38;
-    ctx.fillStyle = '#f0eee6';
+    ctx.fillStyle = '#F4F4F0';
     ctx.fillText('OCTA', startX, baseY);
-    ctx.fillStyle = '#d85a1f';
+    ctx.fillStyle = '#F36B21';
     ctx.fillText('KILL', startX + octaW, baseY);
   }
   drawLogo();
@@ -1739,17 +1769,23 @@
     var ctx = cv.getContext('2d');
 
     var sky = ctx.createLinearGradient(0,0,0,h);
-    sky.addColorStop(0, '#16192a');
-    sky.addColorStop(0.55, '#242030');
-    sky.addColorStop(1, '#3a2a1c');
+    sky.addColorStop(0, '#0c1424');
+    sky.addColorStop(0.55, '#17243B');
+    sky.addColorStop(1, '#2a2632');
     ctx.fillStyle = sky;
     ctx.fillRect(0,0,w,h);
 
     var glow = ctx.createRadialGradient(w*0.82,h*0.55,10, w*0.82,h*0.55, w*0.6);
-    glow.addColorStop(0, 'rgba(255,150,60,0.85)');
-    glow.addColorStop(0.35, 'rgba(230,100,35,0.5)');
-    glow.addColorStop(1, 'rgba(216,90,31,0)');
+    glow.addColorStop(0, 'rgba(255,150,70,0.8)');
+    glow.addColorStop(0.35, 'rgba(243,107,33,0.45)');
+    glow.addColorStop(1, 'rgba(243,107,33,0)');
     ctx.fillStyle = glow;
+    ctx.fillRect(0,0,w,h);
+
+    var coolGlow = ctx.createRadialGradient(w*0.12,h*0.15,10, w*0.12,h*0.15, w*0.5);
+    coolGlow.addColorStop(0, 'rgba(66,217,232,0.16)');
+    coolGlow.addColorStop(1, 'rgba(66,217,232,0)');
+    ctx.fillStyle = coolGlow;
     ctx.fillRect(0,0,w,h);
 
     var horizon = h;
@@ -1759,8 +1795,8 @@
       var bw = 50 + Math.random()*90;
       var bH = h*0.18 + Math.random()*h*0.32;
       var by = horizon - bH;
-      var shade = 55 + Math.random()*35;
-      ctx.fillStyle = 'rgb('+shade+','+(shade+5)+','+(shade+14)+')';
+      var shade = 38 + Math.random()*26;
+      ctx.fillStyle = 'rgb('+shade+','+(shade+12)+','+(shade+30)+')';
       ctx.beginPath();
       ctx.moveTo(bx, horizon);
       ctx.lineTo(bx, by + Math.random()*bH*0.15);
@@ -1774,7 +1810,7 @@
       ctx.closePath();
       ctx.fill();
       if (Math.random() < 0.6){
-        ctx.fillStyle = 'rgba(255,190,110,0.8)';
+        ctx.fillStyle = Math.random() < 0.3 ? 'rgba(66,217,232,0.75)' : 'rgba(255,190,110,0.8)';
         var winX = bx + bw*(0.2+Math.random()*0.6);
         var winY = by + bH*(0.3+Math.random()*0.5);
         ctx.fillRect(winX, winY, 5, 7);
@@ -1863,7 +1899,8 @@
   function renderMapGrid(){
     el['map-grid'].innerHTML = MAPS.map(function(m){
       return '<div class="map-card'+(m.id===S.mapId?' selected':'')+'" data-map="'+m.id+'">'+
-        '<div class="map-swatch" style="background:linear-gradient(180deg,'+m.sky+' 0%,'+m.floor+' 100%);"></div>'+
+        '<div class="map-swatch" style="background:linear-gradient(180deg,'+m.sky+' 0%,'+m.wall+' 70%,'+m.floor+' 100%);">'+
+          '<i class="trim" style="background:'+(m.trim||m.cover)+';"></i><i class="accent"></i></div>'+
         '<div class="map-label">'+m.name+'</div>'+
       '</div>';
     }).join('');
@@ -2784,10 +2821,14 @@
           var railBot = new THREE.Mesh(railGeo, fenceMat); railBot.position.set(w[0], w[1]-w[4]/2+0.12, w[2]); envGroup.add(railBot);
         });
       } else {
+        var trimMat = new THREE.MeshBasicMaterial({color:cfg.trim || cfg.coverAccent});
         wallsDef.forEach(function(w){
           var m = new THREE.Mesh(new THREE.BoxGeometry(w[3],w[4],w[5]), wallMat);
           m.position.set(w[0],w[1],w[2]); m.castShadow = true; m.receiveShadow = true; envGroup.add(m);
           raycastTargets.push(m); envRaycastTargets.push(m);
+          // flat-colored cap strip in the map's detail color (cheap, unlit)
+          var cap = new THREE.Mesh(new THREE.BoxGeometry(w[3]+0.04,0.12,w[5]+0.04), trimMat);
+          cap.position.set(w[0], w[1]+w[4]/2+0.06, w[2]); envGroup.add(cap);
         });
       }
 
@@ -2813,7 +2854,7 @@
 
     var weaponGroup = new THREE.Group();
     weaponGroup.position.set(0.34,-0.27,-0.62);
-    var muzzle = new THREE.PointLight('#d85a1f', 0, 3);
+    var muzzle = new THREE.PointLight('#F36B21', 0, 3);
     muzzle.position.set(0,0,-0.5); weaponGroup.add(muzzle);
 
     function buildGunModel(archetype, color, accent){
@@ -2981,9 +3022,9 @@
       } else {
         var w = currentWeapon();
         weaponGroup.scale.setScalar(clamp(w.scale, 0.55, 1.7));
-        currentGunModel = buildGunModel(w.archetype, w.color, w.accent || '#d85a1f');
+        currentGunModel = buildGunModel(w.archetype, w.color, w.accent || '#F36B21');
         weaponGroup.add(currentGunModel);
-        muzzle.color.set(w.accent || '#d85a1f');
+        muzzle.color.set(w.accent || '#F36B21');
         magazine.visible = true;
       }
     }
@@ -3634,7 +3675,7 @@
     var bots = [];
     var headMat = new THREE.MeshStandardMaterial({color:'#e4e1d6', flatShading:true, roughness:0.55, metalness:0.05});
     var eyeMat = new THREE.MeshStandardMaterial({color:'#171816', flatShading:true, roughness:0.3, emissive:'#ffd23f', emissiveIntensity:0.85});
-    var ventMat = new THREE.MeshStandardMaterial({color:'#171816', flatShading:true, roughness:0.4, emissive:'#d85a1f', emissiveIntensity:0.4});
+    var ventMat = new THREE.MeshStandardMaterial({color:'#171816', flatShading:true, roughness:0.4, emissive:'#F36B21', emissiveIntensity:0.4});
     var gunMat = new THREE.MeshStandardMaterial({color:'#242622', flatShading:true, roughness:0.4, metalness:0.6});
     var helmetMat = new THREE.MeshStandardMaterial({color:'#2c2e2a', flatShading:true, roughness:0.35, metalness:0.5});
     var gearMat = new THREE.MeshStandardMaterial({color:'#22231f', flatShading:true, roughness:0.75, metalness:0.05});
@@ -4300,7 +4341,7 @@
       }
       b.group.visible = true;
       var team = S.fighters[i+1].team;
-      b.bodyMat.color.set(teamMode ? (team === 'orange' ? '#d85a1f' : '#3f83c5') : '#5c5f3f');
+      b.bodyMat.color.set(teamMode ? (team === 'orange' ? '#F36B21' : '#3f83c5') : '#5c5f3f');
       var s = order[i+1];
       b.group.position.set(s[0], s[1], s[2]);
       b.aiState = 'engage'; b.coverIdx = -1; b.lastFire = 0; b.strafeSign = 1; b.strafeTimer = 0;
