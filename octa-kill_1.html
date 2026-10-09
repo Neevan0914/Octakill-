@@ -411,6 +411,127 @@
   #mb-aim.active{background:rgba(243,107,33,.5);border-color:var(--primary);}
   #mb-swap{right:20px;bottom:262px;width:52px;height:52px;font-size:10px;}
   #mb-pause{right:16px;top:16px;width:40px;height:40px;font-size:16px;z-index:30;}
+
+  /* ===== Main menu: stacked angled buttons (tactical-shooter style, Octakill colors) ===== */
+  .menu-vignette{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(90deg, rgba(8,13,24,.82) 0%, rgba(8,13,24,.55) 38%, rgba(8,13,24,0) 70%),
+      linear-gradient(0deg, rgba(8,13,24,.6) 0%, rgba(8,13,24,0) 30%);}
+  .menu-actions{gap:8px;max-width:20rem;margin-top:1.75rem;}
+  .menu-btn{--cut:10px;--line:rgba(66,217,232,.35);--fill:rgba(15,24,40,.78);
+    position:relative;isolation:isolate;border:none !important;border-radius:0 !important;background:var(--line) !important;
+    clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut));
+    min-height:44px;padding:12px 20px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--foreground);box-shadow:none !important;
+    transition:transform 140ms ease, color 140ms ease;}
+  .menu-btn::before{content:'';position:absolute;inset:1px;z-index:-1;background:var(--fill);
+    clip-path:polygon(calc(var(--cut) - 1px) 0,100% 0,100% calc(100% - var(--cut) + 1px),calc(100% - var(--cut) + 1px) 100%,0 100%,0 calc(var(--cut) - 1px));
+    transition:background 140ms ease;}
+  .menu-btn::after{content:'';position:absolute;left:0;top:22%;bottom:22%;width:3px;background:var(--accent);
+    transform:scaleY(0);transition:transform 160ms ease;}
+  .menu-btn:hover{--line:var(--accent);transform:translateX(4px);}
+  .menu-btn:hover::before{background:rgba(23,36,59,.92);}
+  .menu-btn:hover::after{transform:scaleY(1);}
+  .menu-btn span{letter-spacing:.08em;}
+  .menu-btn .menu-btn-arrow{color:var(--muted-foreground);font-size:16px;line-height:1;}
+  .menu-btn:hover .menu-btn-arrow{color:var(--accent);}
+  .play-btn.menu-btn{--line:#ff9a5c;--fill:var(--primary);--cut:12px;min-height:54px;font-size:15px;font-weight:800;
+    letter-spacing:.24em;justify-content:center;max-width:none;}
+  .play-btn.menu-btn::after{background:var(--foreground);}
+  .play-btn.menu-btn:hover{--line:#ffc9a6;}
+  .play-btn.menu-btn:hover::before{background:var(--primary-hover);}
+  .logo-canvas{margin-left:-4px;}
+
+  .feedback-line{display:flex;flex-wrap:wrap;align-items:center;gap:14px;}
+  .discord-pill{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:8px 14px;border:1px solid rgba(66,217,232,.35);
+    background:rgba(15,24,40,.78);color:var(--foreground);text-decoration:none;font-size:10px;letter-spacing:.14em;
+    font-weight:700;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+    transition:border-color 140ms ease,color 140ms ease;}
+  .discord-pill svg{color:#8ea1ff;}
+  .discord-pill:hover{border-color:var(--accent);color:var(--accent);}
+  .feedback-mail{color:var(--muted-foreground);letter-spacing:.12em;}
+
+  /* ===== Popups: frosted panels ===== */
+  .popup-overlay{background:rgba(6,10,20,.55);}
+  .popup-card{border-radius:22px;border-color:rgba(244,244,240,.12);
+    background:linear-gradient(145deg, rgba(36,52,80,.92) 0%, rgba(15,24,40,.95) 60%, rgba(40,28,26,.94) 100%);}
+
+  /* ===== Settings: centered glass panel with side tabs ===== */
+  #drawer-backdrop{background:rgba(6,10,20,.6);}
+  .settings-modal{position:fixed;left:50%;top:50%;z-index:40;width:min(940px,94vw);max-height:92vh;
+    display:flex;flex-direction:column;padding:22px 22px 18px;border-radius:30px;
+    border:1px solid rgba(244,244,240,.14);
+    background:linear-gradient(140deg, rgba(43,58,84,.9) 0%, rgba(20,30,48,.93) 45%, rgba(58,34,24,.92) 100%);
+    box-shadow:0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+    opacity:0;pointer-events:none;transform:translate(-50%,-47%) scale(.98);
+    transition:opacity 180ms ease, transform 200ms ease;}
+  .settings-modal.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+  .settings-shell{display:grid;grid-template-columns:230px 1fr;min-height:0;flex:1;
+    border:1px solid rgba(244,244,240,.12);border-radius:24px;background:rgba(10,16,28,.28);}
+  .settings-nav{display:flex;flex-direction:column;gap:4px;padding:0 0 18px;border-right:1px solid rgba(244,244,240,.12);
+    background:rgba(244,244,240,.03);border-radius:24px 0 0 24px;}
+  .settings-title{margin:0 0 12px;padding:18px 24px;font-family:"Black Ops One",ui-sans-serif,system-ui,sans-serif;
+    font-weight:400;font-size:24px;letter-spacing:.12em;text-transform:uppercase;color:var(--foreground);
+    background:rgba(244,244,240,.07);border-bottom:1px solid rgba(244,244,240,.1);border-radius:24px 0 0 0;}
+  .settings-nav-btn{position:relative;margin-right:-1px;padding:12px 24px;border:none;background:transparent;text-align:left;
+    font-family:ui-sans-serif,system-ui,sans-serif;font-size:18px;color:rgba(244,244,240,.78);border-radius:0;}
+  .settings-nav-btn:hover{color:var(--accent);transform:none;}
+  .settings-nav-btn.active{margin-right:-22px;color:var(--foreground);border-radius:0 999px 999px 0;
+    background:linear-gradient(90deg, rgba(243,107,33,.42), rgba(243,107,33,.18));
+    box-shadow:inset 3px 0 0 var(--primary), 0 6px 18px rgba(0,0,0,.25);}
+  .settings-body{padding:18px 30px 18px 46px;overflow-y:auto;max-height:62vh;}
+  .settings-view{display:none;}
+  .settings-view.active{display:block;animation:settings-in 180ms ease-out;}
+  @keyframes settings-in{ from{opacity:0;transform:translateY(4px);} to{opacity:1;transform:none;} }
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;
+    border-bottom:1px solid rgba(244,244,240,.07);}
+  .set-label{font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;font-weight:600;color:var(--foreground);}
+  .set-group-label{margin:22px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:var(--accent);}
+  .settings-modal .sensitivity-row{flex:0 1 280px;}
+  .settings-modal input[type="range"]{-webkit-appearance:none;appearance:none;height:6px;border-radius:999px;
+    background:rgba(244,244,240,.18);outline:none;}
+  .settings-modal input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--foreground);border:3px solid var(--primary);cursor:pointer;}
+  .settings-modal input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:var(--foreground);border:3px solid var(--primary);cursor:pointer;}
+  .settings-modal #sensitivity-value{color:var(--foreground);}
+  .settings-modal .toggle-row{gap:2px;padding:3px;border-radius:999px;background:rgba(244,244,240,.07);
+    border:1px solid rgba(244,244,240,.1);}
+  .settings-modal .toggle-btn{border:none;border-radius:999px;background:transparent;padding:7px 16px;
+    color:rgba(244,244,240,.7);font-size:11px;}
+  .settings-modal .toggle-btn:hover:not(.selected){color:var(--accent);transform:none;}
+  .settings-modal .toggle-btn.selected{background:var(--primary);color:var(--primary-foreground);}
+  .settings-modal .keybind-row{padding:9px 0;border-bottom-color:rgba(244,244,240,.07);font-size:13px;
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  .settings-modal .keybind-btn{border-radius:8px;background:rgba(244,244,240,.06);border-color:rgba(244,244,240,.14);}
+  .settings-foot{display:flex;align-items:center;gap:14px;padding:16px 10px 0;}
+  .settings-foot button{font-family:ui-sans-serif,system-ui,sans-serif;font-size:20px;font-weight:600;
+    color:var(--foreground);background:transparent;border:none;padding:8px 14px;}
+  .settings-foot-back{margin-right:auto;}
+  .settings-foot-back:hover, .settings-foot-reset:hover{color:var(--accent);}
+  .settings-foot-save{min-width:150px;border-radius:999px !important;padding:10px 32px !important;
+    background:linear-gradient(90deg, rgba(243,107,33,.85), rgba(243,107,33,.6)) !important;
+    border:1px solid rgba(255,190,150,.45) !important;box-shadow:0 6px 18px rgba(243,107,33,.25);}
+  .settings-foot-save:hover{background:var(--primary) !important;}
+  .settings-foot button{white-space:nowrap;}
+  @media (max-width:767px){
+    #menu{flex-direction:column;}
+    .menu-inner{min-height:auto;}
+    #char-panel{position:relative;order:2;width:100%;height:440px;padding-bottom:2.5rem;}
+  }
+  @media (max-width:700px){
+    .settings-modal{padding:14px;border-radius:22px;
+      background:linear-gradient(160deg, rgba(36,50,74,.98) 0%, rgba(18,27,44,.98) 60%, rgba(44,30,26,.98) 100%);}
+    .settings-foot{gap:6px;padding-top:12px;}
+    .settings-shell{grid-template-columns:1fr;}
+    .settings-nav{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid rgba(244,244,240,.12);
+      border-radius:24px 24px 0 0;padding:0 8px 8px;}
+    .settings-title{width:100%;border-radius:24px 24px 0 0;margin:0 -8px 8px;width:calc(100% + 16px);font-size:20px;}
+    .settings-nav-btn{font-size:14px;padding:8px 14px;}
+    .settings-nav-btn.active{margin-right:0;border-radius:999px;}
+    .settings-body{padding:12px 16px;max-height:52vh;}
+    .set-row{flex-wrap:wrap;}
+    .settings-foot button{font-size:16px;}
+  }
 </style>
 </head>
 <body>
@@ -424,78 +545,73 @@
   <section id="menu" class="screen">
     <canvas id="menu-bg-canvas"></canvas>
     <div class="menu-grid"></div>
+    <div class="menu-vignette"></div>
 
-    <button id="settings-toggle" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" title="Settings">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-    <button id="account-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 52px);" title="Account: Guest">
+    <button id="account-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" title="Account: Guest">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </button>
-    <button id="rank-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 104px);" title="Rank: Iron">
+    <button id="rank-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 52px);" title="Rank: Iron">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
     </button>
     <div id="drawer-backdrop"></div>
 
-    <aside id="settings-drawer" class="drawer-right">
-      <div id="settings-view-main" class="settings-view active">
-        <div class="drawer-head">
-          <span class="section-label" style="margin:0;">Settings</span>
-          <button id="settings-close" class="drawer-close-btn">&times;</button>
-        </div>
-        <div class="settings-tab-list">
-          <button class="settings-tab-btn" data-settings-view="customization">
-            <div><h4>Customization</h4><p>Keybinds, sensitivity, damage indicator</p></div>
-            <span class="tab-arrow">&rsaquo;</span>
-          </button>
-          <button class="settings-tab-btn" data-settings-view="graphics">
-            <div><h4>Graphics</h4><p>Visual quality</p></div>
-            <span class="tab-arrow">&rsaquo;</span>
-          </button>
-        </div>
-      </div>
+    <div id="settings-drawer" class="settings-modal" role="dialog" aria-label="Settings">
+      <div class="settings-shell">
+        <nav class="settings-nav">
+          <h2 class="settings-title">Settings</h2>
+          <button class="settings-nav-btn" data-settings-view="controls">Controls</button>
+          <button class="settings-nav-btn" data-settings-view="graphics">Graphics</button>
+          <button class="settings-nav-btn" data-settings-view="audio">Audio</button>
+        </nav>
+        <div class="settings-body">
+          <div id="settings-view-controls" class="settings-view">
+            <div class="set-row">
+              <span class="set-label">Sensitivity</span>
+              <div class="sensitivity-row">
+                <input type="range" id="sensitivity-slider" min="0.3" max="2.5" step="0.05" value="1">
+                <span id="sensitivity-value">1.00x</span>
+              </div>
+            </div>
+            <div class="set-row">
+              <span class="set-label">Damage Indicator</span>
+              <div class="toggle-row">
+                <button class="toggle-btn selected" id="dmg-indicator-on">On</button>
+                <button class="toggle-btn" id="dmg-indicator-off">Off</button>
+              </div>
+            </div>
+            <p class="set-group-label">Keybinds</p>
+            <div id="keybinds-list"></div>
+          </div>
 
-      <div id="settings-view-customization" class="settings-view">
-        <div class="drawer-head">
-          <button class="settings-back-btn" data-settings-view="main">&lsaquo; Back</button>
-          <span class="section-label" style="margin:0;">Customization</span>
-        </div>
-        <div class="loadout-section" style="margin-top:0;">
-          <span class="section-label">Sensitivity</span>
-          <div class="sensitivity-row">
-            <input type="range" id="sensitivity-slider" min="0.3" max="2.5" step="0.05" value="1">
-            <span id="sensitivity-value">1.00x</span>
+          <div id="settings-view-graphics" class="settings-view">
+            <div class="set-row">
+              <span class="set-label">Quality</span>
+              <div class="toggle-row">
+                <button class="toggle-btn selected" id="gfx-standard">Standard</button>
+                <button class="toggle-btn" id="gfx-high">High</button>
+                <button class="toggle-btn" id="gfx-ultra">Ultra</button>
+              </div>
+            </div>
+            <p class="settings-hint">Ultra renders at 1.5x resolution with 4K shadows, sun rays, ambient occlusion, rim lighting, bloom and reflections. Needs a strong GPU.</p>
           </div>
-        </div>
-        <div class="loadout-section">
-          <span class="section-label">Damage Indicator</span>
-          <div class="toggle-row">
-            <button class="toggle-btn selected" id="dmg-indicator-on">On</button>
-            <button class="toggle-btn" id="dmg-indicator-off">Off</button>
-          </div>
-        </div>
-        <div class="loadout-section">
-          <span class="section-label">Keybinds</span>
-          <div id="keybinds-list"></div>
-          <button id="keybinds-reset" class="keybinds-reset-btn">Reset to Defaults</button>
-        </div>
-      </div>
 
-      <div id="settings-view-graphics" class="settings-view">
-        <div class="drawer-head">
-          <button class="settings-back-btn" data-settings-view="main">&lsaquo; Back</button>
-          <span class="section-label" style="margin:0;">Graphics</span>
-        </div>
-        <div class="loadout-section" style="margin-top:0;">
-          <span class="section-label">Graphics</span>
-          <div class="toggle-row">
-            <button class="toggle-btn selected" id="gfx-standard">Standard</button>
-            <button class="toggle-btn" id="gfx-high">High</button>
-            <button class="toggle-btn" id="gfx-ultra">Ultra</button>
+          <div id="settings-view-audio" class="settings-view">
+            <div class="set-row">
+              <span class="set-label">Music</span>
+              <div class="toggle-row">
+                <button class="toggle-btn selected" id="settings-music-on">On</button>
+                <button class="toggle-btn" id="settings-music-off">Off</button>
+              </div>
+            </div>
           </div>
-          <p class="settings-hint">Ultra renders at 1.5x resolution with 4K shadows, sun rays, ambient occlusion, rim lighting, bloom and reflections. Needs a strong GPU.</p>
         </div>
       </div>
-    </aside>
+      <footer class="settings-foot">
+        <button id="settings-close" class="settings-foot-back">&lsaquo; Back</button>
+        <button id="keybinds-reset" class="settings-foot-reset" title="Reset all settings to defaults">Reset</button>
+        <button id="settings-save" class="settings-foot-save">Save</button>
+      </footer>
+    </div>
 
     <div id="loadout-popup" class="popup-overlay">
       <div class="popup-card">
@@ -602,13 +718,14 @@
         </label>
 
         <div class="menu-actions">
-          <button id="loadout-popup-btn" class="popup-trigger-btn">Loadout <span id="loadout-current-name"></span></button>
-          <button id="maps-popup-btn" class="popup-trigger-btn">Map <span id="maps-current-name"></span></button>
-          <button id="play-btn" class="play-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+          <button id="play-btn" class="play-btn menu-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
             Play
           </button>
-          <button id="mode-popup-btn" class="popup-trigger-btn">Mode <span id="mode-current-name"></span></button>
+          <button id="loadout-popup-btn" class="popup-trigger-btn menu-btn">Loadout <span id="loadout-current-name"></span></button>
+          <button id="maps-popup-btn" class="popup-trigger-btn menu-btn">Map <span id="maps-current-name"></span></button>
+          <button id="mode-popup-btn" class="popup-trigger-btn menu-btn">Mode <span id="mode-current-name"></span></button>
+          <button id="settings-toggle" class="popup-trigger-btn menu-btn">Settings <span class="menu-btn-arrow">&rsaquo;</span></button>
         </div>
       </div>
 
@@ -619,8 +736,11 @@
         </span>
         <span>Mouse aim</span><span>LMB fire</span><span>RMB aim down sights</span><span>Scroll cycle weapons + tactical</span><span>Click to throw/use tactical</span><span>Move/jump/crouch/reload — customizable in Settings</span>
         <span class="feedback-line">
-          <a href="https://discord.gg/PSzK3uv349" target="_blank" rel="noopener" class="footer-link">Discord</a>
-          &nbsp;·&nbsp; Feedback: octakillofficial@gmail.com
+          <a href="https://discord.gg/PSzK3uv349" target="_blank" rel="noopener" class="discord-pill">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.9-9.7-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>
+            Join our Discord
+          </a>
+          <span class="feedback-mail">Feedback: octakillofficial@gmail.com</span>
         </span>
       </footer>
     </div>
@@ -1020,6 +1140,7 @@
   function toggleMusic(){
     musicEnabled = !musicEnabled;
     el['music-toggle'].classList.toggle('muted', !musicEnabled);
+    syncMusicSettingUI();
     el['pause-music-btn'].textContent = 'Music: ' + (musicEnabled ? 'On' : 'Off');
     if (musicEnabled){
       ensureAudio();
@@ -1754,6 +1875,14 @@
     ctx.fillText('OCTA', startX, baseY);
     ctx.fillStyle = '#F36B21';
     ctx.fillText('KILL', startX + octaW, baseY);
+    var totalW = octaW + ctx.measureText('KILL').width;
+    var barY = baseY + 20, barH = 16, x = startX + 2, i = 0;
+    while (x < startX + totalW){
+      var bw = (i % 7 === 0) ? 4 : (i % 3 === 0 ? 3 : 1.5);
+      ctx.fillStyle = x > startX + octaW ? '#F36B21' : 'rgba(244,244,240,0.85)';
+      ctx.fillRect(x, barY, bw, barH);
+      x += bw + 3 + (i % 4 === 1 ? 2 : 0); i++;
+    }
   }
   drawLogo();
   if (document.fonts && document.fonts.load){
@@ -1949,12 +2078,25 @@
   el['dmg-indicator-off'].addEventListener('click', function(){ setDamageIndicatorEnabled(false); });
   el['keybinds-reset'].addEventListener('click', function(){
     Object.keys(DEFAULT_KEYBINDS).forEach(function(k){ SETTINGS.keybinds[k] = DEFAULT_KEYBINDS[k]; });
+    rebindingAction = null;
+    SETTINGS.sensitivity = 1.0;
+    el['sensitivity-slider'].value = SETTINGS.sensitivity;
+    el['sensitivity-value'].textContent = SETTINGS.sensitivity.toFixed(2) + 'x';
+    setDamageIndicatorEnabled(true);
+    setGraphicsMode('standard');
     saveSettings();
     renderKeybinds();
   });
   renderKeybinds();
 
   el['music-toggle'].addEventListener('click', toggleMusic);
+  function syncMusicSettingUI(){
+    document.getElementById('settings-music-on').classList.toggle('selected', musicEnabled);
+    document.getElementById('settings-music-off').classList.toggle('selected', !musicEnabled);
+  }
+  syncMusicSettingUI();
+  document.getElementById('settings-music-on').addEventListener('click', function(){ if (!musicEnabled) toggleMusic(); });
+  document.getElementById('settings-music-off').addEventListener('click', function(){ if (musicEnabled) toggleMusic(); });
   function unlockAudioOnce(){
     ensureAudio();
     startMenuMusicIfNeeded();
@@ -1991,13 +2133,17 @@
     Array.prototype.forEach.call(el['settings-drawer'].querySelectorAll('.settings-view'), function(v){
       v.classList.toggle('active', v.id === 'settings-view-' + name);
     });
-    el['settings-drawer'].scrollTop = 0;
+    Array.prototype.forEach.call(el['settings-drawer'].querySelectorAll('.settings-nav-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-settings-view') === name);
+    });
+    el['settings-drawer'].querySelector('.settings-body').scrollTop = 0;
   }
   Array.prototype.forEach.call(el['settings-drawer'].querySelectorAll('[data-settings-view]'), function(btn){
     btn.addEventListener('click', function(){ showSettingsView(btn.getAttribute('data-settings-view')); });
   });
   function openSettingsDrawer(){
-    showSettingsView('main');
+    closeAllPopups();
+    showSettingsView('controls');
     el['settings-drawer'].classList.add('open');
     el['drawer-backdrop'].classList.add('open');
   }
@@ -2023,6 +2169,10 @@
   el['cosmetics-popup'].addEventListener('click', function(e){ if (e.target === el['cosmetics-popup']) closeAllPopups(); });
   el['settings-toggle'].addEventListener('click', openSettingsDrawer);
   el['settings-close'].addEventListener('click', closeAllPopups);
+  document.getElementById('settings-save').addEventListener('click', function(){ saveSettings(); closeAllPopups(); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && !e.defaultPrevented && S.screen === 'menu') closeAllPopups();
+  });
   el['drawer-backdrop'].addEventListener('click', closeAllPopups);
   el['loadout-popup-btn'].addEventListener('click', openLoadoutPopup);
   el['maps-popup-btn'].addEventListener('click', openMapsPopup);
