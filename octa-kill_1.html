@@ -80,6 +80,28 @@
     letter-spacing:.1em;}
   .rank-progress-track{height:8px;width:100%;background:var(--card);border:1px solid var(--border);}
   .rank-progress-fill{height:100%;width:0%;background:var(--muted-foreground);transition:width 200ms ease,background 160ms ease;}
+  /* Trick or Treat: limited-time Halloween event */
+  #tot-popup-btn{border-color:#F36B21;color:#F36B21;box-shadow:0 0 14px rgba(243,107,33,.35);}
+  #tot-popup-btn:hover{border-color:#ff9a3c;color:#ff9a3c;box-shadow:0 0 20px rgba(243,107,33,.55);}
+  #tot-popup-btn.active{background:#F36B21;color:#1a0d05;animation:tot-glow 1.8s ease-in-out infinite;}
+  @keyframes tot-glow{ 0%,100%{box-shadow:0 0 10px rgba(243,107,33,.45);} 50%{box-shadow:0 0 24px rgba(168,85,247,.7);} }
+  .tot-popup-card{width:min(380px,94vw);text-align:center;
+    background:linear-gradient(165deg,#1d1030 0%,var(--background) 55%,#2a1608 100%);border-color:#5b2d82;}
+  .tot-eyebrow{margin:0 0 4px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#a855f7;}
+  .tot-title{margin:0 0 10px;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;
+    color:#F36B21;font-family:'Black Ops One',ui-sans-serif,system-ui,sans-serif;text-shadow:0 0 18px rgba(243,107,33,.45);}
+  .tot-pumpkin{margin:2px auto 8px;color:#F36B21;}
+  .tot-desc{margin:0 0 14px;font-size:12px;line-height:1.6;color:var(--muted-foreground);
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  .tot-desc b{color:var(--foreground);}
+  .tot-status{margin:0 0 12px;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted-foreground);}
+  .tot-status.on{color:#a855f7;font-weight:700;}
+  #tot-toggle-btn{justify-content:center;max-width:none;background:#F36B21;color:#1a0d05;border:none;font-weight:800;}
+  #tot-toggle-btn:hover{background:#ff9a3c;}
+  #tot-toggle-btn.leave{background:var(--card);color:var(--foreground);border:1px solid var(--border);}
+  .tot-hud{display:inline-block;margin:0 0 6px;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.12em;color:#F36B21;background:rgba(29,16,48,.82);border:1px solid #5b2d82;border-radius:999px;}
+  .tot-hud b{color:#c084fc;}
   .brand-row{display:flex;align-items:center;gap:12px;}
   .brand-badge{display:flex;align-items:center;justify-content:center;width:40px;height:40px;
     border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);}
@@ -553,6 +575,9 @@
     <button id="rank-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 52px);" title="Rank: Iron">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
     </button>
+    <button id="tot-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 104px);" title="Halloween Event: Trick or Treat">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 7c-1.2-2-2.6-3-4-3"/><path d="M12 7c4.4 0 8 2.9 8 7s-3.6 7-8 7-8-2.9-8-7 3.6-7 8-7z"/><path d="M12 7c-1.7 1.6-2.5 4.1-2.5 7s.8 5.4 2.5 7"/><path d="M12 7c1.7 1.6 2.5 4.1 2.5 7s-.8 5.4-2.5 7"/></svg>
+    </button>
     <div id="drawer-backdrop"></div>
 
     <div id="settings-drawer" class="settings-modal" role="dialog" aria-label="Settings">
@@ -685,6 +710,21 @@
       </div>
     </div>
 
+    <div id="tot-popup" class="popup-overlay">
+      <div class="popup-card tot-popup-card">
+        <div class="drawer-head">
+          <span class="section-label" style="margin:0;">Halloween Event</span>
+          <button id="tot-popup-close" class="drawer-close-btn">&times;</button>
+        </div>
+        <div class="tot-pumpkin"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 7c-1.2-2-2.6-3-4-3"/><path d="M12 7c4.4 0 8 2.9 8 7s-3.6 7-8 7-8-2.9-8-7 3.6-7 8-7z"/><path d="M12 7c-1.7 1.6-2.5 4.1-2.5 7s.8 5.4 2.5 7"/><path d="M12 7c1.7 1.6 2.5 4.1 2.5 7s-.8 5.4-2.5 7"/></svg></div>
+        <p class="tot-eyebrow">Limited-time special</p>
+        <p class="tot-title">Trick or Treat</p>
+        <p class="tot-desc">Your arsenal is cursed. Every <b>30 seconds</b> your primary, secondary and tactical are swapped for a random new set. Adapt or get spooked.</p>
+        <p id="tot-status" class="tot-status">Event inactive</p>
+        <button id="tot-toggle-btn" class="popup-trigger-btn">Join Event</button>
+      </div>
+    </div>
+
     <div id="cosmetics-popup" class="popup-overlay">
       <div class="popup-card cosmetics-card">
         <div class="drawer-head">
@@ -787,6 +827,7 @@
 
       <div id="top-vitals">
         <p id="clock">3:00</p>
+        <p id="tot-hud" class="tot-hud hidden">Trick or Treat <b id="tot-hud-time">0:30</b></p>
       </div>
 
       <div id="roster"><p class="lbl">Combatants</p><div id="roster-rows"></div></div>
@@ -1839,6 +1880,7 @@
    'account-guest-view','account-logged-in-view','account-username','account-password','account-error',
    'account-signup-btn','account-login-btn','account-logout-btn','account-current-username',
    'rank-popup','rank-popup-btn','rank-popup-close','rank-trophy-display','rank-name','rank-progress','rank-progress-fill',
+   'tot-popup','tot-popup-btn','tot-popup-close','tot-status','tot-toggle-btn','tot-hud','tot-hud-time',
    'settings-toggle','settings-close','drawer-backdrop','settings-drawer',
    'loadout-popup','loadout-popup-btn','loadout-popup-close','loadout-current-name',
    'maps-popup','maps-popup-btn','maps-popup-close','maps-current-name',
@@ -1964,7 +2006,8 @@
     feed:[], locked:false, paused:false,
     loadoutId:'assaulter', mapId:'arena', highGraphics:false, graphicsMode:'standard', slot:'primary',
     weaponState:{ primary:{ammo:0,reserve:0}, secondary:{ammo:0,reserve:0} },
-    tacticalReady:true, mouseHeld:false, aiming:false, crouching:false, spawnProtectedUntil:0
+    tacticalReady:true, mouseHeld:false, aiming:false, crouching:false, spawnProtectedUntil:0,
+    trickOrTreat:false, totArsenal:null, totNext:0
   };
 
   var timers = {countdown:null, tick:null};
@@ -1973,8 +2016,52 @@
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
   function getLoadout(){
+    if (S.totArsenal) return S.totArsenal;
     for (var i=0;i<LOADOUTS.length;i++){ if (LOADOUTS[i].id === S.loadoutId) return LOADOUTS[i]; }
     return LOADOUTS[0];
+  }
+
+  // ---- Trick or Treat (Halloween event): random arsenal every 30s ----
+  var TOT_INTERVAL = 30;
+  try { S.trickOrTreat = localStorage.getItem('octakill_tot') === '1'; } catch(e){}
+
+  function totActiveForMode(mode){ return S.trickOrTreat && modeBase(mode) !== 'gungame'; }
+
+  function rollTrickOrTreatArsenal(){
+    var keys = Object.keys(WEAPONS);
+    var prev = S.totArsenal;
+    var primary, secondary;
+    do { primary = keys[Math.floor(Math.random()*keys.length)]; } while (prev && primary === prev.primary);
+    do { secondary = keys[Math.floor(Math.random()*keys.length)]; } while (secondary === primary);
+    var tactical = LOADOUTS[Math.floor(Math.random()*LOADOUTS.length)].tactical;
+    S.totArsenal = {id:'trickortreat', name:'Trick or Treat', primary:primary, secondary:secondary, tactical:tactical};
+  }
+
+  function applyTrickOrTreatSwap(){
+    rollTrickOrTreatArsenal();
+    var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
+    S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
+    S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
+    S.tacticalReady = true; S.reloading = false; S.aiming = false;
+    if (S.slot === 'tactical') S.slot = 'primary';
+    updateAmmoDisplay(); updateTacticalDisplay();
+    if (three && three.updateWeaponVisual) three.updateWeaponVisual();
+    showToast((Math.random() < 0.5 ? 'Trick! ' : 'Treat! ') + pri.name + ' + ' + sec.name);
+  }
+
+  function updateTrickOrTreatHud(){
+    var on = !!S.totArsenal;
+    el['tot-hud'].classList.toggle('hidden', !on);
+    if (on) el['tot-hud-time'].textContent = '0:' + String(S.totNext).padStart(2,'0');
+  }
+
+  function renderTrickOrTreatPopup(){
+    el['tot-status'].textContent = S.trickOrTreat ? 'Event active \u2014 applies to your next match' : 'Event inactive';
+    el['tot-status'].classList.toggle('on', S.trickOrTreat);
+    el['tot-toggle-btn'].textContent = S.trickOrTreat ? 'Leave Event' : 'Join Event';
+    el['tot-toggle-btn'].classList.toggle('leave', S.trickOrTreat);
+    el['tot-popup-btn'].classList.toggle('active', S.trickOrTreat);
+    el['tot-popup-btn'].title = 'Halloween Event: Trick or Treat' + (S.trickOrTreat ? ' (active)' : '');
   }
   function getWeaponDef(slot){
     if (modeBase() === 'gungame' && slot === 'primary'){
@@ -1993,7 +2080,7 @@
     });
     S.screen = name;
     el['music-toggle'].classList.toggle('hidden', name === 'game');
-    if (name === 'menu'){ stopGameMusic(); startMenuMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.45; startCharPreviewLoop(); resizeCharPreview(); markMenuInteraction(); }
+    if (name === 'menu'){ S.totArsenal = null; stopGameMusic(); startMenuMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.45; startCharPreviewLoop(); resizeCharPreview(); markMenuInteraction(); }
     else if (name === 'game'){ stopMenuMusic(); startGameMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.72; stopCharPreviewLoop(); }
     else if (name === 'countdown-screen'){ stopMenuMusic(); stopCharPreviewLoop(); }
   }
@@ -2117,6 +2204,7 @@
     el['cosmetics-popup'].classList.remove('open');
     el['account-popup'].classList.remove('open');
     el['rank-popup'].classList.remove('open');
+    el['tot-popup'].classList.remove('open');
   }
   function openAccountPopup(){
     closeAllPopups();
@@ -2127,6 +2215,11 @@
     closeAllPopups();
     renderRankPopup();
     el['rank-popup'].classList.add('open');
+  }
+  function openTrickOrTreatPopup(){
+    closeAllPopups();
+    renderTrickOrTreatPopup();
+    el['tot-popup'].classList.add('open');
   }
   function showSettingsView(name){
     if (name !== 'customization' && rebindingAction){ rebindingAction = null; renderKeybinds(); }
@@ -2189,6 +2282,14 @@
   el['rank-popup-btn'].addEventListener('click', openRankPopup);
   el['rank-popup-close'].addEventListener('click', closeAllPopups);
   el['rank-popup'].addEventListener('click', function(e){ if (e.target === el['rank-popup']) closeAllPopups(); });
+  el['tot-popup-btn'].addEventListener('click', openTrickOrTreatPopup);
+  el['tot-popup-close'].addEventListener('click', closeAllPopups);
+  el['tot-popup'].addEventListener('click', function(e){ if (e.target === el['tot-popup']) closeAllPopups(); });
+  el['tot-toggle-btn'].addEventListener('click', function(){
+    S.trickOrTreat = !S.trickOrTreat;
+    try { localStorage.setItem('octakill_tot', S.trickOrTreat ? '1' : '0'); } catch(e){}
+    renderTrickOrTreatPopup();
+  });
   el['account-signup-btn'].addEventListener('click', handleSignUp);
   el['account-login-btn'].addEventListener('click', handleLogIn);
   el['account-logout-btn'].addEventListener('click', handleLogOut);
@@ -2216,6 +2317,7 @@
   updateModeLabel();
   updateCreditsDisplay();
   updateRankButtonTitle();
+  renderTrickOrTreatPopup();
   initCharPreview();
   window.addEventListener('resize', resizeCharPreview);
   el['menu'].addEventListener('pointerdown', markMenuInteraction);
@@ -2248,6 +2350,9 @@
     grantSpawnProtection();
     clearDamageIndicators();
     el['crouch-badge'].classList.add('hidden');
+    S.totArsenal = null; S.totNext = TOT_INTERVAL;
+    if (totActiveForMode(mode)) rollTrickOrTreatArsenal();
+    updateTrickOrTreatHud();
     var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
     S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
     S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
@@ -2260,7 +2365,7 @@
       gungame:'Every kill upgrades your gun.', duel:'One on one. Nowhere to hide.',
       deathmatch:'No respawns. Make it count.', deathmatch_team:'No respawns. Hold the line together.'
     };
-    el['countdown-sub'].textContent = subtitles[mode] || 'No allies. No mercy.';
+    el['countdown-sub'].textContent = S.totArsenal ? 'Trick or Treat! Your arsenal changes every 30 seconds.' : (subtitles[mode] || 'No allies. No mercy.');
     el['feed'].innerHTML = '';
     updateAmmoDisplay(); updateHpDisplay(); updateRoster(); updateClock(); updateTacticalDisplay(); updateObjectiveHud();
     showScreen('countdown-screen');
@@ -2293,6 +2398,11 @@
     S.time -= 1;
     if (S.time <= 0){ S.time = 0; updateClock(); endMatch(); return; }
     updateClock();
+    if (S.totArsenal){
+      S.totNext -= 1;
+      if (S.totNext <= 0){ S.totNext = TOT_INTERVAL; applyTrickOrTreatSwap(); }
+      updateTrickOrTreatHud();
+    }
     if (modeBase() === 'koth' && three){
       var inHillAll = [];
       S.fighters.forEach(function(f, idx){
@@ -4609,7 +4719,7 @@
     if (three.leftArmGroup) three.leftArmGroup.visible = S.highGraphics && !scopedNow && playerAlive && !isTacticalSlot && !!(wCur && wCur.twoHanded);
 
     if (three.reloadFX){
-      var shaking = S.loadoutId === 'gunner' && aimingNow && S.mouseHeld && playerAlive;
+      var shaking = getLoadout().id === 'gunner' && aimingNow && S.mouseHeld && playerAlive;
       var shakeWg = three.reloadFX.weaponGroup;
       if (shaking){
         shakeWg.position.x += (Math.random()-0.5)*0.014;
