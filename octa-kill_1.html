@@ -277,7 +277,18 @@
   #countdown-screen, #results{display:flex;align-items:center;justify-content:center;text-align:center;
     background:var(--background);overflow-y:auto;padding:1.5rem 1rem;}
   #countdown-screen p.eyebrow{font-size:11px;}
-  #countdown-num{margin-top:1.25rem;font-size:9rem;font-weight:900;}
+  .load-wrap{position:relative;width:min(420px,80vw);margin:2.75rem auto 0;padding-top:46px;}
+  .load-track{height:12px;border:1px solid var(--border);border-radius:999px;background:var(--card);overflow:hidden;}
+  .load-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--primary-hover));
+    box-shadow:0 0 12px rgba(243,107,33,.45);}
+  .load-pct{margin:10px 0 0;font-size:12px;letter-spacing:.2em;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
+  .load-pumpkin{position:absolute;top:0;left:0%;transform:translateX(-50%);color:#F36B21;line-height:0;
+    filter:drop-shadow(0 0 10px rgba(243,107,33,.55));}
+  .load-pumpkin svg{animation:pumpkin-bob 700ms ease-in-out infinite;}
+  @keyframes pumpkin-bob{ 0%,100%{transform:translateY(0) rotate(-6deg);} 50%{transform:translateY(-6px) rotate(6deg);} }
+  #countdown-screen.tot .load-track{border-color:#5b2d82;}
+  #countdown-screen.tot .load-fill{background:linear-gradient(90deg,#F36B21,#a855f7);box-shadow:0 0 14px rgba(168,85,247,.5);}
+  @media (prefers-reduced-motion:reduce){ .load-pumpkin svg{animation:none;} }
   #countdown-sub{margin-top:1rem;font-size:14px;color:var(--muted-foreground);}
 
   #results{padding:24px;}
@@ -302,7 +313,6 @@
   .btn-primary:hover{background:var(--primary-hover);}
 
   @media (max-width:480px), (max-height:600px){
-    #countdown-num{font-size:5.5rem;}
     .results-card{padding:1.25rem;}
     .results-card h1{font-size:1.9rem;}
     #results{padding:12px;}
@@ -790,7 +800,11 @@
   <section id="countdown-screen" class="screen hidden">
     <div>
       <p class="eyebrow accent" style="text-transform:uppercase;letter-spacing:.4em;">Deploying 8 combatants</p>
-      <p id="countdown-num">3</p>
+      <div class="load-wrap">
+        <div id="load-pumpkin" class="load-pumpkin hidden"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 7c-1.2-2-2.6-3-4-3"/><path d="M12 7c4.4 0 8 2.9 8 7s-3.6 7-8 7-8-2.9-8-7 3.6-7 8-7z"/><path d="M12 7c-1.7 1.6-2.5 4.1-2.5 7s.8 5.4 2.5 7"/><path d="M12 7c1.7 1.6 2.5 4.1 2.5 7s-.8 5.4-2.5 7"/></svg></div>
+        <div class="load-track" role="progressbar" aria-label="Loading into match" aria-valuemin="0" aria-valuemax="100"><div id="load-fill" class="load-fill"></div></div>
+        <p id="load-pct" class="load-pct">LOADING INTO MATCH 0%</p>
+      </div>
       <p id="countdown-sub">No allies. No mercy.</p>
       <p class="epilepsy-notice">Contains flashing lights, muzzle flashes, and bright explosions — viewer discretion advised for photosensitive players.</p>
     </div>
@@ -1885,7 +1899,7 @@
    'loadout-popup','loadout-popup-btn','loadout-popup-close','loadout-current-name',
    'maps-popup','maps-popup-btn','maps-popup-close','maps-current-name',
    'mode-popup','mode-popup-btn','mode-popup-close','mode-current-name','mode-list-popup','play-btn',
-   'countdown-num','countdown-sub',
+   'countdown-sub','load-fill','load-pct','load-pumpkin',
    'winner-name','results-list','rematch-btn','menu-btn','three-canvas','clock','team-score',
    'orange-score','blue-score','ffa-target','roster-rows','feed','crosshair','crosshair-wrap','damage-vignette','damage-indicators','white-flash','no-aim-toast','scope-overlay','hp-num','hp-bar',
    'ammo-num','reserve-num','reload-indicator','eliminated','eliminated-sub','crouch-badge','spawn-protection-badge',
@@ -2002,7 +2016,7 @@
 
   var S = {
     screen:'menu', mode:'ffa', modeChoice:'ffa', callsign:defaultPlayerName, fighters:[],
-    time:180, countdown:3, reloading:false, reloadStart:0,
+    time:180, reloading:false, reloadStart:0,
     feed:[], locked:false, paused:false,
     loadoutId:'assaulter', mapId:'arena', highGraphics:false, graphicsMode:'standard', slot:'primary',
     weaponState:{ primary:{ammo:0,reserve:0}, secondary:{ammo:0,reserve:0} },
@@ -2356,7 +2370,7 @@
     var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
     S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
     S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
-    S.feed = []; S.countdown = 3;
+    S.feed = [];
     el['team-score'].classList.toggle('hidden', !isTeamMode(mode));
     el['ffa-target'].classList.toggle('hidden', isTeamMode(mode));
     var subtitles = {
@@ -2368,17 +2382,28 @@
     el['countdown-sub'].textContent = S.totArsenal ? 'Trick or Treat! Your arsenal changes every 30 seconds.' : (subtitles[mode] || 'No allies. No mercy.');
     el['feed'].innerHTML = '';
     updateAmmoDisplay(); updateHpDisplay(); updateRoster(); updateClock(); updateTacticalDisplay(); updateObjectiveHud();
+    el['countdown-screen'].classList.toggle('tot', !!S.totArsenal);
+    el['load-pumpkin'].classList.toggle('hidden', !S.totArsenal);
+    setLoadProgress(0);
     showScreen('countdown-screen');
-    el['countdown-num'].textContent = String(S.countdown);
+    var loadStart = performance.now();
     timers.countdown = setInterval(function(){
-      S.countdown -= 1;
-      if (S.countdown <= 0){
+      var t = Math.min(1, (performance.now() - loadStart) / LOAD_DURATION_MS);
+      setLoadProgress(t);
+      if (t >= 1){
         clearInterval(timers.countdown);
         enterPlaying();
-      } else {
-        el['countdown-num'].textContent = String(S.countdown);
       }
-    }, 800);
+    }, 50);
+  }
+
+  var LOAD_DURATION_MS = 5000;
+  function setLoadProgress(t){
+    var pct = Math.round(t * 100);
+    el['load-fill'].style.width = pct + '%';
+    el['load-pumpkin'].style.left = pct + '%';
+    el['load-pct'].textContent = 'LOADING INTO MATCH ' + pct + '%';
+    el['load-fill'].parentNode.setAttribute('aria-valuenow', String(pct));
   }
 
   function enterPlaying(){
