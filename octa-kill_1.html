@@ -99,6 +99,18 @@
   #tot-toggle-btn{justify-content:center;max-width:none;background:#F36B21;color:#1a0d05;border:none;font-weight:800;}
   #tot-toggle-btn:hover{background:#ff9a3c;}
   #tot-toggle-btn.leave{background:var(--card);color:var(--foreground);border:1px solid var(--border);}
+  .tot-challenge{display:block;width:100%;margin:0 0 14px;padding:12px 14px;text-align:left;cursor:pointer;
+    border:1px solid #5b2d82;border-radius:12px;background:rgba(168,85,247,.10);color:var(--foreground);font-family:inherit;}
+  .tot-challenge:hover{border-color:#a855f7;background:rgba(168,85,247,.18);}
+  .tot-challenge-head{display:flex;justify-content:space-between;gap:8px;font-size:10px;text-transform:uppercase;
+    letter-spacing:.16em;color:#c084fc;}
+  .tot-challenge-title{display:block;margin:6px 0 2px;font-size:14px;font-weight:800;color:var(--foreground);
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  .tot-challenge-reward{display:block;font-size:11px;color:var(--muted-foreground);}
+  .tot-challenge-track{display:block;height:6px;margin:10px 0 6px;border-radius:999px;background:var(--card);overflow:hidden;}
+  .tot-challenge-fill{display:block;height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#F36B21,#a855f7);}
+  .tot-challenge-progress{display:block;font-size:11px;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
+  .tot-challenge.done .tot-challenge-progress{color:#c084fc;font-weight:700;}
   .tot-hud{display:inline-block;margin:0 0 6px;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:.12em;color:#F36B21;background:rgba(29,16,48,.82);border:1px solid #5b2d82;border-radius:999px;}
   .tot-hud b{color:#c084fc;}
@@ -730,6 +742,13 @@
         <p class="tot-eyebrow">Limited-time special</p>
         <p class="tot-title">Trick or Treat</p>
         <p class="tot-desc">Your arsenal is cursed. Every <b>30 seconds</b> your primary, secondary and tactical are swapped for a random new set. Adapt or get spooked.</p>
+        <button id="tot-challenge-btn" class="tot-challenge" title="View the Pumpkin skin in Cosmetics">
+          <span class="tot-challenge-head"><span>Challenge</span><span id="tot-challenge-deadline">Ends Oct. 31</span></span>
+          <span class="tot-challenge-title">Win 10 matches by Oct. 31</span>
+          <span class="tot-challenge-reward">Reward: Pumpkin skin</span>
+          <span class="tot-challenge-track"><span id="tot-challenge-fill" class="tot-challenge-fill"></span></span>
+          <span id="tot-challenge-progress" class="tot-challenge-progress">0 / 10 wins</span>
+        </button>
         <p id="tot-status" class="tot-status">Event inactive</p>
         <button id="tot-toggle-btn" class="popup-trigger-btn">Join Event</button>
       </div>
@@ -817,6 +836,7 @@
       <h1 id="winner-name">— wins</h1>
       <div id="results-list"></div>
       <p id="credits-earned-line" class="credits-earned-line hidden">+<span id="credits-earned-amt">0</span> Credits earned</p>
+      <p id="tot-result-line" class="credits-earned-line hidden"></p>
       <div class="results-actions">
         <button class="btn-primary" id="rematch-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
@@ -1214,6 +1234,8 @@
     {id:'uni_arctic', category:'uniform', label:'Uniform', name:'Arctic White', cost:80, color:'#d8d6cc'},
     {id:'uni_shadow', category:'uniform', label:'Uniform', name:'Shadow Black', cost:100, color:'#1c1d1a'},
     {id:'uni_gold', category:'uniform', label:'Uniform', name:'Gold Elite', cost:220, color:'#c9a227'},
+    {id:'uni_pumpkin', category:'uniform', label:'Uniform', name:'Pumpkin Skin', cost:0, color:'#2a1e3a', eventReward:true,
+      swatch:'linear-gradient(135deg,#F36B21 0%,#F36B21 50%,#2a1e3a 50%,#2a1e3a 100%)'},
     {id:'helm_none', category:'helmet', label:'Helmet', name:'No Helmet', cost:0},
     {id:'helm_combat', category:'helmet', label:'Helmet', name:'Combat Helmet', cost:70},
     {id:'helm_beret', category:'helmet', label:'Helmet', name:'Tactical Beret', cost:50},
@@ -1226,7 +1248,8 @@
     credits:0,
     owned:['uni_default','helm_none','visor_amber'],
     equipped:{uniform:'uni_default', helmet:'helm_none', visor:'visor_amber'},
-    matchWins:0
+    matchWins:0,
+    totWins:0
   };
 
   function loadProfile(){
@@ -1236,6 +1259,7 @@
         var p = JSON.parse(raw);
         if (p && p.owned && p.equipped && typeof p.credits === 'number'){
           if (typeof p.matchWins !== 'number') p.matchWins = 0;
+          if (typeof p.totWins !== 'number') p.totWins = 0;
           return p;
         }
       }
@@ -1247,6 +1271,17 @@
     pushCloudProfile();
   }
   var PROFILE = loadProfile();
+
+  // ---- Trick or Treat challenge: win 10 matches by Oct 31 to unlock the Pumpkin skin ----
+  var TOT_WINS_GOAL = 10;
+  var TOT_CHALLENGE_END = new Date(2026, 9, 31, 23, 59, 59, 999).getTime();
+  var lastMatchTotResult = null;
+  function totChallengeOpen(){ return Date.now() <= TOT_CHALLENGE_END; }
+  function hasPumpkinSkin(){ return PROFILE.owned.indexOf('uni_pumpkin') !== -1; }
+  function syncPumpkinUnlock(){
+    if ((PROFILE.totWins || 0) >= TOT_WINS_GOAL && !hasPumpkinSkin()) PROFILE.owned.push('uni_pumpkin');
+  }
+  syncPumpkinUnlock();
 
   // ---- Ranks ----
   var RANKS = [
@@ -1330,11 +1365,13 @@
     PROFILE.owned = row.owned;
     PROFILE.equipped = row.equipped;
     PROFILE.matchWins = typeof row.match_wins === 'number' ? row.match_wins : 0;
+    syncPumpkinUnlock();
     try { localStorage.setItem('octakill_profile', JSON.stringify(PROFILE)); } catch(e){}
     updateCreditsDisplay();
     updateRankButtonTitle();
     if (el['cosmetics-popup'].classList.contains('open')) renderCosmeticsShop();
     if (el['rank-popup'].classList.contains('open')) renderRankPopup();
+    renderTrickOrTreatPopup();
     buildCharModel();
   }
 
@@ -1512,12 +1549,17 @@
       items.forEach(function(item){
         var owned = PROFILE.owned.indexOf(item.id) !== -1;
         var equipped = PROFILE.equipped[cat] === item.id;
-        var swatch = item.color ? '<div class="cosmetic-swatch" style="background:'+item.color+';"></div>' : '<div class="cosmetic-swatch" style="background:repeating-linear-gradient(45deg,var(--border),var(--border) 4px,transparent 4px,transparent 8px);"></div>';
+        var swatchBg = item.swatch || item.color;
+        var swatch = swatchBg ? '<div class="cosmetic-swatch" style="background:'+swatchBg+';"></div>' : '<div class="cosmetic-swatch" style="background:repeating-linear-gradient(45deg,var(--border),var(--border) 4px,transparent 4px,transparent 8px);"></div>';
         var btn;
         if (equipped) btn = '<button disabled>Equipped</button>';
         else if (owned) btn = '<button class="equip-btn" data-action="equip" data-id="'+item.id+'" data-cat="'+cat+'">Equip</button>';
+        else if (item.eventReward) btn = '<button disabled>'+(totChallengeOpen() ? 'Win 10 matches by Oct. 31' : 'Event ended')+'</button>';
         else btn = '<button data-action="buy" data-id="'+item.id+'" data-cat="'+cat+'" data-cost="'+item.cost+'"'+(PROFILE.credits<item.cost?' disabled':'')+'>Buy — '+item.cost+'</button>';
-        html += '<div class="cosmetic-item'+(equipped?' equipped':'')+'">'+swatch+'<h4>'+item.name+'</h4><p>'+(item.cost>0?item.cost+' credits':'Starter item')+'</p>'+btn+'</div>';
+        var priceLine = item.eventReward
+          ? 'Halloween reward' + (owned ? '' : ' \u00b7 ' + Math.min(PROFILE.totWins||0, TOT_WINS_GOAL) + '/' + TOT_WINS_GOAL + ' wins')
+          : (item.cost>0 ? item.cost+' credits' : 'Starter item');
+        html += '<div class="cosmetic-item'+(equipped?' equipped':'')+'">'+swatch+'<h4>'+item.name+'</h4><p>'+priceLine+'</p>'+btn+'</div>';
       });
       html += '</div>';
     });
@@ -1569,6 +1611,12 @@
       reward = idx===0 ? 100 : idx===1 ? 50 : idx===2 ? 25 : 0;
     }
     if (won) PROFILE.matchWins = (PROFILE.matchWins || 0) + 1;
+    lastMatchTotResult = null;
+    if (won && totChallengeOpen() && !hasPumpkinSkin()){
+      PROFILE.totWins = (PROFILE.totWins || 0) + 1;
+      syncPumpkinUnlock();
+      lastMatchTotResult = hasPumpkinSkin() ? 'unlocked' : 'progress';
+    }
     if (reward > 0 || won){
       PROFILE.credits += reward;
       saveProfile();
@@ -1630,6 +1678,12 @@
     var skinMat = new THREE.MeshStandardMaterial({color:'#e4e1d6', flatShading:true, roughness:0.55});
     var eyeMat = new THREE.MeshStandardMaterial({color:'#171816', flatShading:true, emissive:(visor&&visor.color)||'#ffd23f', emissiveIntensity:0.85});
     var bootMat = new THREE.MeshStandardMaterial({color:'#232420', flatShading:true, roughness:0.7});
+    var isPumpkin = uni.id === 'uni_pumpkin';
+    var headMat = skinMat;
+    if (isPumpkin){
+      headMat = new THREE.MeshStandardMaterial({color:'#a8400a', flatShading:true, roughness:0.6});
+      eyeMat = new THREE.MeshStandardMaterial({color:'#2a1405', flatShading:true, emissive:'#ffb020', emissiveIntensity:1.4});
+    }
 
     function part(geo,x,y,z,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); charModel.add(m); return m; }
     function angledPart(geo,x,y,z,rx,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.x = rx; charModel.add(m); return m; }
@@ -1637,8 +1691,17 @@
     part(new THREE.BoxGeometry(0.4,0.5,0.24), 0,0.23,0, uniMat);
     var headGeo = new THREE.CylinderGeometry(0.20,0.20,0.16,8);
     headGeo.rotateY(Math.PI/8);
-    var head = part(headGeo, 0,0.70,0, skinMat);
+    var head = part(headGeo, 0,0.70,0, headMat);
     head.rotateX(Math.PI/2);
+    if (isPumpkin){
+      var stemMat = new THREE.MeshStandardMaterial({color:'#3d6b2f', flatShading:true, roughness:0.8});
+      var stem = part(new THREE.CylinderGeometry(0.022,0.034,0.09,5), 0.01,0.93,0, stemMat);
+      stem.rotation.z = -0.25;
+      var ridgeMat = new THREE.MeshStandardMaterial({color:'#6e2a06', flatShading:true, roughness:0.7});
+      part(new THREE.BoxGeometry(0.02,0.30,0.17), -0.11,0.70,0, ridgeMat);
+      part(new THREE.BoxGeometry(0.02,0.30,0.17), 0.11,0.70,0, ridgeMat);
+      part(new THREE.BoxGeometry(0.15,0.035,0.045), 0,0.635,0.135, eyeMat);
+    }
     part(new THREE.BoxGeometry(0.05,0.05,0.045), -0.07,0.72,0.135, eyeMat);
     part(new THREE.BoxGeometry(0.05,0.05,0.045), 0.07,0.72,0.135, eyeMat);
     angledPart(new THREE.BoxGeometry(0.115,0.24,0.115), -0.24,0.36,0.09, -0.55, uniMat);
@@ -1895,6 +1958,7 @@
    'account-signup-btn','account-login-btn','account-logout-btn','account-current-username',
    'rank-popup','rank-popup-btn','rank-popup-close','rank-trophy-display','rank-name','rank-progress','rank-progress-fill',
    'tot-popup','tot-popup-btn','tot-popup-close','tot-status','tot-toggle-btn','tot-hud','tot-hud-time',
+   'tot-challenge-btn','tot-challenge-deadline','tot-challenge-fill','tot-challenge-progress','tot-result-line',
    'settings-toggle','settings-close','drawer-backdrop','settings-drawer',
    'loadout-popup','loadout-popup-btn','loadout-popup-close','loadout-current-name',
    'maps-popup','maps-popup-btn','maps-popup-close','maps-current-name',
@@ -2075,7 +2139,18 @@
     el['tot-toggle-btn'].textContent = S.trickOrTreat ? 'Leave Event' : 'Join Event';
     el['tot-toggle-btn'].classList.toggle('leave', S.trickOrTreat);
     el['tot-popup-btn'].classList.toggle('active', S.trickOrTreat);
-    el['tot-popup-btn'].title = 'Halloween Event: Trick or Treat' + (S.trickOrTreat ? ' (active)' : '');
+    var wins = Math.min(PROFILE.totWins || 0, TOT_WINS_GOAL);
+    var done = hasPumpkinSkin();
+    var open = totChallengeOpen();
+    var daysLeft = Math.max(0, Math.ceil((TOT_CHALLENGE_END - Date.now()) / 86400000));
+    el['tot-popup-btn'].title = 'Trick or Treat: ' + (done ? 'Pumpkin skin unlocked'
+      : open ? 'Win 10 matches by Oct. 31 for the Pumpkin skin (' + wins + '/' + TOT_WINS_GOAL + ')' : 'Event ended');
+    el['tot-challenge-btn'].classList.toggle('done', done);
+    el['tot-challenge-deadline'].textContent = done ? 'Complete' : open
+      ? (daysLeft <= 1 ? 'Ends today' : daysLeft + ' days left') : 'Ended';
+    el['tot-challenge-fill'].style.width = (done ? 100 : wins / TOT_WINS_GOAL * 100) + '%';
+    el['tot-challenge-progress'].textContent = done ? 'Unlocked \u2014 equip it in Cosmetics'
+      : wins + ' / ' + TOT_WINS_GOAL + ' wins';
   }
   function getWeaponDef(slot){
     if (modeBase() === 'gungame' && slot === 'primary'){
@@ -2299,6 +2374,7 @@
   el['tot-popup-btn'].addEventListener('click', openTrickOrTreatPopup);
   el['tot-popup-close'].addEventListener('click', closeAllPopups);
   el['tot-popup'].addEventListener('click', function(e){ if (e.target === el['tot-popup']) closeAllPopups(); });
+  el['tot-challenge-btn'].addEventListener('click', openCosmeticsPopup);
   el['tot-toggle-btn'].addEventListener('click', function(){
     S.trickOrTreat = !S.trickOrTreat;
     try { localStorage.setItem('octakill_tot', S.trickOrTreat ? '1' : '0'); } catch(e){}
@@ -2832,6 +2908,9 @@
     var earned = awardMatchCredits(sorted, forcedWinnerId);
     el['credits-earned-line'].classList.toggle('hidden', earned <= 0);
     el['credits-earned-amt'].textContent = earned;
+    el['tot-result-line'].classList.toggle('hidden', !lastMatchTotResult);
+    if (lastMatchTotResult === 'unlocked') el['tot-result-line'].textContent = 'Pumpkin skin unlocked! Equip it in Cosmetics.';
+    else if (lastMatchTotResult === 'progress') el['tot-result-line'].textContent = 'Trick or Treat challenge: ' + PROFILE.totWins + '/' + TOT_WINS_GOAL + ' wins';
     showScreen('results');
   }
 
