@@ -745,7 +745,7 @@
         <button id="tot-challenge-btn" class="tot-challenge" title="View the Pumpkin skin in Cosmetics">
           <span class="tot-challenge-head"><span>Challenge</span><span id="tot-challenge-deadline">Ends Oct. 31</span></span>
           <span class="tot-challenge-title">Win 10 matches by Oct. 31</span>
-          <span class="tot-challenge-reward">Reward: Pumpkin skin</span>
+          <span class="tot-challenge-reward">Reward: Pumpkin skin &middot; only wins with the event on count</span>
           <span class="tot-challenge-track"><span id="tot-challenge-fill" class="tot-challenge-fill"></span></span>
           <span id="tot-challenge-progress" class="tot-challenge-progress">0 / 10 wins</span>
         </button>
@@ -1557,7 +1557,7 @@
         else if (item.eventReward) btn = '<button disabled>'+(totChallengeOpen() ? 'Win 10 matches by Oct. 31' : 'Event ended')+'</button>';
         else btn = '<button data-action="buy" data-id="'+item.id+'" data-cat="'+cat+'" data-cost="'+item.cost+'"'+(PROFILE.credits<item.cost?' disabled':'')+'>Buy — '+item.cost+'</button>';
         var priceLine = item.eventReward
-          ? 'Halloween reward' + (owned ? '' : ' \u00b7 ' + Math.min(PROFILE.totWins||0, TOT_WINS_GOAL) + '/' + TOT_WINS_GOAL + ' wins')
+          ? 'Halloween reward' + (owned ? '' : ' \u00b7 ' + Math.min(PROFILE.totWins||0, TOT_WINS_GOAL) + '/' + TOT_WINS_GOAL + ' event wins')
           : (item.cost>0 ? item.cost+' credits' : 'Starter item');
         html += '<div class="cosmetic-item'+(equipped?' equipped':'')+'">'+swatch+'<h4>'+item.name+'</h4><p>'+priceLine+'</p>'+btn+'</div>';
       });
@@ -1612,10 +1612,13 @@
     }
     if (won) PROFILE.matchWins = (PROFILE.matchWins || 0) + 1;
     lastMatchTotResult = null;
+    // Only wins in matches played with the Trick or Treat event on count toward the Pumpkin skin
     if (won && totChallengeOpen() && !hasPumpkinSkin()){
-      PROFILE.totWins = (PROFILE.totWins || 0) + 1;
-      syncPumpkinUnlock();
-      lastMatchTotResult = hasPumpkinSkin() ? 'unlocked' : 'progress';
+      if (S.totArsenal){
+        PROFILE.totWins = (PROFILE.totWins || 0) + 1;
+        syncPumpkinUnlock();
+        lastMatchTotResult = hasPumpkinSkin() ? 'unlocked' : 'progress';
+      } else if (!S.trickOrTreat) lastMatchTotResult = 'hint';
     }
     if (reward > 0 || won){
       PROFILE.credits += reward;
@@ -2144,13 +2147,13 @@
     var open = totChallengeOpen();
     var daysLeft = Math.max(0, Math.ceil((TOT_CHALLENGE_END - Date.now()) / 86400000));
     el['tot-popup-btn'].title = 'Trick or Treat: ' + (done ? 'Pumpkin skin unlocked'
-      : open ? 'Win 10 matches by Oct. 31 for the Pumpkin skin (' + wins + '/' + TOT_WINS_GOAL + ')' : 'Event ended');
+      : open ? 'Win 10 matches with the event on by Oct. 31 for the Pumpkin skin (' + wins + '/' + TOT_WINS_GOAL + ')' : 'Event ended');
     el['tot-challenge-btn'].classList.toggle('done', done);
     el['tot-challenge-deadline'].textContent = done ? 'Complete' : open
       ? (daysLeft <= 1 ? 'Ends today' : daysLeft + ' days left') : 'Ended';
     el['tot-challenge-fill'].style.width = (done ? 100 : wins / TOT_WINS_GOAL * 100) + '%';
     el['tot-challenge-progress'].textContent = done ? 'Unlocked \u2014 equip it in Cosmetics'
-      : wins + ' / ' + TOT_WINS_GOAL + ' wins';
+      : wins + ' / ' + TOT_WINS_GOAL + ' event wins';
   }
   function getWeaponDef(slot){
     if (modeBase() === 'gungame' && slot === 'primary'){
@@ -2911,6 +2914,7 @@
     el['tot-result-line'].classList.toggle('hidden', !lastMatchTotResult);
     if (lastMatchTotResult === 'unlocked') el['tot-result-line'].textContent = 'Pumpkin skin unlocked! Equip it in Cosmetics.';
     else if (lastMatchTotResult === 'progress') el['tot-result-line'].textContent = 'Trick or Treat challenge: ' + PROFILE.totWins + '/' + TOT_WINS_GOAL + ' wins';
+    else if (lastMatchTotResult === 'hint') el['tot-result-line'].textContent = 'Join the Trick or Treat event to count wins toward the Pumpkin skin';
     showScreen('results');
   }
 
