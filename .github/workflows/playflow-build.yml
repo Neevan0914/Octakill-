@@ -1,0 +1,20 @@
+name: PlayFlow server build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - run: ./scripts/build-playflow.sh
+      # Downloads as a zip wrapping Server.x86_64 directly.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: octakill-server
+          path: build/server/Server.x86_64
