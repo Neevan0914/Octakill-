@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,75 +12,60 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Online Free For All. The server keeps rooms of up to maxPlayers, relays
-// movement/shots/effects between players and keeps the scoreboard. Each
-// client is authoritative for its own health: shooters send "hit" to their
-// victim, and a victim that dies reports "died" so the server can score it.
+// Matchmaking and relay for online matches.
+//
+// A player queues for a game mode. Players queueing for the same mode share
+// a lobby that waits up to lobbyWait for more people. When the wait ends the
+// lobby starts if it has 2+ players (the game fills the remaining slots with
+// bots); a lone player is told to play solo. Once started, the server only
+// relays messages: the lobby's host client runs the bots and the match rules,
+// and if the host leaves (or yields) the next player takes over.
 
 const (
-	maxPlayers   = 8 // the game has 7 opponent models + yourself
-	killTarget   = 15
-	roundLength  = 180 * time.Second
-	maxMsgBytes  = 4096
-	maxHitDamage = 250
-	sendBuffer   = 256
+	lobbyWait   = 10 * time.Second
+	maxMsgBytes = 8192
+	sendBuffer  = 512
 )
 
-var (
-	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		// The game page may be hosted elsewhere (GitHub Pages, itch.io, ...).
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
-	roomNameRe = regexp.MustCompile(`[^a-z0-9_-]`)
-	colorRe    = regexp.MustCompile(`^#[0-9a-fA-F]{3,8}$`)
-	mapIDRe    = regexp.MustCompile(`^[a-z]{1,16}$`)
-)
-
-type player struct {
-	id     string
-	name   string
-	kills  int
-	deaths int
-	send   chan []byte
-	room   *room
+// Players per match for each mode, matching the game's lobby sizes.
+var modeCaps = map[string]int{
+	"ffa": 8, "team": 8, "koth": 8, "koth_team": 8, "gungame": 8,
+	"deathmatch": 8, "deathmatch_team": 8, "duel": 2,
 }
 
-type room struct {
-	name     string
-	mapID    string
-	roundEnd time.Time
-	players  map[string]*player
-	order    []string // join order, used for stable scoreboards
-	nextID   int
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	// The game page may be hosted elsewhere (GitHub Pages, itch.io, ...).
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
+
+type player struct {
+	id    string
+	name  string
+	send  chan []byte
+	lobby *lobby
+}
+
+type lobby struct {
+	mode     string
+	cap      int
+	started  bool
+	deadline time.Time
+	players  []*player
+	host     *player
 }
 
 type hub struct {
-	mu    sync.Mutex
-	rooms map[string]*room
+	mu      sync.Mutex
+	nextID  int
+	waiting map[string]*lobby // mode -> lobby still collecting players
 }
 
 func newHub() *hub {
-	h := &hub{rooms: map[string]*room{}}
-	go h.roundTimer()
+	h := &hub{waiting: map[string]*lobby{}}
+	go h.lobbyTimer()
 	return h
-}
-
-type scoreRow struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Kills  int    `json:"k"`
-	Deaths int    `json:"d"`
-}
-
-func (r *room) scores() []scoreRow {
-	rows := make([]scoreRow, 0, len(r.order))
-	for _, id := range r.order {
-		p := r.players[id]
-		rows = append(rows, scoreRow{p.id, p.name, p.kills, p.deaths})
-	}
-	return rows
 }
 
 func encode(v any) []byte {
@@ -95,58 +79,67 @@ func encode(v any) []byte {
 func (p *player) deliver(msg []byte) {
 	select {
 	case p.send <- msg:
-	default: // client too slow; drop rather than stall the room
+	default: // client too slow; drop rather than stall the lobby
 	}
 }
 
-// broadcast must be called with h.mu held.
-func (r *room) broadcast(msg []byte, except *player) {
-	for _, p := range r.players {
+// The methods below must be called with h.mu held.
+
+func (l *lobby) broadcast(msg []byte, except *player) {
+	for _, p := range l.players {
 		if p != except {
 			p.deliver(msg)
 		}
 	}
 }
 
-func (r *room) resetRound() {
-	r.roundEnd = time.Now().Add(roundLength)
-	for _, p := range r.players {
-		p.kills, p.deaths = 0, 0
-	}
-}
-
-// endRound must be called with h.mu held.
-func (r *room) endRound(winner string) {
-	r.broadcast(encode(map[string]any{"t": "end", "w": winner, "players": r.scores()}), nil)
-	r.resetRound()
-}
-
-func (r *room) leader() string {
-	best, bestKills := "", -1
-	for _, id := range r.order {
-		if p := r.players[id]; p.kills > bestKills {
-			best, bestKills = id, p.kills
+func (l *lobby) find(id string) *player {
+	for _, p := range l.players {
+		if p.id == id {
+			return p
 		}
 	}
-	return best
+	return nil
 }
 
-func (h *hub) roundTimer() {
-	for range time.Tick(time.Second) {
+func (l *lobby) sendStatus() {
+	wait := int(time.Until(l.deadline).Seconds() + 0.999)
+	l.broadcast(encode(map[string]any{"t": "lobby", "n": len(l.players), "cap": l.cap, "wait": wait}), nil)
+}
+
+func (h *hub) start(l *lobby) {
+	delete(h.waiting, l.mode)
+	l.started = true
+	l.host = l.players[0]
+	roster := make([]map[string]string, 0, len(l.players))
+	for _, p := range l.players {
+		roster = append(roster, map[string]string{"id": p.id, "name": p.name})
+	}
+	for _, p := range l.players {
+		p.deliver(encode(map[string]any{"t": "start", "you": p.id, "host": l.host.id, "mode": l.mode, "players": roster}))
+	}
+	log.Printf("match started: %s with %d players", l.mode, len(l.players))
+}
+
+func (h *hub) lobbyTimer() {
+	for range time.Tick(250 * time.Millisecond) {
 		h.mu.Lock()
-		for _, r := range h.rooms {
-			if len(r.players) > 0 && time.Now().After(r.roundEnd) {
-				r.endRound(r.leader())
+		for mode, l := range h.waiting {
+			if time.Now().Before(l.deadline) {
+				continue
+			}
+			if len(l.players) >= 2 {
+				h.start(l)
+			} else {
+				delete(h.waiting, mode)
+				for _, p := range l.players {
+					p.lobby = nil
+					p.deliver(encode(map[string]any{"t": "solo"}))
+				}
 			}
 		}
 		h.mu.Unlock()
 	}
-}
-
-type joinMsg struct {
-	Name string `json:"name"`
-	Room string `json:"room"`
-	Map  string `json:"map"`
 }
 
 func cleanName(s string) string {
@@ -165,134 +158,104 @@ func cleanName(s string) string {
 	return s
 }
 
-func cleanRoom(s string) string {
-	s = roomNameRe.ReplaceAllString(strings.ToLower(s), "")
-	if len(s) > 24 {
-		s = s[:24]
-	}
-	if s == "" {
-		s = "public"
-	}
-	return s
-}
-
-func (h *hub) join(j joinMsg) (*player, []byte) {
+func (h *hub) queue(name, mode string) (*player, bool) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	name := cleanRoom(j.Room)
-	r := h.rooms[name]
-	if r == nil {
-		mapID := j.Map
-		if !mapIDRe.MatchString(mapID) {
-			mapID = "arena"
-		}
-		r = &room{name: name, mapID: mapID, players: map[string]*player{}}
-		h.rooms[name] = r
+	capacity, ok := modeCaps[mode]
+	if !ok {
+		return nil, false
 	}
-	if len(r.players) >= maxPlayers {
-		return nil, encode(map[string]any{"t": "full"})
+	h.nextID++
+	p := &player{id: "p" + strconv.Itoa(h.nextID), name: cleanName(name), send: make(chan []byte, sendBuffer)}
+	l := h.waiting[mode]
+	if l == nil {
+		l = &lobby{mode: mode, cap: capacity, deadline: time.Now().Add(lobbyWait)}
+		h.waiting[mode] = l
 	}
-	if len(r.players) == 0 {
-		r.resetRound()
+	l.players = append(l.players, p)
+	p.lobby = l
+	if len(l.players) >= l.cap {
+		h.start(l)
+	} else {
+		l.sendStatus()
 	}
-	r.nextID++
-	p := &player{id: "p" + strconv.Itoa(r.nextID), name: cleanName(j.Name), send: make(chan []byte, sendBuffer), room: r}
-	r.broadcast(encode(map[string]any{"t": "join", "id": p.id, "name": p.name}), nil)
-	r.players[p.id] = p
-	r.order = append(r.order, p.id)
-	welcome := encode(map[string]any{
-		"t": "welcome", "id": p.id, "map": r.mapID, "room": r.name,
-		"time": int(time.Until(r.roundEnd).Seconds()), "target": killTarget, "players": r.scores(),
-	})
-	log.Printf("room %s: %s (%s) joined, %d players", r.name, p.id, p.name, len(r.players))
-	return p, welcome
+	return p, true
 }
 
 func (h *hub) leave(p *player) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	r := p.room
-	delete(r.players, p.id)
-	for i, id := range r.order {
-		if id == p.id {
-			r.order = append(r.order[:i], r.order[i+1:]...)
+	close(p.send)
+	l := p.lobby
+	if l == nil {
+		return
+	}
+	for i, q := range l.players {
+		if q == p {
+			l.players = append(l.players[:i], l.players[i+1:]...)
 			break
 		}
 	}
-	close(p.send)
-	r.broadcast(encode(map[string]any{"t": "leave", "id": p.id}), nil)
-	if len(r.players) == 0 {
-		delete(h.rooms, r.name)
+	if !l.started {
+		if len(l.players) == 0 {
+			delete(h.waiting, l.mode)
+		} else {
+			l.sendStatus()
+		}
+		return
 	}
-	log.Printf("room %s: %s left, %d players", r.name, p.id, len(r.players))
+	l.broadcast(encode(map[string]any{"t": "left", "id": p.id}), nil)
+	if l.host == p && len(l.players) > 0 {
+		l.host = l.players[0]
+		l.broadcast(encode(map[string]any{"t": "host", "id": l.host.id}), nil)
+	}
 }
 
-// clientMsg is the union of everything a client may send after joining.
-type clientMsg struct {
-	T string `json:"t"`
-	// state
-	P [3]float64 `json:"p"`
-	R float64    `json:"r"`
-	C bool       `json:"c"`
-	A bool       `json:"a"`
-	// shot / effects
-	From [3]float64 `json:"a3"`
-	To   [3]float64 `json:"b3"`
-	Col  string     `json:"col"`
-	K    string     `json:"k"`
-	Rad  float64    `json:"rad"`
-	Dur  float64    `json:"dur"`
-	// hit / died
-	Target string `json:"to"`
-	Dmg    int    `json:"d"`
-	By     string `json:"by"`
-}
+// relay forwards an in-match message, stamped with its sender, either to the
+// player named in "to" or to everyone else in the lobby.
+func (h *hub) relay(p *player, raw []byte) {
+	var m map[string]json.RawMessage
+	if json.Unmarshal(raw, &m) != nil {
+		return
+	}
+	var t, to string
+	json.Unmarshal(m["t"], &t)
+	json.Unmarshal(m["to"], &to)
 
-func (h *hub) handle(p *player, m clientMsg) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	r := p.room
-	switch m.T {
-	case "s":
-		r.broadcast(encode(map[string]any{"t": "s", "id": p.id, "p": m.P, "r": m.R, "c": m.C, "a": m.A}), p)
-	case "shot":
-		if !colorRe.MatchString(m.Col) {
-			m.Col = "#f2c94c"
-		}
-		r.broadcast(encode(map[string]any{"t": "shot", "id": p.id, "a3": m.From, "b3": m.To, "col": m.Col}), p)
-	case "fx":
-		if m.K != "boom" && m.K != "smoke" && m.K != "flash" {
-			return
-		}
-		if !colorRe.MatchString(m.Col) {
-			m.Col = "#ff7a3d"
-		}
-		r.broadcast(encode(map[string]any{"t": "fx", "id": p.id, "k": m.K, "p": m.P, "rad": m.Rad, "dur": m.Dur, "col": m.Col}), p)
-	case "hit":
-		target := r.players[m.Target]
-		if target == nil || target == p || m.Dmg <= 0 {
-			return
-		}
-		if m.Dmg > maxHitDamage {
-			m.Dmg = maxHitDamage
-		}
-		target.deliver(encode(map[string]any{"t": "hit", "from": p.id, "d": m.Dmg}))
-	case "died":
-		p.deaths++
-		killer := r.players[m.By]
-		if killer == p {
-			killer = nil
-		}
-		killerID := ""
-		if killer != nil {
-			killer.kills++
-			killerID = killer.id
-		}
-		r.broadcast(encode(map[string]any{"t": "kill", "k": killerID, "v": p.id, "players": r.scores()}), nil)
-		if killer != nil && killer.kills >= killTarget {
-			r.endRound(killer.id)
-		}
+	l := p.lobby
+	if l == nil || !l.started {
+		return
 	}
+	if t == "yield" {
+		// The host hands the bots to the next player (e.g. its tab went to the background).
+		if l.host == p && len(l.players) > 1 {
+			for i, q := range l.players {
+				if q == p {
+					l.host = l.players[(i+1)%len(l.players)]
+					break
+				}
+			}
+			l.broadcast(encode(map[string]any{"t": "host", "id": l.host.id}), nil)
+		}
+		return
+	}
+	m["from"], _ = json.Marshal(p.id)
+	msg := encode(m)
+	if to != "" {
+		if q := l.find(to); q != nil && q != p {
+			q.deliver(msg)
+		}
+		return
+	}
+	l.broadcast(msg, p)
+}
+
+type queueMsg struct {
+	T    string `json:"t"`
+	Name string `json:"name"`
+	Mode string `json:"mode"`
 }
 
 func (h *hub) serveWS(w http.ResponseWriter, req *http.Request) {
@@ -307,16 +270,14 @@ func (h *hub) serveWS(w http.ResponseWriter, req *http.Request) {
 	})
 
 	conn.SetReadDeadline(time.Now().Add(15 * time.Second))
-	var j joinMsg
-	if err := conn.ReadJSON(&j); err != nil {
+	var q queueMsg
+	if err := conn.ReadJSON(&q); err != nil || q.T != "queue" {
 		return
 	}
-	p, reply := h.join(j)
-	if p == nil {
-		conn.WriteMessage(websocket.TextMessage, reply)
+	p, ok := h.queue(q.Name, q.Mode)
+	if !ok {
 		return
 	}
-	p.deliver(reply)
 	defer h.leave(p)
 
 	go func() {
@@ -345,10 +306,10 @@ func (h *hub) serveWS(w http.ResponseWriter, req *http.Request) {
 
 	for {
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		var m clientMsg
-		if err := conn.ReadJSON(&m); err != nil {
+		_, raw, err := conn.ReadMessage()
+		if err != nil {
 			return
 		}
-		h.handle(p, m)
+		h.relay(p, raw)
 	}
 }
