@@ -1,8 +1,8 @@
-// Command Server is the OCTAKILL dedicated server for PlayFlow.
+// Command Server is the OCTAKILL game + online multiplayer server.
 //
 // It embeds the browser game (octa-kill_1.html) into a single static
-// Linux x86_64 binary and serves it over HTTP, so the build ZIP only
-// needs to contain Server.x86_64.
+// Linux x86_64 binary, serves it over HTTP and hosts online multiplayer
+// on /ws (see multiplayer.go).
 package main
 
 import (
@@ -30,6 +30,7 @@ func main() {
 	flag.Parse()
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", newHub().serveWS)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte("ok\n"))
@@ -57,7 +58,7 @@ func main() {
 		}
 	}()
 
-	// PlayFlow stops instances with SIGTERM; shut down cleanly.
+	// Hosts (Render, PlayFlow, ...) stop instances with SIGTERM; shut down cleanly.
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop

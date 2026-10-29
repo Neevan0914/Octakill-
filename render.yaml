@@ -1,0 +1,10 @@
+# Render Blueprint: hosts the game + online multiplayer server for free.
+# render.com -> New -> Blueprint -> pick this repo -> Apply.
+services:
+  - type: web
+    name: octakill
+    runtime: go
+    plan: free
+    buildCommand: go build -o octakill-server .
+    startCommand: ./octakill-server
+    healthCheckPath: /healthz

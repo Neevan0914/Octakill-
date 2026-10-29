@@ -893,6 +893,11 @@
     "SkyRunner77","Player_6540","MangoChutney9","Player_4183","IronFist_512","Player_9067",
     "RustyNail88","Player_1738","CloudSurfer3","Player_6602","WildCard_29","Player_0451"
   ];
+  // Online multiplayer server (main.go / multiplayer.go). Leave empty when the game
+  // is served by that server itself; otherwise set it to the server's address,
+  // e.g. 'https://octakill.onrender.com'. A ?server=... URL parameter overrides it.
+  var MULTIPLAYER_SERVER = '';
+
   var SPAWNS = [[-12,1,-12],[12,1,12],[-12,1,12],[12,1,-12],[0,1,-13],[0,1,13],[-13,1,0],[13,1,0]];
 
   var WEAPONS = {
@@ -938,6 +943,7 @@
   ];
 
   var GAME_MODES = [
+    {id:'online', name:'Online Free For All', desc:'Real players, one arena. First to 15 eliminations.'},
     {id:'ffa', name:'Free For All', desc:'First operator to 15 eliminations.'},
     {id:'team', name:'Team Strike', desc:'Orange versus Blue. First to 30.'},
     {id:'koth', name:'King of the Hill', desc:'Hold the hill to score. First to 100 control wins.'},
@@ -1814,6 +1820,13 @@
     return { x: c.x + (dx/len)*dist, z: c.z + (dz/len)*dist };
   }
 
+  // Fighter that drives bot model #idx (offline: an AI bot, online: a remote player).
+  function fighterForBot(idx){
+    var id = 'bot-'+idx;
+    for (var i=1;i<S.fighters.length;i++){ if (S.fighters[i].id === id) return S.fighters[i]; }
+    return null;
+  }
+
   function makeFighters(callsign, mode){
     var list = [{id:'player', name: callsign || 'Player_0000', team:'orange', kills:0, deaths:0, health:100, alive:true, shield:0, tier:0, hillPoints:0}];
     var pool = BOT_NAMES.slice();
@@ -1968,6 +1981,8 @@
   };
 
   var timers = {countdown:null, tick:null};
+  var NET = {active:false, ws:null, myId:null, welcomed:false, countdownDone:false, roundEndAt:0,
+    lastSend:0, lastShotSound:{}, remote:{}};
   var lastFireTime = 0;
 
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
@@ -1993,7 +2008,7 @@
     });
     S.screen = name;
     el['music-toggle'].classList.toggle('hidden', name === 'game');
-    if (name === 'menu'){ stopGameMusic(); startMenuMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.45; startCharPreviewLoop(); resizeCharPreview(); markMenuInteraction(); }
+    if (name === 'menu'){ netDisconnect(); stopGameMusic(); startMenuMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.45; startCharPreviewLoop(); resizeCharPreview(); markMenuInteraction(); }
     else if (name === 'game'){ stopMenuMusic(); startGameMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.72; stopCharPreviewLoop(); }
     else if (name === 'countdown-screen'){ stopMenuMusic(); stopCharPreviewLoop(); }
   }
@@ -2242,8 +2257,10 @@
 
   function startMatch(mode){
     clearTimers();
+    netDisconnect();
     S.mode = mode;
     S.fighters = makeFighters(S.callsign, mode);
+    if (mode === 'online') S.fighters = S.fighters.slice(0,1);
     S.time = 180; S.reloading = false; S.slot = 'primary'; S.tacticalReady = true; S.mouseHeld = false; S.aiming = false; S.crouching = false;
     grantSpawnProtection();
     clearDamageIndicators();
@@ -2258,18 +2275,23 @@
       ffa:'No allies. No mercy.', team:'Orange team, hold the line.',
       koth:'Hold the hill. Control wins.', koth_team:'Hold the hill together. Control wins.',
       gungame:'Every kill upgrades your gun.', duel:'One on one. Nowhere to hide.',
-      deathmatch:'No respawns. Make it count.', deathmatch_team:'No respawns. Hold the line together.'
+      deathmatch:'No respawns. Make it count.', deathmatch_team:'No respawns. Hold the line together.',
+      online:'Connecting to the online server...'
     };
     el['countdown-sub'].textContent = subtitles[mode] || 'No allies. No mercy.';
     el['feed'].innerHTML = '';
     updateAmmoDisplay(); updateHpDisplay(); updateRoster(); updateClock(); updateTacticalDisplay(); updateObjectiveHud();
     showScreen('countdown-screen');
+    if (mode === 'online') netConnect();
     el['countdown-num'].textContent = String(S.countdown);
     timers.countdown = setInterval(function(){
       S.countdown -= 1;
       if (S.countdown <= 0){
         clearInterval(timers.countdown);
-        enterPlaying();
+        if (S.mode === 'online' && !NET.welcomed){
+          NET.countdownDone = true;
+          el['countdown-num'].textContent = '...';
+        } else enterPlaying();
       } else {
         el['countdown-num'].textContent = String(S.countdown);
       }
@@ -2281,6 +2303,10 @@
     showScreen('game');
     ensureScene();
     resetSceneForMatch();
+    if (NET.active){
+      for (var rid in NET.remote) NET.remote[rid].snap = true;
+      respawnPlayer(); grantSpawnProtection();
+    }
     S.paused = false;
     el['pause-overlay'].classList.add('hidden');
     el['eliminated'].classList.add('hidden');
@@ -2290,6 +2316,11 @@
   }
 
   function tickSecond(){
+    if (NET.active){
+      S.time = Math.max(0, Math.round((NET.roundEndAt - Date.now())/1000));
+      updateClock();
+      return;
+    }
     S.time -= 1;
     if (S.time <= 0){ S.time = 0; updateClock(); endMatch(); return; }
     updateClock();
@@ -2524,6 +2555,20 @@
     var killer = S.fighters.find(function(f){return f.id===killerId;});
     var victim = S.fighters.find(function(f){return f.id===victimId;});
     if (!killer || !victim || !victim.alive) return;
+    if (NET.active){
+      // Online, each player only decides their own death; the server scores it.
+      if (victimId !== 'player') return;
+      netSend({t:'died', by: killer.netId || ''});
+      victim.health = 0; victim.alive = false;
+      updateHpDisplay();
+      setTimeout(function(){
+        if (!NET.active || S.screen !== 'game') return;
+        victim.health = 100; victim.alive = true;
+        resetPlayerAfterDeath();
+        updateRoster(); updateHpDisplay();
+      }, 2200);
+      return;
+    }
     pushFeed(killer.name, victim.name, killerId === 'player');
     if (killerId === 'player' && modeBase() !== 'gungame'){
       var w = currentWeapon(), ws = S.weaponState[S.slot];
@@ -2551,23 +2596,27 @@
     if (modeBase() !== 'deathmatch'){
       setTimeout(function(){
         victim.health = victimId === 'player' ? 100 : BOT_MAX_HEALTH; victim.alive = true;
-        if (victimId === 'player'){
-          victim.shield = 0; updateShieldDisplay();
-          S.slot = 'primary'; S.reloading = false; S.aiming = false; S.crouching = false;
-          grantSpawnProtection();
-          clearDamageIndicators();
-          el['crouch-badge'].classList.add('hidden');
-          var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
-          S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
-          S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
-          S.tacticalReady = true; updateTacticalDisplay(); updateAmmoDisplay();
-          if (three && three.updateWeaponVisual) three.updateWeaponVisual();
-          respawnPlayer();
-        } else resetBotAI(victimId);
+        if (victimId === 'player') resetPlayerAfterDeath();
+        else resetBotAI(victimId);
         updateRoster(); updateHpDisplay(); setBotVisibility(victimId, true);
       }, 2200);
     }
     checkWinCondition();
+  }
+
+  function resetPlayerAfterDeath(){
+    var player = S.fighters[0];
+    player.shield = 0; updateShieldDisplay();
+    S.slot = 'primary'; S.reloading = false; S.aiming = false; S.crouching = false;
+    grantSpawnProtection();
+    clearDamageIndicators();
+    el['crouch-badge'].classList.add('hidden');
+    var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
+    S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
+    S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
+    S.tacticalReady = true; updateTacticalDisplay(); updateAmmoDisplay();
+    if (three && three.updateWeaponVisual) three.updateWeaponVisual();
+    respawnPlayer();
   }
 
   function isEnemy(aId, bId){
@@ -2583,6 +2632,11 @@
     var target = S.fighters.find(function(f){return f.id===targetId;});
     if (!target || !target.alive) return;
     if (!isEnemy(attackerId, targetId)) return;
+    if (target.remote){
+      // Remote players track their own health; tell them they were hit.
+      if (attackerId === 'player'){ flashHit(); netSend({t:'hit', to:target.netId, d:Math.round(amount)}); }
+      return;
+    }
     if (targetId === 'player' && performance.now() < S.spawnProtectedUntil) return;
     if (targetId === 'player'){ flashDamage(); showDamageIndicator(attackerId); }
     else if (attackerId === 'player') flashHit();
@@ -2638,6 +2692,7 @@
   }
 
   function checkWinCondition(){
+    if (NET.active) return; // the online server decides when a round ends
     var base = modeBase();
     if (base === 'gungame') return;
     if (base === 'deathmatch'){
@@ -3928,7 +3983,7 @@
     function alertBotsNearShot(point, radius){
       var t = clock.elapsedTime + ALERT_DURATION;
       bots.forEach(function(b, idx){
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         if (b.group.position.distanceTo(point) <= radius) b.noticedPlayerUntil = t;
       });
@@ -4000,6 +4055,7 @@
         for (var h=0; h<hits.length; h++){ if (hits[h].object.userData && hits[h].object.userData.botId){ target = hits[h].object; break; } }
         var endPoint = hits.length ? hits[0].point.clone() : camera.position.clone().add(dir.clone().multiplyScalar(60));
         spawnBullet(muzzleWorld, endPoint, w.explosive ? '#ff7a3d' : '#f2c94c');
+        if (NET.active) netSend({t:'shot', a3:netVec(muzzleWorld), b3:netVec(endPoint), col: w.explosive ? '#ff7a3d' : '#f2c94c'});
         if (S.graphicsMode === 'ultra' && hits.length && !w.explosive) spawnSparks(hits[0].point, target ? '#ff4a3a' : '#ffc860', 5, 3, 300);
         if (target){
           dealDamage('player', target.userData.botId, target.userData.head ? Math.round(w.dmg*1.9) : w.dmg);
@@ -4008,7 +4064,7 @@
       }
     }
 
-    function explodeAt(point, radius, damage, color){
+    function explodeAt(point, radius, damage, color, visualOnly){
       var now0 = performance.now();
       var burstScale = Math.max(1.6, radius*0.55);
       playExplosionSound();
@@ -4061,8 +4117,10 @@
         });
       }
 
+      if (visualOnly) return;
+      if (NET.active) netSend({t:'fx', k:'boom', p:netVec(point), rad:radius, col:color});
       bots.forEach(function(b, idx){
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         var dist = b.group.position.distanceTo(point);
         if (dist > radius) return;
@@ -4085,10 +4143,11 @@
     function triggerFlash(point, radius, duration){
       var elapsedNow = clock.elapsedTime;
       bots.forEach(function(b, idx){
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         if (b.group.position.distanceTo(point) <= radius) b.blindedUntil = elapsedNow + duration;
       });
+      if (NET.active) netSend({t:'fx', k:'flash', p:netVec(point), rad:radius, dur:duration});
       flashWhite();
     }
 
@@ -4432,6 +4491,8 @@
     var idx = parseInt(id.split('-')[1], 10);
     if (isNaN(idx) || !three.bots[idx]) return;
     three.bots[idx].group.visible = visible;
+    // Hidden models still block raycasts, so park them out of the arena online.
+    if (NET.active && !visible) three.bots[idx].group.position.y = -50;
   }
 
   function resetBotAI(id){
@@ -4450,7 +4511,7 @@
     if (!three) return;
     var botPositions = [];
     three.bots.forEach(function(b, idx){
-      var f = S.fighters[idx+1];
+      var f = fighterForBot(idx);
       if (f && f.alive) botPositions.push(b.group.position);
     });
     var s = randomSpawnAwayFrom(botPositions, 6);
@@ -4483,14 +4544,16 @@
     three.explosionFX.forEach(function(x){ three.scene.remove(x.mesh); if (x.geo) x.geo.dispose(); if (x.mat) x.mat.dispose(); });
     three.explosionFX.length = 0;
     var teamMode = isTeamMode();
-    var activeBotCount = S.fighters.length - 1;
     three.bots.forEach(function(b, i){
-      if (i >= activeBotCount){
+      var f = fighterForBot(i);
+      if (!f || (NET.active && !f.alive)){
         b.group.visible = false;
+        if (NET.active) b.group.position.y = -50;
         return;
       }
       b.group.visible = true;
-      var team = S.fighters[i+1].team;
+      b.group.scale.y = 1;
+      var team = f.team;
       b.bodyMat.color.set(teamMode ? (team === 'orange' ? '#F36B21' : '#3f83c5') : '#5c5f3f');
       var s = order[i+1];
       b.group.position.set(s[0], s[1], s[2]);
@@ -4559,6 +4622,215 @@
     b.head.rotation.y = moving ? 0 : Math.sin(b.animPhase*0.55) * 0.2;
   }
 
+  // ---- Online multiplayer (see multiplayer.go) ----
+  // Remote players reuse the bot models: each gets a free model slot and a
+  // fighter with id 'bot-<slot>', remote:true and its server id in netId.
+  function netUrl(){
+    var base = '';
+    try { base = new URLSearchParams(location.search).get('server') || ''; } catch(e){}
+    base = base || MULTIPLAYER_SERVER;
+    if (!base){
+      if (location.protocol !== 'http:' && location.protocol !== 'https:') return null;
+      base = location.origin;
+    }
+    base = base.trim().replace(/\/+$/, '');
+    if (/^https?:\/\//.test(base)) base = base.replace(/^http/, 'ws');
+    else if (!/^wss?:\/\//.test(base)) base = (location.protocol === 'http:' ? 'ws://' : 'wss://') + base;
+    return base + '/ws';
+  }
+  function netRoom(){
+    try { return new URLSearchParams(location.search).get('room') || 'public'; } catch(e){ return 'public'; }
+  }
+  function netVec(v){ return [Math.round(v.x*100)/100, Math.round(v.y*100)/100, Math.round(v.z*100)/100]; }
+  function netSend(m){
+    if (NET.ws && NET.ws.readyState === 1) NET.ws.send(JSON.stringify(m));
+  }
+
+  function netConnect(){
+    netDisconnect();
+    var url = netUrl();
+    if (!url){ netFail('The online server is not set up yet.'); return; }
+    NET.active = true; NET.welcomed = false; NET.countdownDone = false; NET.myId = null; NET.remote = {};
+    var ws;
+    try { ws = new WebSocket(url); } catch(e){ netFail('Could not reach the online server.'); return; }
+    NET.ws = ws;
+    var wakeTimer = setTimeout(function(){
+      if (NET.ws === ws && !NET.welcomed) el['countdown-sub'].textContent = 'Waking up the server... this can take up to a minute.';
+    }, 4000);
+    ws.onopen = function(){
+      ws.send(JSON.stringify({t:'join', name:S.callsign, room:netRoom(), map:S.mapId}));
+    };
+    ws.onmessage = function(ev){
+      if (NET.ws !== ws) return;
+      var m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+      netHandle(m);
+    };
+    ws.onclose = function(){
+      clearTimeout(wakeTimer);
+      if (NET.ws !== ws) return;
+      NET.ws = null;
+      netFail(NET.welcomed ? 'Disconnected from the online server.' : 'Could not reach the online server.');
+    };
+  }
+
+  function netDisconnect(){
+    var ws = NET.ws;
+    NET.ws = null; NET.active = false; NET.welcomed = false;
+    if (ws){ try { ws.close(); } catch(e){} }
+  }
+
+  function netFail(msg){
+    netDisconnect();
+    clearTimers();
+    if (document.pointerLockElement) document.exitPointerLock();
+    el['countdown-num'].textContent = '!';
+    el['countdown-sub'].textContent = msg;
+    showScreen('countdown-screen');
+    setTimeout(function(){ if (S.screen === 'countdown-screen' && !NET.active) showScreen('menu'); }, 3500);
+  }
+
+  function netFighter(netId){
+    if (netId && netId === NET.myId) return S.fighters[0];
+    return NET.remote[netId] || null;
+  }
+
+  function netAddFighter(row){
+    if (row.id === NET.myId){
+      S.fighters[0].kills = row.k; S.fighters[0].deaths = row.d;
+      return;
+    }
+    if (NET.remote[row.id]) return;
+    var used = {};
+    for (var id in NET.remote) used[NET.remote[id].slot] = true;
+    var slot = -1;
+    for (var i=0;i<7;i++){ if (!used[i]){ slot = i; break; } }
+    if (slot < 0) return;
+    var f = {id:'bot-'+slot, netId:row.id, remote:true, slot:slot, name:row.name, team:'blue',
+      kills:row.k||0, deaths:row.d||0, health:100, alive:false, tier:0, hillPoints:0, net:null};
+    NET.remote[row.id] = f;
+    S.fighters.push(f);
+    setBotVisibility(f.id, false);
+  }
+
+  function netRemoveFighter(netId){
+    var f = NET.remote[netId];
+    if (!f) return;
+    delete NET.remote[netId];
+    var i = S.fighters.indexOf(f);
+    if (i > 0) S.fighters.splice(i, 1);
+    if (three && three.bots[f.slot]){ three.bots[f.slot].group.visible = false; three.bots[f.slot].group.position.y = -50; }
+  }
+
+  function netApplyScores(rows){
+    (rows || []).forEach(function(row){
+      var f = netFighter(row.id);
+      if (f){ f.kills = row.k; f.deaths = row.d; }
+    });
+  }
+
+  function netHandle(m){
+    var f;
+    if (m.t === 'welcome'){
+      NET.myId = m.id; NET.welcomed = true;
+      NET.roundEndAt = Date.now() + m.time*1000;
+      S.time = Math.max(0, m.time);
+      if (m.map && MAPS.some(function(x){ return x.id === m.map; })){ S.mapId = m.map; renderMapGrid(); updateMapLabel(); }
+      (m.players || []).forEach(netAddFighter);
+      el['countdown-sub'].textContent = 'Room "' + m.room + '" — ' + (m.players || []).length + ' player(s) online';
+      updateRoster(); updateClock();
+      if (NET.countdownDone && S.screen === 'countdown-screen') enterPlaying();
+    } else if (m.t === 'full'){
+      netFail('That online room is full (8 players). Try again soon.');
+    } else if (m.t === 'join'){
+      netAddFighter({id:m.id, name:m.name, k:0, d:0});
+      updateRoster();
+      if (S.screen === 'game') showToast(m.name + ' joined');
+    } else if (m.t === 'leave'){
+      f = NET.remote[m.id];
+      netRemoveFighter(m.id);
+      updateRoster();
+      if (f && S.screen === 'game') showToast(f.name + ' left');
+    } else if (m.t === 's'){
+      f = NET.remote[m.id];
+      if (!f) return;
+      var wasAlive = f.alive;
+      f.net = {x:m.p[0], y:m.p[1], z:m.p[2], r:m.r, c:!!m.c};
+      f.alive = !!m.a;
+      if (f.alive && !wasAlive){
+        f.health = 100;
+        f.snap = true;
+        if (three && three.bots[f.slot]) three.bots[f.slot].bodyMat.color.set('#5c5f3f');
+        setBotVisibility(f.id, true);
+      } else if (!f.alive && wasAlive) setBotVisibility(f.id, false);
+    } else if (m.t === 'shot'){
+      if (!three || S.screen !== 'game') return;
+      three.spawnBullet(new THREE.Vector3(m.a3[0], m.a3[1], m.a3[2]), new THREE.Vector3(m.b3[0], m.b3[1], m.b3[2]), m.col);
+      var nowMs = performance.now();
+      if (!NET.lastShotSound[m.id] || nowMs - NET.lastShotSound[m.id] > 50){
+        NET.lastShotSound[m.id] = nowMs;
+        playGunshot({suppressed:true});
+      }
+    } else if (m.t === 'fx'){
+      if (!three || S.screen !== 'game') return;
+      var pt = new THREE.Vector3(m.p[0], m.p[1], m.p[2]);
+      if (m.k === 'boom') three.explodeAt(pt, m.rad, 0, m.col, true);
+      else if (m.k === 'smoke') three.spawnSmoke(pt, m.rad, m.dur, m.col);
+      else if (m.k === 'flash' && three.camera.position.distanceTo(pt) <= m.rad) flashWhite();
+    } else if (m.t === 'hit'){
+      f = NET.remote[m.from];
+      if (!f || S.screen !== 'game') return;
+      dealDamage(f.id, 'player', m.d);
+    } else if (m.t === 'kill'){
+      netApplyScores(m.players);
+      var killer = netFighter(m.k), victim = netFighter(m.v);
+      if (victim){
+        pushFeed(killer ? killer.name : '☠', victim.name, m.k === NET.myId);
+        if (victim.remote){ victim.alive = false; setBotVisibility(victim.id, false); }
+      }
+      if (m.k && m.k === NET.myId){
+        var w = currentWeapon(), ws = S.weaponState[S.slot];
+        if (w && ws){ ws.reserve = Math.min(w.reserve, ws.reserve + Math.round(w.mag*0.5)); updateAmmoDisplay(); }
+      }
+      updateRoster();
+    } else if (m.t === 'end'){
+      netApplyScores(m.players);
+      var winner = netFighter(m.w);
+      netDisconnect();
+      if (S.screen === 'game' || S.screen === 'countdown-screen') endMatch(winner ? winner.id : undefined);
+    }
+  }
+
+  // Called every frame while online: move remote players and send our own state.
+  function netUpdate(delta){
+    var k = 1 - Math.exp(-delta*14);
+    for (var id in NET.remote){
+      var f = NET.remote[id], b = three.bots[f.slot];
+      if (!b || !f.alive || !f.net) continue;
+      var n = f.net, pos = b.group.position;
+      var eye = n.c ? EYE_HEIGHT_CROUCH : EYE_HEIGHT_STAND;
+      var baseY = n.c ? 0.7 : 1;
+      var ty = baseY + Math.max(0, n.y - eye);
+      b.group.scale.y = n.c ? 0.7 : 1;
+      if (f.snap){ pos.set(n.x, ty, n.z); f.snap = false; }
+      var ox = pos.x, oz = pos.z;
+      pos.x += (n.x - pos.x)*k; pos.z += (n.z - pos.z)*k; pos.y += (ty - pos.y)*k;
+      var dr = n.r - b.group.rotation.y;
+      dr = Math.atan2(Math.sin(dr), Math.cos(dr));
+      b.group.rotation.set(0, b.group.rotation.y + dr*k, 0);
+      var speed = Math.sqrt((pos.x-ox)*(pos.x-ox) + (pos.z-oz)*(pos.z-oz)) / Math.max(delta, 0.001);
+      updateBotAnim(b, speed > 0.6, delta, 0.6);
+    }
+
+    var nowMs = performance.now();
+    if (!NET.welcomed || nowMs - NET.lastSend < 50) return;
+    NET.lastSend = nowMs;
+    var cam = three.camera, player = S.fighters[0];
+    var dir = new THREE.Vector3(); cam.getWorldDirection(dir);
+    netSend({t:'s', p:netVec(cam.position), r:Math.round(Math.atan2(dir.x, dir.z)*1000)/1000,
+      c:!!S.crouching, a:!!(player && player.alive)});
+  }
+
+
   var FRAME_INTERVAL_MS = 1000/60;
   var lastFrameTimestamp = 0;
 
@@ -4569,6 +4841,7 @@
     if (nowMs - lastFrameTimestamp < FRAME_INTERVAL_MS) return;
     lastFrameTimestamp = nowMs;
     var delta = Math.min(three.clock.getDelta(), 0.05);
+    if (NET.active) netUpdate(delta);
     if (S.paused){ three.renderFrame(three.camera); return; }
     var elapsed = three.clock.elapsedTime;
     var camera = three.camera, keys = three.keys;
@@ -4666,7 +4939,7 @@
     var tmpPos = new THREE.Vector3();
     var tmpTarget = new THREE.Vector3();
 
-    S.fighters.slice(1).forEach(function(bot, index){
+    if (!NET.active) S.fighters.slice(1).forEach(function(bot, index){
       var b = three.bots[index];
       if (!b || !bot.alive) return;
       var pos = b.group.position;
@@ -4810,7 +5083,10 @@
         three.scene.remove(g.mesh); g.geo.dispose(); g.mat.dispose();
         var pt = g.mesh.position.clone();
         if (g.meta.kind === 'frag') three.explodeAt(pt, g.meta.radius, g.meta.damage, g.meta.color);
-        else if (g.meta.kind === 'smoke') three.spawnSmoke(pt, g.meta.radius, g.meta.duration, g.meta.color);
+        else if (g.meta.kind === 'smoke'){
+          three.spawnSmoke(pt, g.meta.radius, g.meta.duration, g.meta.color);
+          if (NET.active) netSend({t:'fx', k:'smoke', p:netVec(pt), rad:g.meta.radius, dur:g.meta.duration, col:g.meta.color});
+        }
         else if (g.meta.kind === 'flash') three.triggerFlash(pt, g.meta.radius, g.meta.duration);
         three.grenades.splice(gi,1);
       }
@@ -4822,7 +5098,7 @@
       var triggered = false;
       three.bots.forEach(function(b, idx){
         if (triggered) return;
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         if (b.group.position.distanceTo(mine.point) <= mine.radius) triggered = true;
       });
