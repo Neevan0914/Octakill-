@@ -4670,12 +4670,25 @@
 
   function requestLock(){
     if (!three) return;
-    three.setLockedFn(true);
+    var canvas = three.canvasEl;
+    // Touch devices have no pointer lock; there "locked" just means playing.
+    if (isTouchDeviceGlobal || !canvas.requestPointerLock || document.pointerLockElement === canvas){
+      three.setLockedFn(true);
+      return;
+    }
+    // Otherwise only count as locked once the browser grants it (onPointerLockChange).
     try {
-      var p = three.canvasEl.requestPointerLock();
-      if (p && p.catch) p.catch(function(){});
-    } catch(e){}
+      var p = canvas.requestPointerLock();
+      if (p && p.catch) p.catch(onLockFailed);
+    } catch(e){ onLockFailed(); }
   }
+
+  // Browsers refuse pointer lock without a recent click (e.g. after matchmaking +
+  // the loading bar). Show the pause menu so the Resume click can lock the cursor.
+  function onLockFailed(){
+    if (S.screen === 'game' && !S.paused && !document.pointerLockElement) pauseGame();
+  }
+  document.addEventListener('pointerlockerror', onLockFailed);
 
   function pauseGame(){
     if (S.screen !== 'game' || S.paused) return;
