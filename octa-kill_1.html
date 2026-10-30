@@ -80,6 +80,40 @@
     letter-spacing:.1em;}
   .rank-progress-track{height:8px;width:100%;background:var(--card);border:1px solid var(--border);}
   .rank-progress-fill{height:100%;width:0%;background:var(--muted-foreground);transition:width 200ms ease,background 160ms ease;}
+  /* Trick or Treat: limited-time Halloween event */
+  #tot-popup-btn{border-color:#F36B21;color:#F36B21;box-shadow:0 0 14px rgba(243,107,33,.35);}
+  #tot-popup-btn:hover{border-color:#ff9a3c;color:#ff9a3c;box-shadow:0 0 20px rgba(243,107,33,.55);}
+  #tot-popup-btn.active{background:#F36B21;color:#1a0d05;animation:tot-glow 1.8s ease-in-out infinite;}
+  @keyframes tot-glow{ 0%,100%{box-shadow:0 0 10px rgba(243,107,33,.45);} 50%{box-shadow:0 0 24px rgba(168,85,247,.7);} }
+  .tot-popup-card{width:min(380px,94vw);text-align:center;
+    background:linear-gradient(165deg,#1d1030 0%,var(--background) 55%,#2a1608 100%);border-color:#5b2d82;}
+  .tot-eyebrow{margin:0 0 4px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#a855f7;}
+  .tot-title{margin:0 0 10px;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;
+    color:#F36B21;font-family:'Black Ops One',ui-sans-serif,system-ui,sans-serif;text-shadow:0 0 18px rgba(243,107,33,.45);}
+  .tot-pumpkin{margin:2px auto 8px;color:#F36B21;}
+  .tot-desc{margin:0 0 14px;font-size:12px;line-height:1.6;color:var(--muted-foreground);
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  .tot-desc b{color:var(--foreground);}
+  .tot-status{margin:0 0 12px;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted-foreground);}
+  .tot-status.on{color:#a855f7;font-weight:700;}
+  #tot-toggle-btn{justify-content:center;max-width:none;background:#F36B21;color:#1a0d05;border:none;font-weight:800;}
+  #tot-toggle-btn:hover{background:#ff9a3c;}
+  #tot-toggle-btn.leave{background:var(--card);color:var(--foreground);border:1px solid var(--border);}
+  .tot-challenge{display:block;width:100%;margin:0 0 14px;padding:12px 14px;text-align:left;cursor:pointer;
+    border:1px solid #5b2d82;border-radius:12px;background:rgba(168,85,247,.10);color:var(--foreground);font-family:inherit;}
+  .tot-challenge:hover{border-color:#a855f7;background:rgba(168,85,247,.18);}
+  .tot-challenge-head{display:flex;justify-content:space-between;gap:8px;font-size:10px;text-transform:uppercase;
+    letter-spacing:.16em;color:#c084fc;}
+  .tot-challenge-title{display:block;margin:6px 0 2px;font-size:14px;font-weight:800;color:var(--foreground);
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  .tot-challenge-reward{display:block;font-size:11px;color:var(--muted-foreground);}
+  .tot-challenge-track{display:block;height:6px;margin:10px 0 6px;border-radius:999px;background:var(--card);overflow:hidden;}
+  .tot-challenge-fill{display:block;height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#F36B21,#a855f7);}
+  .tot-challenge-progress{display:block;font-size:11px;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
+  .tot-challenge.done .tot-challenge-progress{color:#c084fc;font-weight:700;}
+  .tot-hud{display:inline-block;margin:0 0 6px;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.12em;color:#F36B21;background:rgba(29,16,48,.82);border:1px solid #5b2d82;border-radius:999px;}
+  .tot-hud b{color:#c084fc;}
   .brand-row{display:flex;align-items:center;gap:12px;}
   .brand-badge{display:flex;align-items:center;justify-content:center;width:40px;height:40px;
     border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);}
@@ -255,7 +289,18 @@
   #countdown-screen, #results{display:flex;align-items:center;justify-content:center;text-align:center;
     background:var(--background);overflow-y:auto;padding:1.5rem 1rem;}
   #countdown-screen p.eyebrow{font-size:11px;}
-  #countdown-num{margin-top:1.25rem;font-size:9rem;font-weight:900;}
+  .load-wrap{position:relative;width:min(420px,80vw);margin:2.75rem auto 0;padding-top:46px;}
+  .load-track{height:12px;border:1px solid var(--border);border-radius:999px;background:var(--card);overflow:hidden;}
+  .load-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--primary-hover));
+    box-shadow:0 0 12px rgba(243,107,33,.45);}
+  .load-pct{margin:10px 0 0;font-size:12px;letter-spacing:.2em;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
+  .load-pumpkin{position:absolute;top:0;left:0%;transform:translateX(-50%);color:#F36B21;line-height:0;
+    filter:drop-shadow(0 0 10px rgba(243,107,33,.55));}
+  .load-pumpkin svg{animation:pumpkin-bob 700ms ease-in-out infinite;}
+  @keyframes pumpkin-bob{ 0%,100%{transform:translateY(0) rotate(-6deg);} 50%{transform:translateY(-6px) rotate(6deg);} }
+  #countdown-screen.tot .load-track{border-color:#5b2d82;}
+  #countdown-screen.tot .load-fill{background:linear-gradient(90deg,#F36B21,#a855f7);box-shadow:0 0 14px rgba(168,85,247,.5);}
+  @media (prefers-reduced-motion:reduce){ .load-pumpkin svg{animation:none;} }
   #countdown-sub{margin-top:1rem;font-size:14px;color:var(--muted-foreground);}
 
   #results{padding:24px;}
@@ -280,7 +325,6 @@
   .btn-primary:hover{background:var(--primary-hover);}
 
   @media (max-width:480px), (max-height:600px){
-    #countdown-num{font-size:5.5rem;}
     .results-card{padding:1.25rem;}
     .results-card h1{font-size:1.9rem;}
     #results{padding:12px;}
@@ -553,6 +597,9 @@
     <button id="rank-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 52px);" title="Rank: Iron">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
     </button>
+    <button id="tot-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 104px);" title="Halloween Event: Trick or Treat">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 7c-1.2-2-2.6-3-4-3"/><path d="M12 7c4.4 0 8 2.9 8 7s-3.6 7-8 7-8-2.9-8-7 3.6-7 8-7z"/><path d="M12 7c-1.7 1.6-2.5 4.1-2.5 7s.8 5.4 2.5 7"/><path d="M12 7c1.7 1.6 2.5 4.1 2.5 7s-.8 5.4-2.5 7"/></svg>
+    </button>
     <div id="drawer-backdrop"></div>
 
     <div id="settings-drawer" class="settings-modal" role="dialog" aria-label="Settings">
@@ -685,6 +732,28 @@
       </div>
     </div>
 
+    <div id="tot-popup" class="popup-overlay">
+      <div class="popup-card tot-popup-card">
+        <div class="drawer-head">
+          <span class="section-label" style="margin:0;">Halloween Event</span>
+          <button id="tot-popup-close" class="drawer-close-btn">&times;</button>
+        </div>
+        <div class="tot-pumpkin"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 7c-1.2-2-2.6-3-4-3"/><path d="M12 7c4.4 0 8 2.9 8 7s-3.6 7-8 7-8-2.9-8-7 3.6-7 8-7z"/><path d="M12 7c-1.7 1.6-2.5 4.1-2.5 7s.8 5.4 2.5 7"/><path d="M12 7c1.7 1.6 2.5 4.1 2.5 7s-.8 5.4-2.5 7"/></svg></div>
+        <p class="tot-eyebrow">Limited-time special</p>
+        <p class="tot-title">Trick or Treat</p>
+        <p class="tot-desc">Your arsenal is cursed. Every <b>30 seconds</b> your primary, secondary and tactical are swapped for a random new set. Adapt or get spooked.</p>
+        <button id="tot-challenge-btn" class="tot-challenge" title="View the Pumpkin skin in Cosmetics">
+          <span class="tot-challenge-head"><span>Challenge</span><span id="tot-challenge-deadline">Ends Oct. 31</span></span>
+          <span class="tot-challenge-title">Win 10 matches by Oct. 31</span>
+          <span class="tot-challenge-reward">Reward: Pumpkin skin &middot; only wins with the event on count</span>
+          <span class="tot-challenge-track"><span id="tot-challenge-fill" class="tot-challenge-fill"></span></span>
+          <span id="tot-challenge-progress" class="tot-challenge-progress">0 / 10 wins</span>
+        </button>
+        <p id="tot-status" class="tot-status">Event inactive</p>
+        <button id="tot-toggle-btn" class="popup-trigger-btn">Join Event</button>
+      </div>
+    </div>
+
     <div id="cosmetics-popup" class="popup-overlay">
       <div class="popup-card cosmetics-card">
         <div class="drawer-head">
@@ -750,7 +819,11 @@
   <section id="countdown-screen" class="screen hidden">
     <div>
       <p class="eyebrow accent" style="text-transform:uppercase;letter-spacing:.4em;">Deploying 8 combatants</p>
-      <p id="countdown-num">3</p>
+      <div class="load-wrap">
+        <div id="load-pumpkin" class="load-pumpkin hidden"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 7c-1.2-2-2.6-3-4-3"/><path d="M12 7c4.4 0 8 2.9 8 7s-3.6 7-8 7-8-2.9-8-7 3.6-7 8-7z"/><path d="M12 7c-1.7 1.6-2.5 4.1-2.5 7s.8 5.4 2.5 7"/><path d="M12 7c1.7 1.6 2.5 4.1 2.5 7s-.8 5.4-2.5 7"/></svg></div>
+        <div class="load-track" role="progressbar" aria-label="Loading into match" aria-valuemin="0" aria-valuemax="100"><div id="load-fill" class="load-fill"></div></div>
+        <p id="load-pct" class="load-pct">LOADING INTO MATCH 0%</p>
+      </div>
       <p id="countdown-sub">No allies. No mercy.</p>
       <p class="epilepsy-notice">Contains flashing lights, muzzle flashes, and bright explosions — viewer discretion advised for photosensitive players.</p>
     </div>
@@ -763,6 +836,7 @@
       <h1 id="winner-name">— wins</h1>
       <div id="results-list"></div>
       <p id="credits-earned-line" class="credits-earned-line hidden">+<span id="credits-earned-amt">0</span> Credits earned</p>
+      <p id="tot-result-line" class="credits-earned-line hidden"></p>
       <div class="results-actions">
         <button class="btn-primary" id="rematch-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
@@ -787,6 +861,7 @@
 
       <div id="top-vitals">
         <p id="clock">3:00</p>
+        <p id="tot-hud" class="tot-hud hidden">Trick or Treat <b id="tot-hud-time">0:30</b></p>
       </div>
 
       <div id="roster"><p class="lbl">Combatants</p><div id="roster-rows"></div></div>
@@ -893,6 +968,10 @@
     "SkyRunner77","Player_6540","MangoChutney9","Player_4183","IronFist_512","Player_9067",
     "RustyNail88","Player_1738","CloudSurfer3","Player_6602","WildCard_29","Player_0451"
   ];
+  // Online matchmaking server (main.go / multiplayer.go). Empty means "the server
+  // this page was loaded from". A ?server=... URL parameter overrides it.
+  var MULTIPLAYER_SERVER = 'https://octa-kill.onrender.com';
+
   var SPAWNS = [[-12,1,-12],[12,1,12],[-12,1,12],[12,1,-12],[0,1,-13],[0,1,13],[-13,1,0],[13,1,0]];
 
   var WEAPONS = {
@@ -1159,6 +1238,8 @@
     {id:'uni_arctic', category:'uniform', label:'Uniform', name:'Arctic White', cost:80, color:'#d8d6cc'},
     {id:'uni_shadow', category:'uniform', label:'Uniform', name:'Shadow Black', cost:100, color:'#1c1d1a'},
     {id:'uni_gold', category:'uniform', label:'Uniform', name:'Gold Elite', cost:220, color:'#c9a227'},
+    {id:'uni_pumpkin', category:'uniform', label:'Uniform', name:'Pumpkin Skin', cost:0, color:'#2a1e3a', eventReward:true,
+      swatch:'linear-gradient(135deg,#F36B21 0%,#F36B21 50%,#2a1e3a 50%,#2a1e3a 100%)'},
     {id:'helm_none', category:'helmet', label:'Helmet', name:'No Helmet', cost:0},
     {id:'helm_combat', category:'helmet', label:'Helmet', name:'Combat Helmet', cost:70},
     {id:'helm_beret', category:'helmet', label:'Helmet', name:'Tactical Beret', cost:50},
@@ -1171,7 +1252,8 @@
     credits:0,
     owned:['uni_default','helm_none','visor_amber'],
     equipped:{uniform:'uni_default', helmet:'helm_none', visor:'visor_amber'},
-    matchWins:0
+    matchWins:0,
+    totWins:0
   };
 
   function loadProfile(){
@@ -1181,6 +1263,7 @@
         var p = JSON.parse(raw);
         if (p && p.owned && p.equipped && typeof p.credits === 'number'){
           if (typeof p.matchWins !== 'number') p.matchWins = 0;
+          if (typeof p.totWins !== 'number') p.totWins = 0;
           return p;
         }
       }
@@ -1192,6 +1275,17 @@
     pushCloudProfile();
   }
   var PROFILE = loadProfile();
+
+  // ---- Trick or Treat challenge: win 10 matches by Oct 31 to unlock the Pumpkin skin ----
+  var TOT_WINS_GOAL = 10;
+  var TOT_CHALLENGE_END = new Date(2026, 9, 31, 23, 59, 59, 999).getTime();
+  var lastMatchTotResult = null;
+  function totChallengeOpen(){ return Date.now() <= TOT_CHALLENGE_END; }
+  function hasPumpkinSkin(){ return PROFILE.owned.indexOf('uni_pumpkin') !== -1; }
+  function syncPumpkinUnlock(){
+    if ((PROFILE.totWins || 0) >= TOT_WINS_GOAL && !hasPumpkinSkin()) PROFILE.owned.push('uni_pumpkin');
+  }
+  syncPumpkinUnlock();
 
   // ---- Ranks ----
   var RANKS = [
@@ -1275,11 +1369,13 @@
     PROFILE.owned = row.owned;
     PROFILE.equipped = row.equipped;
     PROFILE.matchWins = typeof row.match_wins === 'number' ? row.match_wins : 0;
+    syncPumpkinUnlock();
     try { localStorage.setItem('octakill_profile', JSON.stringify(PROFILE)); } catch(e){}
     updateCreditsDisplay();
     updateRankButtonTitle();
     if (el['cosmetics-popup'].classList.contains('open')) renderCosmeticsShop();
     if (el['rank-popup'].classList.contains('open')) renderRankPopup();
+    renderTrickOrTreatPopup();
     buildCharModel();
   }
 
@@ -1457,12 +1553,17 @@
       items.forEach(function(item){
         var owned = PROFILE.owned.indexOf(item.id) !== -1;
         var equipped = PROFILE.equipped[cat] === item.id;
-        var swatch = item.color ? '<div class="cosmetic-swatch" style="background:'+item.color+';"></div>' : '<div class="cosmetic-swatch" style="background:repeating-linear-gradient(45deg,var(--border),var(--border) 4px,transparent 4px,transparent 8px);"></div>';
+        var swatchBg = item.swatch || item.color;
+        var swatch = swatchBg ? '<div class="cosmetic-swatch" style="background:'+swatchBg+';"></div>' : '<div class="cosmetic-swatch" style="background:repeating-linear-gradient(45deg,var(--border),var(--border) 4px,transparent 4px,transparent 8px);"></div>';
         var btn;
         if (equipped) btn = '<button disabled>Equipped</button>';
         else if (owned) btn = '<button class="equip-btn" data-action="equip" data-id="'+item.id+'" data-cat="'+cat+'">Equip</button>';
+        else if (item.eventReward) btn = '<button disabled>'+(totChallengeOpen() ? 'Win 10 matches by Oct. 31' : 'Event ended')+'</button>';
         else btn = '<button data-action="buy" data-id="'+item.id+'" data-cat="'+cat+'" data-cost="'+item.cost+'"'+(PROFILE.credits<item.cost?' disabled':'')+'>Buy — '+item.cost+'</button>';
-        html += '<div class="cosmetic-item'+(equipped?' equipped':'')+'">'+swatch+'<h4>'+item.name+'</h4><p>'+(item.cost>0?item.cost+' credits':'Starter item')+'</p>'+btn+'</div>';
+        var priceLine = item.eventReward
+          ? 'Halloween reward' + (owned ? '' : ' \u00b7 ' + Math.min(PROFILE.totWins||0, TOT_WINS_GOAL) + '/' + TOT_WINS_GOAL + ' event wins')
+          : (item.cost>0 ? item.cost+' credits' : 'Starter item');
+        html += '<div class="cosmetic-item'+(equipped?' equipped':'')+'">'+swatch+'<h4>'+item.name+'</h4><p>'+priceLine+'</p>'+btn+'</div>';
       });
       html += '</div>';
     });
@@ -1514,6 +1615,15 @@
       reward = idx===0 ? 100 : idx===1 ? 50 : idx===2 ? 25 : 0;
     }
     if (won) PROFILE.matchWins = (PROFILE.matchWins || 0) + 1;
+    lastMatchTotResult = null;
+    // Only wins in matches played with the Trick or Treat event on count toward the Pumpkin skin
+    if (won && totChallengeOpen() && !hasPumpkinSkin()){
+      if (S.totArsenal){
+        PROFILE.totWins = (PROFILE.totWins || 0) + 1;
+        syncPumpkinUnlock();
+        lastMatchTotResult = hasPumpkinSkin() ? 'unlocked' : 'progress';
+      } else if (!S.trickOrTreat) lastMatchTotResult = 'hint';
+    }
     if (reward > 0 || won){
       PROFILE.credits += reward;
       saveProfile();
@@ -1575,6 +1685,12 @@
     var skinMat = new THREE.MeshStandardMaterial({color:'#e4e1d6', flatShading:true, roughness:0.55});
     var eyeMat = new THREE.MeshStandardMaterial({color:'#171816', flatShading:true, emissive:(visor&&visor.color)||'#ffd23f', emissiveIntensity:0.85});
     var bootMat = new THREE.MeshStandardMaterial({color:'#232420', flatShading:true, roughness:0.7});
+    var isPumpkin = uni.id === 'uni_pumpkin';
+    var headMat = skinMat;
+    if (isPumpkin){
+      headMat = new THREE.MeshStandardMaterial({color:'#a8400a', flatShading:true, roughness:0.6});
+      eyeMat = new THREE.MeshStandardMaterial({color:'#2a1405', flatShading:true, emissive:'#ffb020', emissiveIntensity:1.4});
+    }
 
     function part(geo,x,y,z,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); charModel.add(m); return m; }
     function angledPart(geo,x,y,z,rx,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.x = rx; charModel.add(m); return m; }
@@ -1582,8 +1698,17 @@
     part(new THREE.BoxGeometry(0.4,0.5,0.24), 0,0.23,0, uniMat);
     var headGeo = new THREE.CylinderGeometry(0.20,0.20,0.16,8);
     headGeo.rotateY(Math.PI/8);
-    var head = part(headGeo, 0,0.70,0, skinMat);
+    var head = part(headGeo, 0,0.70,0, headMat);
     head.rotateX(Math.PI/2);
+    if (isPumpkin){
+      var stemMat = new THREE.MeshStandardMaterial({color:'#3d6b2f', flatShading:true, roughness:0.8});
+      var stem = part(new THREE.CylinderGeometry(0.022,0.034,0.09,5), 0.01,0.93,0, stemMat);
+      stem.rotation.z = -0.25;
+      var ridgeMat = new THREE.MeshStandardMaterial({color:'#6e2a06', flatShading:true, roughness:0.7});
+      part(new THREE.BoxGeometry(0.02,0.30,0.17), -0.11,0.70,0, ridgeMat);
+      part(new THREE.BoxGeometry(0.02,0.30,0.17), 0.11,0.70,0, ridgeMat);
+      part(new THREE.BoxGeometry(0.15,0.035,0.045), 0,0.635,0.135, eyeMat);
+    }
     part(new THREE.BoxGeometry(0.05,0.05,0.045), -0.07,0.72,0.135, eyeMat);
     part(new THREE.BoxGeometry(0.05,0.05,0.045), 0.07,0.72,0.135, eyeMat);
     angledPart(new THREE.BoxGeometry(0.115,0.24,0.115), -0.24,0.36,0.09, -0.55, uniMat);
@@ -1814,6 +1939,13 @@
     return { x: c.x + (dx/len)*dist, z: c.z + (dz/len)*dist };
   }
 
+  // Fighter that drives bot model #idx (an AI bot, or someone online).
+  function fighterForBot(idx){
+    var id = 'bot-'+idx;
+    for (var i=1;i<S.fighters.length;i++){ if (S.fighters[i].id === id) return S.fighters[i]; }
+    return null;
+  }
+
   function makeFighters(callsign, mode){
     var list = [{id:'player', name: callsign || 'Player_0000', team:'orange', kills:0, deaths:0, health:100, alive:true, shield:0, tier:0, hillPoints:0}];
     var pool = BOT_NAMES.slice();
@@ -1839,11 +1971,13 @@
    'account-guest-view','account-logged-in-view','account-username','account-password','account-error',
    'account-signup-btn','account-login-btn','account-logout-btn','account-current-username',
    'rank-popup','rank-popup-btn','rank-popup-close','rank-trophy-display','rank-name','rank-progress','rank-progress-fill',
+   'tot-popup','tot-popup-btn','tot-popup-close','tot-status','tot-toggle-btn','tot-hud','tot-hud-time',
+   'tot-challenge-btn','tot-challenge-deadline','tot-challenge-fill','tot-challenge-progress','tot-result-line',
    'settings-toggle','settings-close','drawer-backdrop','settings-drawer',
    'loadout-popup','loadout-popup-btn','loadout-popup-close','loadout-current-name',
    'maps-popup','maps-popup-btn','maps-popup-close','maps-current-name',
    'mode-popup','mode-popup-btn','mode-popup-close','mode-current-name','mode-list-popup','play-btn',
-   'countdown-num','countdown-sub',
+   'countdown-sub','load-fill','load-pct','load-pumpkin',
    'winner-name','results-list','rematch-btn','menu-btn','three-canvas','clock','team-score',
    'orange-score','blue-score','ffa-target','roster-rows','feed','crosshair','crosshair-wrap','damage-vignette','damage-indicators','white-flash','no-aim-toast','scope-overlay','hp-num','hp-bar',
    'ammo-num','reserve-num','reload-indicator','eliminated','eliminated-sub','crouch-badge','spawn-protection-badge',
@@ -1960,21 +2094,86 @@
 
   var S = {
     screen:'menu', mode:'ffa', modeChoice:'ffa', callsign:defaultPlayerName, fighters:[],
-    time:180, countdown:3, reloading:false, reloadStart:0,
+    time:180, reloading:false, reloadStart:0,
     feed:[], locked:false, paused:false,
     loadoutId:'assaulter', mapId:'arena', highGraphics:false, graphicsMode:'standard', slot:'primary',
     weaponState:{ primary:{ammo:0,reserve:0}, secondary:{ammo:0,reserve:0} },
-    tacticalReady:true, mouseHeld:false, aiming:false, crouching:false, spawnProtectedUntil:0
+    tacticalReady:true, mouseHeld:false, aiming:false, crouching:false, spawnProtectedUntil:0,
+    trickOrTreat:false, totArsenal:null, totNext:0
   };
 
   var timers = {countdown:null, tick:null};
+  var NET = {phase:'idle', ws:null, myId:null, hostId:null, isHost:false, humans:[], byNet:{},
+    rosterReady:false, countdownDone:false, found:1, cap:8, displayEnd:0, searchEnd:0,
+    lastSend:0, lastBotSend:0, lastShotSound:{}};
   var lastFireTime = 0;
 
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
   function getLoadout(){
+    if (S.totArsenal) return S.totArsenal;
     for (var i=0;i<LOADOUTS.length;i++){ if (LOADOUTS[i].id === S.loadoutId) return LOADOUTS[i]; }
     return LOADOUTS[0];
+  }
+
+  // ---- Trick or Treat (Halloween event): random arsenal every 30s ----
+  var TOT_INTERVAL = 30;
+  try { S.trickOrTreat = localStorage.getItem('octakill_tot') === '1'; } catch(e){}
+
+  function totActiveForMode(mode){ return S.trickOrTreat && modeBase(mode) !== 'gungame'; }
+
+  function rollTrickOrTreatArsenal(){
+    var keys = Object.keys(WEAPONS);
+    var prev = S.totArsenal;
+    var primary, secondary;
+    do { primary = keys[Math.floor(Math.random()*keys.length)]; } while (prev && primary === prev.primary);
+    do { secondary = keys[Math.floor(Math.random()*keys.length)]; } while (secondary === primary);
+    var tactical = LOADOUTS[Math.floor(Math.random()*LOADOUTS.length)].tactical;
+    S.totArsenal = {id:'trickortreat', name:'Trick or Treat', primary:primary, secondary:secondary, tactical:tactical};
+  }
+
+  function applyTrickOrTreatSwap(){
+    rollTrickOrTreatArsenal();
+    var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
+    S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
+    S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
+    S.tacticalReady = true; S.reloading = false; S.aiming = false;
+    if (S.slot === 'tactical') S.slot = 'primary';
+    updateAmmoDisplay(); updateTacticalDisplay();
+    if (three && three.updateWeaponVisual) three.updateWeaponVisual();
+    showToast((Math.random() < 0.5 ? 'Trick! ' : 'Treat! ') + pri.name + ' + ' + sec.name);
+  }
+
+  function tickTrickOrTreat(){
+    if (!S.totArsenal) return;
+    S.totNext -= 1;
+    if (S.totNext <= 0){ S.totNext = TOT_INTERVAL; applyTrickOrTreatSwap(); }
+    updateTrickOrTreatHud();
+  }
+  function updateTrickOrTreatHud(){
+    var on = !!S.totArsenal;
+    el['tot-hud'].classList.toggle('hidden', !on);
+    if (on) el['tot-hud-time'].textContent = '0:' + String(S.totNext).padStart(2,'0');
+  }
+
+  function renderTrickOrTreatPopup(){
+    el['tot-status'].textContent = S.trickOrTreat ? 'Event active \u2014 applies to your next match' : 'Event inactive';
+    el['tot-status'].classList.toggle('on', S.trickOrTreat);
+    el['tot-toggle-btn'].textContent = S.trickOrTreat ? 'Leave Event' : 'Join Event';
+    el['tot-toggle-btn'].classList.toggle('leave', S.trickOrTreat);
+    el['tot-popup-btn'].classList.toggle('active', S.trickOrTreat);
+    var wins = Math.min(PROFILE.totWins || 0, TOT_WINS_GOAL);
+    var done = hasPumpkinSkin();
+    var open = totChallengeOpen();
+    var daysLeft = Math.max(0, Math.ceil((TOT_CHALLENGE_END - Date.now()) / 86400000));
+    el['tot-popup-btn'].title = 'Trick or Treat: ' + (done ? 'Pumpkin skin unlocked'
+      : open ? 'Win 10 matches with the event on by Oct. 31 for the Pumpkin skin (' + wins + '/' + TOT_WINS_GOAL + ')' : 'Event ended');
+    el['tot-challenge-btn'].classList.toggle('done', done);
+    el['tot-challenge-deadline'].textContent = done ? 'Complete' : open
+      ? (daysLeft <= 1 ? 'Ends today' : daysLeft + ' days left') : 'Ended';
+    el['tot-challenge-fill'].style.width = (done ? 100 : wins / TOT_WINS_GOAL * 100) + '%';
+    el['tot-challenge-progress'].textContent = done ? 'Unlocked \u2014 equip it in Cosmetics'
+      : wins + ' / ' + TOT_WINS_GOAL + ' event wins';
   }
   function getWeaponDef(slot){
     if (modeBase() === 'gungame' && slot === 'primary'){
@@ -1993,7 +2192,7 @@
     });
     S.screen = name;
     el['music-toggle'].classList.toggle('hidden', name === 'game');
-    if (name === 'menu'){ stopGameMusic(); startMenuMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.45; startCharPreviewLoop(); resizeCharPreview(); markMenuInteraction(); }
+    if (name === 'menu'){ S.totArsenal = null; netDisconnect(); stopGameMusic(); startMenuMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.45; startCharPreviewLoop(); resizeCharPreview(); markMenuInteraction(); }
     else if (name === 'game'){ stopMenuMusic(); startGameMusicIfNeeded(); if (musicGain) musicGain.gain.value = 0.72; stopCharPreviewLoop(); }
     else if (name === 'countdown-screen'){ stopMenuMusic(); stopCharPreviewLoop(); }
   }
@@ -2117,6 +2316,7 @@
     el['cosmetics-popup'].classList.remove('open');
     el['account-popup'].classList.remove('open');
     el['rank-popup'].classList.remove('open');
+    el['tot-popup'].classList.remove('open');
   }
   function openAccountPopup(){
     closeAllPopups();
@@ -2127,6 +2327,11 @@
     closeAllPopups();
     renderRankPopup();
     el['rank-popup'].classList.add('open');
+  }
+  function openTrickOrTreatPopup(){
+    closeAllPopups();
+    renderTrickOrTreatPopup();
+    el['tot-popup'].classList.add('open');
   }
   function showSettingsView(name){
     if (name !== 'customization' && rebindingAction){ rebindingAction = null; renderKeybinds(); }
@@ -2189,6 +2394,15 @@
   el['rank-popup-btn'].addEventListener('click', openRankPopup);
   el['rank-popup-close'].addEventListener('click', closeAllPopups);
   el['rank-popup'].addEventListener('click', function(e){ if (e.target === el['rank-popup']) closeAllPopups(); });
+  el['tot-popup-btn'].addEventListener('click', openTrickOrTreatPopup);
+  el['tot-popup-close'].addEventListener('click', closeAllPopups);
+  el['tot-popup'].addEventListener('click', function(e){ if (e.target === el['tot-popup']) closeAllPopups(); });
+  el['tot-challenge-btn'].addEventListener('click', openCosmeticsPopup);
+  el['tot-toggle-btn'].addEventListener('click', function(){
+    S.trickOrTreat = !S.trickOrTreat;
+    try { localStorage.setItem('octakill_tot', S.trickOrTreat ? '1' : '0'); } catch(e){}
+    renderTrickOrTreatPopup();
+  });
   el['account-signup-btn'].addEventListener('click', handleSignUp);
   el['account-login-btn'].addEventListener('click', handleLogIn);
   el['account-logout-btn'].addEventListener('click', handleLogOut);
@@ -2216,12 +2430,13 @@
   updateModeLabel();
   updateCreditsDisplay();
   updateRankButtonTitle();
+  renderTrickOrTreatPopup();
   initCharPreview();
   window.addEventListener('resize', resizeCharPreview);
   el['menu'].addEventListener('pointerdown', markMenuInteraction);
   el['menu'].addEventListener('keydown', markMenuInteraction);
 
-  el['play-btn'].addEventListener('click', function(){ closeAllPopups(); startMatch(S.modeChoice); });
+  el['play-btn'].addEventListener('click', function(){ closeAllPopups(); findMatch(S.modeChoice); });
   el['callsign'].addEventListener('input', function(e){ S.callsign = e.target.value; });
   el['rematch-btn'].addEventListener('click', function(){
     if (MAPS.length > 1){
@@ -2231,7 +2446,7 @@
       renderMapGrid();
       updateMapLabel();
     }
-    startMatch(S.mode);
+    findMatch(S.mode);
   });
   el['menu-btn'].addEventListener('click', function(){ clearTimers(); showScreen('menu'); });
 
@@ -2244,14 +2459,18 @@
     clearTimers();
     S.mode = mode;
     S.fighters = makeFighters(S.callsign, mode);
-    S.time = 180; S.reloading = false; S.slot = 'primary'; S.tacticalReady = true; S.mouseHeld = false; S.aiming = false; S.crouching = false;
+    S.time = 180;
+    if (netInMatch()) netSetupFighters(); S.reloading = false; S.slot = 'primary'; S.tacticalReady = true; S.mouseHeld = false; S.aiming = false; S.crouching = false;
     grantSpawnProtection();
     clearDamageIndicators();
     el['crouch-badge'].classList.add('hidden');
+    S.totArsenal = null; S.totNext = TOT_INTERVAL;
+    if (totActiveForMode(mode)) rollTrickOrTreatArsenal();
+    updateTrickOrTreatHud();
     var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
     S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
     S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
-    S.feed = []; S.countdown = 3;
+    S.feed = [];
     el['team-score'].classList.toggle('hidden', !isTeamMode(mode));
     el['ffa-target'].classList.toggle('hidden', isTeamMode(mode));
     var subtitles = {
@@ -2260,20 +2479,35 @@
       gungame:'Every kill upgrades your gun.', duel:'One on one. Nowhere to hide.',
       deathmatch:'No respawns. Make it count.', deathmatch_team:'No respawns. Hold the line together.'
     };
-    el['countdown-sub'].textContent = subtitles[mode] || 'No allies. No mercy.';
+    el['countdown-sub'].textContent = S.totArsenal ? 'Trick or Treat! Your arsenal changes every 30 seconds.' : (subtitles[mode] || 'No allies. No mercy.');
+    if (netInMatch()) el['countdown-sub'].textContent = 'Online match \u2014 ' + NET.humans.length + ' players + bots' + (S.totArsenal ? ' \u00b7 Trick or Treat is on' : '');
     el['feed'].innerHTML = '';
     updateAmmoDisplay(); updateHpDisplay(); updateRoster(); updateClock(); updateTacticalDisplay(); updateObjectiveHud();
+    el['countdown-screen'].classList.toggle('tot', !!S.totArsenal);
+    el['load-pumpkin'].classList.toggle('hidden', !S.totArsenal);
+    setLoadProgress(0);
     showScreen('countdown-screen');
-    el['countdown-num'].textContent = String(S.countdown);
+    var loadStart = performance.now();
     timers.countdown = setInterval(function(){
-      S.countdown -= 1;
-      if (S.countdown <= 0){
+      var t = Math.min(1, (performance.now() - loadStart) / LOAD_DURATION_MS);
+      setLoadProgress(t);
+      if (t >= 1){
         clearInterval(timers.countdown);
-        enterPlaying();
-      } else {
-        el['countdown-num'].textContent = String(S.countdown);
+        if (netInMatch() && !NET.rosterReady){
+          NET.countdownDone = true;
+          el['load-pct'].textContent = 'WAITING FOR THE HOST...';
+        } else enterPlaying();
       }
-    }, 800);
+    }, 50);
+  }
+
+  var LOAD_DURATION_MS = 5000;
+  function setLoadProgress(t){
+    var pct = Math.round(t * 100);
+    el['load-fill'].style.width = pct + '%';
+    el['load-pumpkin'].style.left = pct + '%';
+    el['load-pct'].textContent = 'LOADING INTO MATCH ' + pct + '%';
+    el['load-fill'].parentNode.setAttribute('aria-valuenow', String(pct));
   }
 
   function enterPlaying(){
@@ -2281,6 +2515,7 @@
     showScreen('game');
     ensureScene();
     resetSceneForMatch();
+    if (netInMatch()) netOnEnterPlaying();
     S.paused = false;
     el['pause-overlay'].classList.add('hidden');
     el['eliminated'].classList.add('hidden');
@@ -2290,16 +2525,23 @@
   }
 
   function tickSecond(){
+    if (netInMatch() && !NET.isHost){
+      // The host runs the clock and objectives; its snapshots keep us in sync.
+      S.time = Math.max(0, S.time - 1);
+      updateClock();
+      tickTrickOrTreat();
+      return;
+    }
     S.time -= 1;
     if (S.time <= 0){ S.time = 0; updateClock(); endMatch(); return; }
     updateClock();
+    if (netHosting()) netSendSnap();
+    tickTrickOrTreat();
     if (modeBase() === 'koth' && three){
       var inHillAll = [];
       S.fighters.forEach(function(f, idx){
         if (!f.alive) return;
-        var pos;
-        if (f.id === 'player') pos = three.camera.position;
-        else { var b = three.bots[idx-1]; if (!b) return; pos = b.group.position; }
+        var pos = three.getEntityPosition(f.id, new THREE.Vector3());
         if (Math.sqrt(pos.x*pos.x + pos.z*pos.z) <= HILL_RADIUS) inHillAll.push(f);
       });
       if (isTeamMode()){
@@ -2524,6 +2766,7 @@
     var killer = S.fighters.find(function(f){return f.id===killerId;});
     var victim = S.fighters.find(function(f){return f.id===victimId;});
     if (!killer || !victim || !victim.alive) return;
+    if (netInMatch() && !NET.isHost) return; // the host decides kills
     pushFeed(killer.name, victim.name, killerId === 'player');
     if (killerId === 'player' && modeBase() !== 'gungame'){
       var w = currentWeapon(), ws = S.weaponState[S.slot];
@@ -2533,6 +2776,7 @@
     killer.kills += 1;
     victim.health = 0; victim.alive = false; victim.deaths += 1;
     updateRoster(); updateAmmoDisplay(); updateHpDisplay(); setBotVisibility(victimId, false);
+    if (netHosting()) netSend({t:'kill', k:netIdOf(killer), v:netIdOf(victim), kt: killer.tier + (modeBase() === 'gungame' ? 1 : 0)});
 
     if (modeBase() === 'gungame'){
       killer.tier += 1;
@@ -2548,26 +2792,38 @@
       }
     }
 
-    if (modeBase() !== 'deathmatch'){
-      setTimeout(function(){
-        victim.health = victimId === 'player' ? 100 : BOT_MAX_HEALTH; victim.alive = true;
-        if (victimId === 'player'){
-          victim.shield = 0; updateShieldDisplay();
-          S.slot = 'primary'; S.reloading = false; S.aiming = false; S.crouching = false;
-          grantSpawnProtection();
-          clearDamageIndicators();
-          el['crouch-badge'].classList.add('hidden');
-          var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
-          S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
-          S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
-          S.tacticalReady = true; updateTacticalDisplay(); updateAmmoDisplay();
-          if (three && three.updateWeaponVisual) three.updateWeaponVisual();
-          respawnPlayer();
-        } else resetBotAI(victimId);
-        updateRoster(); updateHpDisplay(); setBotVisibility(victimId, true);
-      }, 2200);
-    }
+    if (modeBase() !== 'deathmatch') scheduleRespawn(victim);
     checkWinCondition();
+  }
+
+  function scheduleRespawn(victim){
+    setTimeout(function(){ respawnFighter(victim); }, 2200);
+  }
+
+  function respawnFighter(victim){
+    if (victim.alive || S.fighters.indexOf(victim) < 0) return;
+    if (netInMatch() && !NET.isHost) return; // the host respawns everyone
+    victim.health = (victim.id === 'player' || victim.human) ? 100 : BOT_MAX_HEALTH; victim.alive = true;
+    if (victim.id === 'player') resetPlayerAfterDeath();
+    else if (victim.remote){ victim.protectedUntil = performance.now() + 3000; victim.snapPending = true; }
+    else resetBotAI(victim.id);
+    if (netHosting()) netSend({t:'respawn', id:netIdOf(victim)});
+    updateRoster(); updateHpDisplay(); setBotVisibility(victim.id, true);
+  }
+
+  function resetPlayerAfterDeath(){
+    var player = S.fighters[0];
+    player.shield = 0; updateShieldDisplay();
+    S.slot = 'primary'; S.reloading = false; S.aiming = false; S.crouching = false;
+    grantSpawnProtection();
+    clearDamageIndicators();
+    el['crouch-badge'].classList.add('hidden');
+    var pri = getWeaponDef('primary'), sec = getWeaponDef('secondary');
+    S.weaponState.primary = {ammo:pri.mag, reserve:pri.reserve};
+    S.weaponState.secondary = {ammo:sec.mag, reserve:sec.reserve};
+    S.tacticalReady = true; updateTacticalDisplay(); updateAmmoDisplay();
+    if (three && three.updateWeaponVisual) three.updateWeaponVisual();
+    respawnPlayer();
   }
 
   function isEnemy(aId, bId){
@@ -2583,21 +2839,31 @@
     var target = S.fighters.find(function(f){return f.id===targetId;});
     if (!target || !target.alive) return;
     if (!isEnemy(attackerId, targetId)) return;
+    if (netInMatch() && !NET.isHost){
+      // Only the host applies damage online; report our hit to it.
+      if (attackerId === 'player'){ flashHit(); netSend({t:'hit', to:NET.hostId, tg:netIdOf(target), d:Math.round(amount)}); }
+      return;
+    }
     if (targetId === 'player' && performance.now() < S.spawnProtectedUntil) return;
+    if (target.protectedUntil && performance.now() < target.protectedUntil) return;
     if (targetId === 'player'){ flashDamage(); showDamageIndicator(attackerId); }
     else if (attackerId === 'player') flashHit();
     if (attackerId === 'player' && targetId.indexOf('bot-') === 0 && three){
       var botIdx = parseInt(targetId.split('-')[1], 10);
       if (three.bots[botIdx]) three.bots[botIdx].noticedPlayerUntil = three.clock.elapsedTime + ALERT_DURATION;
     }
-    if (targetId === 'player' && target.shield > 0){
+    if (target.shield > 0){
       var absorbed = Math.min(target.shield, amount);
       target.shield -= absorbed; amount -= absorbed;
-      updateShieldDisplay();
-      if (amount <= 0) return;
+      if (targetId === 'player') updateShieldDisplay();
+      if (amount <= 0){ netNotifyDamage(target, attackerId); return; }
     }
     if (target.health - amount <= 0) addKill(attackerId, targetId);
-    else { target.health -= amount; if (targetId === 'player') updateHpDisplay(); }
+    else {
+      target.health -= amount;
+      if (targetId === 'player') updateHpDisplay();
+      netNotifyDamage(target, attackerId);
+    }
   }
 
   function fire(){
@@ -2638,6 +2904,7 @@
   }
 
   function checkWinCondition(){
+    if (netInMatch() && !NET.isHost) return; // the host decides when the match ends
     var base = modeBase();
     if (base === 'gungame') return;
     if (base === 'deathmatch'){
@@ -2671,6 +2938,11 @@
   }
 
   function endMatch(forcedWinnerId){
+    if (netHosting()){
+      var w = forcedWinnerId && forcedWinnerId.indexOf('TEAM_') === 0 ? forcedWinnerId : netIdOf(fighterById(forcedWinnerId));
+      netSend({t:'end', w:w || '', l:netScoreList()});
+    }
+    netDisconnect();
     clearTimers();
     if (document.pointerLockElement) document.exitPointerLock();
     var base = modeBase();
@@ -2697,6 +2969,10 @@
     var earned = awardMatchCredits(sorted, forcedWinnerId);
     el['credits-earned-line'].classList.toggle('hidden', earned <= 0);
     el['credits-earned-amt'].textContent = earned;
+    el['tot-result-line'].classList.toggle('hidden', !lastMatchTotResult);
+    if (lastMatchTotResult === 'unlocked') el['tot-result-line'].textContent = 'Pumpkin skin unlocked! Equip it in Cosmetics.';
+    else if (lastMatchTotResult === 'progress') el['tot-result-line'].textContent = 'Trick or Treat challenge: ' + PROFILE.totWins + '/' + TOT_WINS_GOAL + ' wins';
+    else if (lastMatchTotResult === 'hint') el['tot-result-line'].textContent = 'Join the Trick or Treat event to count wins toward the Pumpkin skin';
     showScreen('results');
   }
 
@@ -3928,7 +4204,7 @@
     function alertBotsNearShot(point, radius){
       var t = clock.elapsedTime + ALERT_DURATION;
       bots.forEach(function(b, idx){
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         if (b.group.position.distanceTo(point) <= radius) b.noticedPlayerUntil = t;
       });
@@ -4000,6 +4276,7 @@
         for (var h=0; h<hits.length; h++){ if (hits[h].object.userData && hits[h].object.userData.botId){ target = hits[h].object; break; } }
         var endPoint = hits.length ? hits[0].point.clone() : camera.position.clone().add(dir.clone().multiplyScalar(60));
         spawnBullet(muzzleWorld, endPoint, w.explosive ? '#ff7a3d' : '#f2c94c');
+        if (netInMatch()) netSend({t:'shot', a3:netVec(muzzleWorld), b3:netVec(endPoint), col: w.explosive ? '#ff7a3d' : '#f2c94c'});
         if (S.graphicsMode === 'ultra' && hits.length && !w.explosive) spawnSparks(hits[0].point, target ? '#ff4a3a' : '#ffc860', 5, 3, 300);
         if (target){
           dealDamage('player', target.userData.botId, target.userData.head ? Math.round(w.dmg*1.9) : w.dmg);
@@ -4008,7 +4285,7 @@
       }
     }
 
-    function explodeAt(point, radius, damage, color){
+    function explodeAt(point, radius, damage, color, visualOnly){
       var now0 = performance.now();
       var burstScale = Math.max(1.6, radius*0.55);
       playExplosionSound();
@@ -4061,8 +4338,10 @@
         });
       }
 
+      if (visualOnly) return;
+      if (netInMatch()) netSend({t:'fx', k:'boom', p:netVec(point), rad:radius, col:color});
       bots.forEach(function(b, idx){
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         var dist = b.group.position.distanceTo(point);
         if (dist > radius) return;
@@ -4082,13 +4361,18 @@
       smokeZones.push({mesh:mesh, mat:mat, geo:geo, point:mesh.position.clone(), radius:radius, expire:performance.now()+duration*1000});
     }
 
-    function triggerFlash(point, radius, duration){
+    function blindBots(point, radius, duration){
       var elapsedNow = clock.elapsedTime;
       bots.forEach(function(b, idx){
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         if (b.group.position.distanceTo(point) <= radius) b.blindedUntil = elapsedNow + duration;
       });
+    }
+
+    function triggerFlash(point, radius, duration){
+      blindBots(point, radius, duration);
+      if (netInMatch()) netSend({t:'fx', k:'flash', p:netVec(point), rad:radius, dur:duration});
       flashWhite();
     }
 
@@ -4138,6 +4422,7 @@
       } else if (t.type === 'shield'){
         player.shield = Math.min(100, (player.shield||0) + t.amount);
         updateShieldDisplay();
+        if (netInMatch() && !NET.isHost) netSend({t:'shield', to:NET.hostId, amt:t.amount});
         showToast('Armor Plate equipped \u2014 +' + t.amount + ' shield, higher health');
       }
 
@@ -4377,6 +4662,7 @@
       bullets:bullets, spawnBullet:spawnBullet, getEntityPosition:getEntityPosition, reloadFX:reloadFX,
       grenades:grenades, mines:mines, smokeZones:smokeZones, explosionFX:explosionFX,
       performShot:performShot, explodeAt:explodeAt, spawnSmoke:spawnSmoke, triggerFlash:triggerFlash,
+      blindBots:blindBots, alertBotsNearShot:alertBotsNearShot,
       updateWeaponVisual:updateWeaponVisual, buildEnvironment:buildEnvironment, currentMapId:S.mapId,
       applyGraphicsMode:applyGraphicsMode, renderFrame:renderFrame, touchMove:touchMove, armGroup:armGroup, leftArmGroup:leftArmGroup, checkLineOfSight:checkLineOfSight
     };
@@ -4397,7 +4683,7 @@
     S.mouseHeld = false;
     S.aiming = false;
     if (three) three.setLockedFn(false);
-    if (timers.tick){ clearInterval(timers.tick); timers.tick = null; }
+    if (timers.tick && !netInMatch()){ clearInterval(timers.tick); timers.tick = null; }
     el['pause-overlay'].classList.remove('hidden');
   }
 
@@ -4405,14 +4691,14 @@
     if (!S.paused) return;
     S.paused = false;
     el['pause-overlay'].classList.add('hidden');
-    timers.tick = setInterval(tickSecond, 1000);
+    if (!timers.tick) timers.tick = setInterval(tickSecond, 1000);
     requestLock();
   }
 
   function restartMatch(){
     el['pause-overlay'].classList.add('hidden');
     S.paused = false;
-    startMatch(S.mode);
+    findMatch(S.mode);
   }
 
   function quitToMenu(){
@@ -4432,6 +4718,8 @@
     var idx = parseInt(id.split('-')[1], 10);
     if (isNaN(idx) || !three.bots[idx]) return;
     three.bots[idx].group.visible = visible;
+    // Hidden models still block raycasts, so park them out of the arena online.
+    if (netInMatch() && !visible) three.bots[idx].group.position.y = -50;
   }
 
   function resetBotAI(id){
@@ -4450,7 +4738,7 @@
     if (!three) return;
     var botPositions = [];
     three.bots.forEach(function(b, idx){
-      var f = S.fighters[idx+1];
+      var f = fighterForBot(idx);
       if (f && f.alive) botPositions.push(b.group.position);
     });
     var s = randomSpawnAwayFrom(botPositions, 6);
@@ -4483,14 +4771,16 @@
     three.explosionFX.forEach(function(x){ three.scene.remove(x.mesh); if (x.geo) x.geo.dispose(); if (x.mat) x.mat.dispose(); });
     three.explosionFX.length = 0;
     var teamMode = isTeamMode();
-    var activeBotCount = S.fighters.length - 1;
     three.bots.forEach(function(b, i){
-      if (i >= activeBotCount){
+      var f = fighterForBot(i);
+      if (!f){
         b.group.visible = false;
+        if (netInMatch()) b.group.position.y = -50;
         return;
       }
       b.group.visible = true;
-      var team = S.fighters[i+1].team;
+      b.group.scale.y = 1;
+      var team = f.team;
       b.bodyMat.color.set(teamMode ? (team === 'orange' ? '#F36B21' : '#3f83c5') : '#5c5f3f');
       var s = order[i+1];
       b.group.position.set(s[0], s[1], s[2]);
@@ -4559,6 +4849,393 @@
     b.head.rotation.y = moving ? 0 : Math.sin(b.animPhase*0.55) * 0.2;
   }
 
+  // ---- Online matchmaking (see multiplayer.go) ----
+  // Every mode first looks for other players for ~10s. If nobody shows up the
+  // match is played offline as before. Otherwise the server picks a host whose
+  // game runs the bots, the match rules and all damage; everyone else sends
+  // their hits to the host and draws what it reports. Other fighters (remote
+  // players and, on non-hosts, bots) use the bot models: fighter id 'bot-<slot>',
+  // with remote:true when their movement comes from the network.
+  function netInMatch(){ return NET.phase === 'match'; }
+  function netHosting(){ return NET.phase === 'match' && NET.isHost; }
+
+  function netUrl(){
+    var base = '';
+    try { base = new URLSearchParams(location.search).get('server') || ''; } catch(e){}
+    base = base || MULTIPLAYER_SERVER;
+    if (!base){
+      if (location.protocol !== 'http:' && location.protocol !== 'https:') return null;
+      base = location.origin;
+    }
+    base = base.trim().replace(/\/+$/, '');
+    if (/^https?:\/\//.test(base)) base = base.replace(/^http/, 'ws');
+    else if (!/^wss?:\/\//.test(base)) base = (location.protocol === 'http:' ? 'ws://' : 'wss://') + base;
+    return base + '/ws';
+  }
+  // Free hosts sleep when idle; poke the server on page load so it is awake by the time someone presses Play.
+  function netWarmup(){
+    var url = netUrl();
+    if (!url || !window.fetch) return;
+    try { fetch(url.replace(/^ws/, 'http').replace(/\/ws$/, '/healthz'), {mode:'no-cors'}).catch(function(){}); } catch(e){}
+  }
+
+  function netVec(v){ return [Math.round(v.x*100)/100, Math.round(v.y*100)/100, Math.round(v.z*100)/100]; }
+  function netSend(m){
+    if (NET.ws && NET.ws.readyState === 1) NET.ws.send(JSON.stringify(m));
+  }
+  function fighterById(id){
+    for (var i=0;i<S.fighters.length;i++){ if (S.fighters[i].id === id) return S.fighters[i]; }
+    return null;
+  }
+  function netIdOf(f){ return f ? (f.id === 'player' ? NET.myId : f.netId) : ''; }
+  function netFighter(netId){
+    if (!netId) return null;
+    if (netId === NET.myId) return S.fighters[0];
+    return NET.byNet[netId] || null;
+  }
+
+  function netDisconnect(){
+    var ws = NET.ws;
+    NET.ws = null; NET.phase = 'idle'; NET.isHost = false; NET.rosterReady = false; NET.countdownDone = false;
+    if (ws){ try { ws.close(); } catch(e){} }
+  }
+
+  function findMatch(mode){
+    clearTimers();
+    netDisconnect();
+    S.mode = mode;
+    var url = netUrl();
+    if (!url || typeof WebSocket === 'undefined'){ startMatch(mode); return; }
+    NET.phase = 'queue';
+    NET.found = 1; NET.cap = mode === 'duel' ? 2 : 8;
+    NET.displayEnd = Date.now() + 10000;
+    NET.searchEnd = NET.displayEnd + 3000;
+    el['countdown-screen'].classList.toggle('tot', totActiveForMode(mode));
+    el['load-pumpkin'].classList.toggle('hidden', !totActiveForMode(mode));
+    showScreen('countdown-screen');
+    netSearchTick();
+    timers.countdown = setInterval(netSearchTick, 250);
+    var ws;
+    try { ws = new WebSocket(url); } catch(e){ netGoSolo(); return; }
+    NET.ws = ws;
+    ws.onopen = function(){ ws.send(JSON.stringify({t:'queue', name:S.callsign, mode:mode})); };
+    ws.onmessage = function(ev){
+      if (NET.ws !== ws) return;
+      var m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+      netHandle(m);
+    };
+    ws.onclose = function(){
+      if (NET.ws !== ws) return;
+      NET.ws = null;
+      if (NET.phase === 'queue') netGoSolo();
+      else if (NET.phase === 'match') netLostConnection();
+    };
+  }
+
+  function netSearchTick(){
+    if (NET.phase !== 'queue') return;
+    var left = Math.max(0, NET.displayEnd - Date.now());
+    el['load-fill'].style.width = Math.round(clamp(1 - left/10000, 0, 1) * 100) + '%';
+    el['load-pumpkin'].style.left = el['load-fill'].style.width;
+    el['load-pct'].textContent = 'FINDING PLAYERS ' + NET.found + '/' + NET.cap + ' · ' + Math.ceil(left/1000) + 's';
+    el['countdown-sub'].textContent = 'Searching for online players...';
+    if (Date.now() >= NET.searchEnd) netGoSolo();
+  }
+
+  function netGoSolo(){
+    if (NET.phase !== 'queue') return;
+    netDisconnect();
+    startMatch(S.mode);
+  }
+
+  // The server connection dropped mid-match: keep playing, with bots taking over everyone else.
+  function netLostConnection(){
+    var rosterReady = NET.rosterReady;
+    NET.phase = 'idle'; NET.isHost = false;
+    if (S.screen === 'countdown-screen' && !rosterReady){ startMatch(S.mode); return; }
+    S.fighters.forEach(function(f){
+      if (f.id !== 'player'){ f.remote = false; f.net = null; f.human = false; f.bot = true; }
+      if (!f.alive && modeBase() !== 'deathmatch') scheduleRespawn(f);
+    });
+    if (S.screen === 'game') showToast('Connection lost — bots took over');
+  }
+
+  // Host only: build the full lobby (players + bots) and share it.
+  function netSetupFighters(){
+    var me = S.fighters[0];
+    me.human = true; me.netId = NET.myId;
+    S.fighters = [me];
+    NET.byNet = {};
+    if (!NET.isHost) return; // everyone else waits for the host's roster
+    var cap = S.mode === 'duel' ? 2 : 8;
+    var teamMode = isTeamMode();
+    var counts = {orange:0, blue:0};
+    function pickTeam(slot){
+      if (!teamMode) return slot % 2 ? 'orange' : 'blue';
+      var t = counts.orange <= counts.blue ? 'orange' : 'blue';
+      counts[t]++;
+      return t;
+    }
+    me.team = teamMode ? pickTeam() : 'orange';
+    var slot = 0;
+    NET.humans.forEach(function(h){
+      if (h.id !== NET.myId) netAddFighter({id:h.id, name:h.name, team:pickTeam(slot), bot:false}, slot++);
+    });
+    var taken = {};
+    S.fighters.forEach(function(f){ taken[f.name] = true; });
+    var pool = BOT_NAMES.filter(function(n){ return !taken[n]; });
+    for (var i = pool.length-1; i>0; i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    while (S.fighters.length < cap){
+      netAddFighter({id:'b'+slot, name:pool.shift() || ('Bot_'+slot), team:pickTeam(slot), bot:true}, slot++);
+    }
+    NET.rosterReady = true;
+    netSend({t:'roster', map:S.mapId, time:S.time, l:S.fighters.map(function(f){
+      return {id:netIdOf(f), name:f.name, team:f.team, bot:!!f.bot};
+    })});
+  }
+
+  function netAddFighter(e, slot){
+    var bot = !!e.bot;
+    var f = {id:'bot-'+slot, netId:e.id, slot:slot, name:e.name, team:e.team, kills:0, deaths:0,
+      health: bot ? BOT_MAX_HEALTH : 100, alive:true, shield:0, tier:0, hillPoints:0,
+      bot:bot, human:!bot, remote: !(NET.isHost && bot), net:null, snapPending:true};
+    S.fighters.push(f);
+    NET.byNet[e.id] = f;
+    return f;
+  }
+
+  function netOnEnterPlaying(){
+    respawnPlayer();
+    grantSpawnProtection();
+    var until = performance.now() + 4000;
+    S.fighters.forEach(function(f){ if (f.remote){ f.snapPending = true; f.protectedUntil = until; } });
+  }
+
+  function netRefreshTierWeapon(){
+    var newW = getWeaponDef('primary');
+    S.weaponState.primary = {ammo:newW.mag, reserve:newW.reserve};
+    updateAmmoDisplay();
+    if (three && three.updateWeaponVisual) three.updateWeaponVisual();
+  }
+
+  // Host only: tell a remote player about damage they took.
+  function netNotifyDamage(target, attackerId){
+    if (!netHosting() || !target.remote || !target.human) return;
+    netSend({t:'dmg', to:target.netId, hp:Math.round(target.health*10)/10, sh:target.shield||0, by:netIdOf(fighterById(attackerId))});
+  }
+
+  function netScoreList(){
+    return S.fighters.map(function(f){
+      return [netIdOf(f), f.kills, f.deaths, Math.round(f.health), f.alive ? 1 : 0, f.tier, Math.floor(f.hillPoints)];
+    });
+  }
+  function netSendSnap(){ netSend({t:'snap', time:S.time, l:netScoreList()}); }
+
+  function netApplyScores(list){
+    var player = S.fighters[0];
+    (list || []).forEach(function(r){
+      var f = netFighter(r[0]);
+      if (!f) return;
+      f.kills = r[1]; f.deaths = r[2]; f.hillPoints = r[6];
+      if (f.id === 'player'){
+        if (modeBase() === 'gungame' && r[5] !== f.tier){ f.tier = r[5]; netRefreshTierWeapon(); }
+        if (r[4] && player.alive){ player.health = r[3]; updateHpDisplay(); }
+        else if (!r[4] && player.alive){ player.health = 0; player.alive = false; updateHpDisplay(); }
+        else if (r[4] && !player.alive){ player.health = 100; player.alive = true; resetPlayerAfterDeath(); updateHpDisplay(); }
+        return;
+      }
+      f.tier = r[5];
+      if (r[4] && !f.alive){ f.alive = true; f.snapPending = true; setBotVisibility(f.id, true); }
+      else if (!r[4] && f.alive){ f.alive = false; setBotVisibility(f.id, false); }
+    });
+    updateRoster(); updateObjectiveHud();
+  }
+
+  function netBecomeHost(){
+    S.fighters.forEach(function(f){
+      if (f.bot && f.remote){ f.remote = false; f.net = null; }
+      if (!f.alive && modeBase() !== 'deathmatch') scheduleRespawn(f);
+    });
+  }
+  function netLoseHost(){
+    S.fighters.forEach(function(f){ if (f.bot && f.id !== 'player'){ f.remote = true; f.snapPending = true; } });
+  }
+
+  function netHandle(m){
+    var f, player = S.fighters[0];
+    if (m.t === 'lobby'){
+      if (NET.phase !== 'queue') return;
+      NET.found = m.n; NET.cap = m.cap;
+      NET.displayEnd = Date.now() + m.wait*1000;
+      NET.searchEnd = NET.displayEnd + 3000;
+      netSearchTick();
+    } else if (m.t === 'solo'){
+      netGoSolo();
+    } else if (m.t === 'start'){
+      if (NET.phase !== 'queue') return;
+      NET.phase = 'match'; NET.myId = m.you; NET.hostId = m.host; NET.isHost = m.host === m.you;
+      NET.humans = m.players || []; NET.byNet = {}; NET.rosterReady = false; NET.countdownDone = false;
+      startMatch(S.mode);
+    } else if (!netInMatch()){
+      return;
+    } else if (m.t === 'roster'){
+      if (NET.rosterReady) return;
+      if (m.map && MAPS.some(function(x){ return x.id === m.map; })){ S.mapId = m.map; renderMapGrid(); updateMapLabel(); }
+      S.time = m.time || 180; updateClock();
+      var slot = 0;
+      (m.l || []).forEach(function(e){
+        if (e.id === NET.myId) player.team = e.team;
+        else netAddFighter(e, slot++);
+      });
+      NET.rosterReady = true;
+      updateRoster(); updateObjectiveHud();
+      if (NET.countdownDone && S.screen === 'countdown-screen') enterPlaying();
+    } else if (m.t === 's'){
+      f = netFighter(m.from);
+      if (!f || !f.remote) return;
+      var eye = m.c ? EYE_HEIGHT_CROUCH : EYE_HEIGHT_STAND;
+      f.net = {x:m.p[0], y:(m.c ? 0.7 : 1) + Math.max(0, m.p[1] - eye), z:m.p[2], r:m.r, c:!!m.c};
+      if (f.snapPending){ f.snap = true; f.snapPending = false; }
+    } else if (m.t === 'bs'){
+      (m.l || []).forEach(function(r){
+        var bf = netFighter(r[0]);
+        if (!bf || !bf.remote) return;
+        bf.net = {x:r[1], y:r[2], z:r[3], r:r[4], c:false};
+        if (bf.snapPending){ bf.snap = true; bf.snapPending = false; }
+      });
+    } else if (m.t === 'shot'){
+      if (!three || S.screen !== 'game') return;
+      var a = new THREE.Vector3(m.a3[0], m.a3[1], m.a3[2]);
+      three.spawnBullet(a, new THREE.Vector3(m.b3[0], m.b3[1], m.b3[2]), m.tg && m.tg === NET.myId ? '#e2453f' : m.col);
+      if (NET.isHost && !m.bot) three.alertBotsNearShot(a, 24);
+      var nowMs = performance.now();
+      if (!NET.lastShotSound[m.from] || nowMs - NET.lastShotSound[m.from] > 50){
+        NET.lastShotSound[m.from] = nowMs;
+        playGunshot({suppressed:true});
+      }
+    } else if (m.t === 'fx'){
+      if (!three || S.screen !== 'game') return;
+      var pt = new THREE.Vector3(m.p[0], m.p[1], m.p[2]);
+      if (m.k === 'boom') three.explodeAt(pt, m.rad, 0, m.col, true);
+      else if (m.k === 'smoke') three.spawnSmoke(pt, m.rad, m.dur, m.col);
+      else if (m.k === 'flash'){
+        if (NET.isHost) three.blindBots(pt, m.rad, m.dur);
+        if (three.camera.position.distanceTo(pt) <= m.rad) flashWhite();
+      }
+    } else if (m.t === 'hit'){
+      if (!NET.isHost || S.screen !== 'game') return;
+      var attacker = netFighter(m.from), target = netFighter(m.tg);
+      if (attacker && target) dealDamage(attacker.id, target.id, Math.min(300, Math.max(0, +m.d || 0)));
+    } else if (m.t === 'shield'){
+      f = netFighter(m.from);
+      if (NET.isHost && f) f.shield = Math.min(100, (f.shield||0) + (+m.amt || 0));
+    } else if (m.t === 'dmg'){
+      if (!player.alive || S.screen !== 'game') return;
+      player.health = m.hp; player.shield = m.sh || 0;
+      updateShieldDisplay(); updateHpDisplay(); flashDamage();
+      var by = netFighter(m.by);
+      if (by && by !== player) showDamageIndicator(by.id);
+    } else if (m.t === 'kill'){
+      var killer = netFighter(m.k), victim = netFighter(m.v);
+      if (!victim) return;
+      pushFeed(killer ? killer.name : '☠', victim.name, m.k === NET.myId);
+      if (killer){ killer.kills += 1; if (modeBase() === 'gungame') killer.tier = m.kt; }
+      victim.deaths += 1; victim.health = 0; victim.alive = false;
+      if (victim.id === 'player'){ S.reloading = false; S.aiming = false; updateHpDisplay(); }
+      else setBotVisibility(victim.id, false);
+      if (killer && killer.id === 'player'){
+        if (modeBase() === 'gungame') netRefreshTierWeapon();
+        else {
+          var w = currentWeapon(), ws = S.weaponState[S.slot];
+          if (w && ws){ ws.reserve = Math.min(w.reserve, ws.reserve + Math.round(w.mag*0.5)); updateAmmoDisplay(); }
+        }
+      }
+      updateRoster(); updateObjectiveHud();
+    } else if (m.t === 'respawn'){
+      f = netFighter(m.id);
+      if (!f || f.alive) return;
+      f.alive = true; f.health = f.bot ? BOT_MAX_HEALTH : 100;
+      if (f.id === 'player'){ resetPlayerAfterDeath(); updateHpDisplay(); }
+      else { f.snapPending = true; setBotVisibility(f.id, true); }
+      updateRoster();
+    } else if (m.t === 'snap'){
+      if (NET.isHost) return;
+      S.time = m.time; updateClock();
+      netApplyScores(m.l);
+    } else if (m.t === 'left'){
+      f = netFighter(m.id);
+      if (!f || f.id === 'player') return;
+      f.human = false; f.bot = true;
+      if (NET.isHost){
+        f.remote = false; f.net = null;
+        if (!f.alive && modeBase() !== 'deathmatch') scheduleRespawn(f);
+      }
+      if (S.screen === 'game') showToast(f.name + ' left — a bot took over');
+    } else if (m.t === 'host'){
+      var wasHost = NET.isHost;
+      NET.hostId = m.id; NET.isHost = m.id === NET.myId;
+      if (NET.isHost && !wasHost) netBecomeHost();
+      else if (!NET.isHost && wasHost) netLoseHost();
+    } else if (m.t === 'end'){
+      if (NET.isHost) return;
+      netApplyScores(m.l);
+      var winnerId;
+      if (m.w && m.w.indexOf('TEAM_') === 0) winnerId = m.w;
+      else { var wf = netFighter(m.w); winnerId = wf ? wf.id : undefined; }
+      netDisconnect();
+      if (S.screen === 'game' || S.screen === 'countdown-screen') endMatch(winnerId);
+    }
+  }
+
+  // Every frame during an online match: move network-driven fighters and send our state.
+  function netUpdate(delta){
+    var k = 1 - Math.exp(-delta*14);
+    S.fighters.forEach(function(f){
+      if (!f.remote || !f.alive || !f.net) return;
+      var b = three.bots[f.slot];
+      if (!b) return;
+      var n = f.net, pos = b.group.position;
+      b.group.scale.y = n.c ? 0.7 : 1;
+      if (f.snap){ pos.set(n.x, n.y, n.z); b.group.rotation.set(0, n.r, 0); f.snap = false; }
+      var ox = pos.x, oz = pos.z;
+      pos.x += (n.x - pos.x)*k; pos.y += (n.y - pos.y)*k; pos.z += (n.z - pos.z)*k;
+      var dr = n.r - b.group.rotation.y;
+      dr = Math.atan2(Math.sin(dr), Math.cos(dr));
+      b.group.rotation.set(0, b.group.rotation.y + dr*k, 0);
+      var speed = Math.sqrt((pos.x-ox)*(pos.x-ox) + (pos.z-oz)*(pos.z-oz)) / Math.max(delta, 0.001);
+      updateBotAnim(b, speed > 0.6, delta, 0.6);
+    });
+
+    var nowMs = performance.now();
+    if (nowMs - NET.lastSend >= 50){
+      NET.lastSend = nowMs;
+      var cam = three.camera, dir = new THREE.Vector3();
+      cam.getWorldDirection(dir);
+      netSend({t:'s', p:netVec(cam.position), r:Math.round(Math.atan2(dir.x, dir.z)*1000)/1000, c:!!S.crouching});
+    }
+    if (NET.isHost && nowMs - NET.lastBotSend >= 66){
+      NET.lastBotSend = nowMs;
+      var list = [], fwd = new THREE.Vector3();
+      S.fighters.forEach(function(f){
+        if (f.remote || f.id === 'player' || !f.alive) return;
+        var b = three.bots[f.slot];
+        if (!b) return;
+        b.group.getWorldDirection(fwd);
+        var p = netVec(b.group.position);
+        list.push([f.netId, p[0], p[1], p[2], Math.round(Math.atan2(fwd.x, fwd.z)*1000)/1000]);
+      });
+      if (list.length) netSend({t:'bs', l:list});
+    }
+  }
+
+  // A background tab stops animating, which would freeze the bots for everyone.
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden && netHosting() && S.fighters.some(function(f){ return f.remote && f.human; })) netSend({t:'yield'});
+  });
+
   var FRAME_INTERVAL_MS = 1000/60;
   var lastFrameTimestamp = 0;
 
@@ -4569,7 +5246,8 @@
     if (nowMs - lastFrameTimestamp < FRAME_INTERVAL_MS) return;
     lastFrameTimestamp = nowMs;
     var delta = Math.min(three.clock.getDelta(), 0.05);
-    if (S.paused){ three.renderFrame(three.camera); return; }
+    if (netInMatch()) netUpdate(delta);
+    if (S.paused && !netInMatch()){ three.renderFrame(three.camera); return; }
     var elapsed = three.clock.elapsedTime;
     var camera = three.camera, keys = three.keys;
     var player = S.fighters[0];
@@ -4579,6 +5257,9 @@
       player.health = Math.min(100, player.health + 0.5*delta);
       updateHpDisplay();
     }
+    if (netHosting()) S.fighters.forEach(function(f){
+      if (f.remote && f.human && f.alive && f.health < 100) f.health = Math.min(100, f.health + 0.5*delta);
+    });
 
     if (three.reloadFX){
       if (S.reloading) applyReloadFX(three.reloadFX, (performance.now() - S.reloadStart) / currentWeapon().reload);
@@ -4609,7 +5290,7 @@
     if (three.leftArmGroup) three.leftArmGroup.visible = S.highGraphics && !scopedNow && playerAlive && !isTacticalSlot && !!(wCur && wCur.twoHanded);
 
     if (three.reloadFX){
-      var shaking = S.loadoutId === 'gunner' && aimingNow && S.mouseHeld && playerAlive;
+      var shaking = getLoadout().id === 'gunner' && aimingNow && S.mouseHeld && playerAlive;
       var shakeWg = three.reloadFX.weaponGroup;
       if (shaking){
         shakeWg.position.x += (Math.random()-0.5)*0.014;
@@ -4666,9 +5347,9 @@
     var tmpPos = new THREE.Vector3();
     var tmpTarget = new THREE.Vector3();
 
-    S.fighters.slice(1).forEach(function(bot, index){
-      var b = three.bots[index];
-      if (!b || !bot.alive) return;
+    three.bots.forEach(function(b, index){
+      var bot = fighterForBot(index);
+      if (!bot || bot.remote || !bot.alive) return;
       var pos = b.group.position;
 
       if (bot.health <= BOT_MAX_HEALTH*0.35 && b.aiState === 'engage'){
@@ -4708,7 +5389,7 @@
           if (!f.alive || !isEnemy(bot.id, f.id)) return;
           three.getEntityPosition(f.id, tmpTarget);
           var d = tmpTarget.distanceTo(pos);
-          if (f.id === 'player' && S.mode !== 'duel' && d > BOT_SIGHT_RANGE && elapsed >= b.noticedPlayerUntil) return;
+          if ((f.id === 'player' || f.human) && S.mode !== 'duel' && d > BOT_SIGHT_RANGE && elapsed >= b.noticedPlayerUntil) return;
           if (d < targetDist){ targetDist = d; targetId = f.id; }
         });
 
@@ -4746,12 +5427,14 @@
             b.lastFire = elapsed;
             b.aimBlend = 1;
             var smokeFactor = 1;
-            if (targetId === 'player' && three.smokeZones.length){
+            var targetF = fighterById(targetId);
+            var humanTarget = targetId === 'player' || !!(targetF && targetF.human);
+            if (humanTarget && three.smokeZones.length){
               for (var szi=0; szi<three.smokeZones.length; szi++){
                 if (three.smokeZones[szi].point.distanceTo(tmpPos) <= three.smokeZones[szi].radius){ smokeFactor = 0.1; break; }
               }
             }
-            var crouchFactor = (targetId === 'player' && S.crouching) ? 0.6 : 1;
+            var crouchFactor = ((targetId === 'player' && S.crouching) || (targetF && targetF.human && targetF.net && targetF.net.c)) ? 0.6 : 1;
             var hitChance = Math.max(0, Math.min(0.90, 1 - dist/28)) * smokeFactor * crouchFactor;
             var endPoint;
             var botDmg = 6 + Math.floor(Math.random()*8);
@@ -4767,6 +5450,7 @@
               endPoint.x += (Math.random()-0.5)*2.4; endPoint.z += (Math.random()-0.5)*2.4;
             }
             three.spawnBullet(muzzleWorld, endPoint, targetId === 'player' ? '#e2453f' : '#f2c94c');
+            if (netHosting()) netSend({t:'shot', a3:netVec(muzzleWorld), b3:netVec(endPoint), col:'#f2c94c', tg:netIdOf(targetF), bot:1});
             playGunshot({suppressed:true});
             }
           }
@@ -4810,7 +5494,10 @@
         three.scene.remove(g.mesh); g.geo.dispose(); g.mat.dispose();
         var pt = g.mesh.position.clone();
         if (g.meta.kind === 'frag') three.explodeAt(pt, g.meta.radius, g.meta.damage, g.meta.color);
-        else if (g.meta.kind === 'smoke') three.spawnSmoke(pt, g.meta.radius, g.meta.duration, g.meta.color);
+        else if (g.meta.kind === 'smoke'){
+          three.spawnSmoke(pt, g.meta.radius, g.meta.duration, g.meta.color);
+          if (netInMatch()) netSend({t:'fx', k:'smoke', p:netVec(pt), rad:g.meta.radius, dur:g.meta.duration, col:g.meta.color});
+        }
         else if (g.meta.kind === 'flash') three.triggerFlash(pt, g.meta.radius, g.meta.duration);
         three.grenades.splice(gi,1);
       }
@@ -4822,7 +5509,7 @@
       var triggered = false;
       three.bots.forEach(function(b, idx){
         if (triggered) return;
-        var f = S.fighters[idx+1];
+        var f = fighterForBot(idx);
         if (!f || !f.alive) return;
         if (b.group.position.distanceTo(mine.point) <= mine.radius) triggered = true;
       });
@@ -4880,6 +5567,7 @@
   }
 
   updateAmmoDisplay(); updateHpDisplay();
+  netWarmup();
 })();
 </script>
 </body>
