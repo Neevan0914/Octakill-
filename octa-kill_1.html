@@ -1284,7 +1284,8 @@
     owned:['uni_default','helm_none','visor_amber'],
     equipped:{uniform:'uni_default', helmet:'helm_none', visor:'visor_amber'},
     matchWins:0,
-    totWins:0
+    totWins:0,
+    redeemedCoupons:[]
   };
 
   function loadProfile(){
@@ -1295,6 +1296,7 @@
         if (p && p.owned && p.equipped && typeof p.credits === 'number'){
           if (typeof p.matchWins !== 'number') p.matchWins = 0;
           if (typeof p.totWins !== 'number') p.totWins = 0;
+          if (!Array.isArray(p.redeemedCoupons)) p.redeemedCoupons = [];
           return p;
         }
       }
@@ -2363,7 +2365,8 @@
   }
   // ---- Coupons ----
   // Map of CODE -> function(){ ...grant reward...; return 'Message shown on success'; }.
-  // Codes are matched case-insensitively. None are redeemable yet.
+  // Codes are matched case-insensitively and can only be redeemed once per profile
+  // (tracked in PROFILE.redeemedCoupons). None are redeemable yet.
   var COUPON_CODES = {};
   function setCouponMessage(text, kind){
     el['coupon-message'].textContent = text;
@@ -2381,7 +2384,11 @@
     if (!code){ setCouponMessage('Enter a code first', 'error'); return; }
     var reward = Object.prototype.hasOwnProperty.call(COUPON_CODES, code) ? COUPON_CODES[code] : null;
     if (!reward){ setCouponMessage('Invalid code', 'error'); return; }
-    setCouponMessage(reward() || 'Code redeemed!', 'success');
+    if (PROFILE.redeemedCoupons.indexOf(code) !== -1){ setCouponMessage('Code already redeemed', 'error'); return; }
+    PROFILE.redeemedCoupons.push(code);
+    var msg = reward();
+    saveProfile();
+    setCouponMessage(msg || 'Code redeemed!', 'success');
     el['coupon-code-input'].value = '';
   }
   function openTrickOrTreatPopup(){
