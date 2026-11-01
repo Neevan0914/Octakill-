@@ -713,7 +713,7 @@
         </div>
         <div class="coupon-icon-display"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M12 8.4l.88 2.39 2.54.1-2 1.57.69 2.45L12 13.5l-2.12 1.41.69-2.45-2-1.57 2.54-.1z" fill="currentColor" stroke-width="1"/></svg></div>
         <p class="coupon-prompt">Got a code? Enter it below to redeem your reward.</p>
-        <input id="coupon-code-input" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Enter code" aria-label="Coupon code" />
+        <input id="coupon-code-input" maxlength="24" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Enter code" aria-label="Coupon code" />
         <button id="coupon-redeem-btn" class="popup-trigger-btn">Redeem</button>
         <p id="coupon-message" class="coupon-message" role="status" aria-live="polite"></p>
       </div>
@@ -2333,8 +2333,8 @@
   }
   // ---- Coupons ----
   // Map of CODE -> function(){ ...grant reward...; return 'Message shown on success'; }.
-  // Codes are matched case-insensitively and can only be redeemed once per profile
-  // (tracked in PROFILE.redeemedCoupons).
+  // Codes are matched forgivingly (see normalizeCouponCode) and can only be redeemed
+  // once per profile (tracked in PROFILE.redeemedCoupons by their key below).
   var COUPON_CODES = {
     'DISCORD99': function(){ return grantRewardSkin('uni_discord') + ' unlocked and equipped!'; },
     'DMOD50': function(){ return grantRewardSkin('uni_robot') + ' unlocked and equipped!'; }
@@ -2359,10 +2359,16 @@
     el['coupon-popup'].classList.add('open');
     setTimeout(function(){ el['coupon-code-input'].focus(); }, 0);
   }
+  // Ignores case, spaces, dashes and other punctuation, and treats the letter O as zero,
+  // so "dmod 50", "DMOD-50" and "DMOD5O" all match DMOD50.
+  function normalizeCouponCode(text){
+    return String(text).toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0');
+  }
   function redeemCoupon(){
-    var code = el['coupon-code-input'].value.trim().toUpperCase();
-    if (!code){ setCouponMessage('Enter a code first', 'error'); return; }
-    var reward = Object.prototype.hasOwnProperty.call(COUPON_CODES, code) ? COUPON_CODES[code] : null;
+    var typed = normalizeCouponCode(el['coupon-code-input'].value);
+    if (!typed){ setCouponMessage('Enter a code first', 'error'); return; }
+    var code = Object.keys(COUPON_CODES).find(function(key){ return normalizeCouponCode(key) === typed; });
+    var reward = code ? COUPON_CODES[code] : null;
     if (!reward){ setCouponMessage('Invalid code', 'error'); return; }
     if (PROFILE.redeemedCoupons.indexOf(code) !== -1){ setCouponMessage('Code already redeemed', 'error'); return; }
     PROFILE.redeemedCoupons.push(code);
