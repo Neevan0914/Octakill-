@@ -1621,11 +1621,49 @@
   function markMenuInteraction(){ lastMenuInteraction = performance.now(); }
 
 
+  function makeDiscordNametagTexture(){
+    var c = document.createElement('canvas'); c.width = 256; c.height = 72;
+    var g = c.getContext('2d');
+    g.fillStyle = '#5865F2'; g.fillRect(0, 0, 256, 72);
+    g.fillStyle = '#ffffff'; g.fillRect(6, 6, 244, 60);
+    var size = 40;
+    g.font = '800 ' + size + 'px ui-monospace, Menlo, Consolas, monospace';
+    while (g.measureText('[DISCORD]').width > 224 && size > 12){ size -= 2; g.font = '800 ' + size + 'px ui-monospace, Menlo, Consolas, monospace'; }
+    g.fillStyle = '#1e1f22'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('[DISCORD]', 128, 38);
+    return new THREE.CanvasTexture(c);
+  }
+  function makeControllerLogoTexture(){
+    var c = document.createElement('canvas'); c.width = 128; c.height = 96;
+    var g = c.getContext('2d');
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    g.moveTo(34, 18); g.lineTo(94, 18);
+    g.quadraticCurveTo(118, 18, 122, 46);
+    g.quadraticCurveTo(128, 84, 108, 84);
+    g.quadraticCurveTo(96, 84, 88, 66);
+    g.lineTo(40, 66);
+    g.quadraticCurveTo(32, 84, 20, 84);
+    g.quadraticCurveTo(0, 84, 6, 46);
+    g.quadraticCurveTo(10, 18, 34, 18);
+    g.fill();
+    // Punch out the d-pad and buttons so the jersey shows through
+    g.globalCompositeOperation = 'destination-out';
+    g.fillRect(24, 38, 24, 8); g.fillRect(32, 30, 8, 24);
+    [[94, 31], [94, 53], [83, 42], [105, 42]].forEach(function(b){
+      g.beginPath(); g.arc(b[0], b[1], 5.5, 0, Math.PI*2); g.fill();
+    });
+    return new THREE.CanvasTexture(c);
+  }
+
   function buildCharModel(){
     if (!charScene) return;
     if (charModel){
       charScene.remove(charModel);
-      charModel.traverse(function(o){ if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+      charModel.traverse(function(o){
+        if (o.geometry) o.geometry.dispose();
+        if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+      });
     }
     charModel = new THREE.Group();
     var uni = COSMETICS.find(function(c){return c.id===PROFILE.equipped.uniform;}) || COSMETICS[0];
@@ -1644,6 +1682,7 @@
     }
     if (isDiscord){
       headMat = new THREE.MeshStandardMaterial({color:'#2b3bd1', flatShading:true, roughness:0.55});
+      bootMat = new THREE.MeshStandardMaterial({color:'#3a10a0', flatShading:true, roughness:0.6});
     }
 
     function part(geo,x,y,z,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); charModel.add(m); return m; }
@@ -1664,26 +1703,27 @@
       part(new THREE.BoxGeometry(0.15,0.035,0.045), 0,0.635,0.135, eyeMat);
     }
     if (isDiscord){
-      // White Discord face plate on the front of the head; the eye holes show the blue head behind
+      // White Discord logo on the front of the head, traced from the official logo outline
+      // (x,y pairs, 1 unit wide, centred). The eye holes show the blue head behind.
+      var LOGO = [.347,.315,.302,.335,.256,.351,.209,.364,.161,.375,.128,.354,.098,.328,.049,.332,0,.334,-.049,.332,-.098,.328,-.128,.354,-.161,.375,-.209,.364,-.256,.351,-.302,.334,-.347,.315,-.374,.275,-.398,.232,-.42,.189,-.44,.144,-.457,.098,-.471,.051,-.483,.004,-.491,-.044,-.497,-.093,-.5,-.142,-.5,-.191,-.497,-.239,-.466,-.273,-.425,-.299,-.382,-.323,-.338,-.344,-.293,-.362,-.246,-.378,-.217,-.342,-.193,-.299,-.225,-.276,-.269,-.254,-.238,-.242,-.192,-.26,-.145,-.274,-.097,-.284,-.049,-.29,0,-.292,.049,-.29,.097,-.284,.145,-.274,.192,-.26,.238,-.242,.269,-.254,.225,-.276,.192,-.3,.217,-.342,.246,-.378,.293,-.362,.338,-.344,.382,-.323,.425,-.299,.466,-.273,.497,-.239,.5,-.191,.5,-.142,.497,-.093,.491,-.044,.483,.004,.471,.051,.457,.098,.44,.144,.42,.189,.398,.232,.374,.274];
       var face = new THREE.Shape();
-      face.moveTo(-0.30,0.36);
-      face.quadraticCurveTo(0,0.25, 0.30,0.36);
-      face.quadraticCurveTo(0.43,0.18, 0.50,-0.20);
-      face.quadraticCurveTo(0.51,-0.36, 0.40,-0.38);
-      face.quadraticCurveTo(0.31,-0.35, 0.26,-0.25);
-      face.quadraticCurveTo(0,-0.31, -0.26,-0.25);
-      face.quadraticCurveTo(-0.31,-0.35, -0.40,-0.38);
-      face.quadraticCurveTo(-0.51,-0.36, -0.50,-0.20);
-      face.quadraticCurveTo(-0.43,0.18, -0.30,0.36);
-      [-0.17, 0.17].forEach(function(x){
+      face.moveTo(LOGO[0], LOGO[1]);
+      for (var li = 2; li < LOGO.length; li += 2) face.lineTo(LOGO[li], LOGO[li+1]);
+      face.closePath();
+      [-0.166, 0.166].forEach(function(x){
         var eye = new THREE.Path();
-        eye.absellipse(x, -0.03, 0.085, 0.10, 0, Math.PI*2, false, 0);
+        eye.absellipse(x, -0.038, 0.09, 0.1, 0, Math.PI*2, true, 0);
         face.holes.push(eye);
       });
       var faceGeo = new THREE.ExtrudeGeometry(face, {depth:0.02, bevelEnabled:false, curveSegments:10});
       var faceMat = new THREE.MeshStandardMaterial({color:'#ffffff', flatShading:true, roughness:0.45});
       var facePlate = part(faceGeo, 0,0.70,0.075, faceMat);
       facePlate.scale.set(0.30,0.30,1);
+      // [DISCORD] nametag over the heart (character's left) and a controller logo on the right side
+      part(new THREE.PlaneGeometry(0.13,0.0366), 0.103,0.452,0.121,
+        new THREE.MeshBasicMaterial({map:makeDiscordNametagTexture()}));
+      part(new THREE.PlaneGeometry(0.056,0.042), -0.09,0.452,0.121,
+        new THREE.MeshBasicMaterial({map:makeControllerLogoTexture(), transparent:true}));
     } else {
       part(new THREE.BoxGeometry(0.05,0.05,0.045), -0.07,0.72,0.135, eyeMat);
       part(new THREE.BoxGeometry(0.05,0.05,0.045), 0.07,0.72,0.135, eyeMat);
