@@ -80,6 +80,20 @@
     letter-spacing:.1em;}
   .rank-progress-track{height:8px;width:100%;background:var(--card);border:1px solid var(--border);}
   .rank-progress-fill{height:100%;width:0%;background:var(--muted-foreground);transition:width 200ms ease,background 160ms ease;}
+  .coupon-popup-card{width:min(360px,94vw);text-align:center;}
+  .coupon-icon-display{margin:4px auto 10px;color:var(--primary);}
+  .coupon-prompt{margin:0 0 14px;font-size:12px;line-height:1.6;color:var(--muted-foreground);
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  #coupon-code-input{height:44px;width:100%;border:1px solid var(--border);background:var(--card);padding:0 14px;
+    border-radius:10px;font-family:inherit;font-size:14px;color:var(--foreground);outline:none;text-align:center;
+    text-transform:uppercase;letter-spacing:.15em;}
+  #coupon-code-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  #coupon-redeem-btn{justify-content:center;max-width:none;margin-top:12px;background:var(--primary);
+    color:var(--primary-foreground);border:none;font-weight:800;}
+  .coupon-message{min-height:1.2em;margin:10px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--muted-foreground);}
+  .coupon-message.error{color:var(--primary);}
+  .coupon-message.success{color:#4ade80;}
   /* Trick or Treat: limited-time Halloween event */
   #tot-popup-btn{border-color:#F36B21;color:#F36B21;box-shadow:0 0 14px rgba(243,107,33,.35);}
   #tot-popup-btn:hover{border-color:#ff9a3c;color:#ff9a3c;box-shadow:0 0 20px rgba(243,107,33,.55);}
@@ -597,7 +611,10 @@
     <button id="rank-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 52px);" title="Rank: Iron">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
     </button>
-    <button id="tot-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 104px);" title="Halloween Event: Trick or Treat">
+    <button id="coupon-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 104px);" title="Coupons">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M12 8.4l.88 2.39 2.54.1-2 1.57.69 2.45L12 13.5l-2.12 1.41.69-2.45-2-1.57 2.54-.1z" fill="currentColor" stroke-width="1"/></svg>
+    </button>
+    <button id="tot-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 156px);" title="Halloween Event: Trick or Treat">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 7c-1.2-2-2.6-3-4-3"/><path d="M12 7c4.4 0 8 2.9 8 7s-3.6 7-8 7-8-2.9-8-7 3.6-7 8-7z"/><path d="M12 7c-1.7 1.6-2.5 4.1-2.5 7s.8 5.4 2.5 7"/><path d="M12 7c1.7 1.6 2.5 4.1 2.5 7s-.8 5.4-2.5 7"/></svg>
     </button>
     <div id="drawer-backdrop"></div>
@@ -729,6 +746,20 @@
         <p id="rank-name" class="rank-name-display">Iron</p>
         <p id="rank-progress" class="rank-progress-text">Win 10 matches to rank up</p>
         <div class="rank-progress-track"><div id="rank-progress-fill" class="rank-progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div id="coupon-popup" class="popup-overlay">
+      <div class="popup-card coupon-popup-card">
+        <div class="drawer-head">
+          <span class="section-label" style="margin:0;">Coupons</span>
+          <button id="coupon-popup-close" class="drawer-close-btn">&times;</button>
+        </div>
+        <div class="coupon-icon-display"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M12 8.4l.88 2.39 2.54.1-2 1.57.69 2.45L12 13.5l-2.12 1.41.69-2.45-2-1.57 2.54-.1z" fill="currentColor" stroke-width="1"/></svg></div>
+        <p class="coupon-prompt">Got a code? Enter it below to redeem your reward.</p>
+        <input id="coupon-code-input" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Enter code" aria-label="Coupon code" />
+        <button id="coupon-redeem-btn" class="popup-trigger-btn">Redeem</button>
+        <p id="coupon-message" class="coupon-message" role="status" aria-live="polite"></p>
       </div>
     </div>
 
@@ -1971,6 +2002,7 @@
    'account-guest-view','account-logged-in-view','account-username','account-password','account-error',
    'account-signup-btn','account-login-btn','account-logout-btn','account-current-username',
    'rank-popup','rank-popup-btn','rank-popup-close','rank-trophy-display','rank-name','rank-progress','rank-progress-fill',
+   'coupon-popup','coupon-popup-btn','coupon-popup-close','coupon-code-input','coupon-redeem-btn','coupon-message',
    'tot-popup','tot-popup-btn','tot-popup-close','tot-status','tot-toggle-btn','tot-hud','tot-hud-time',
    'tot-challenge-btn','tot-challenge-deadline','tot-challenge-fill','tot-challenge-progress','tot-result-line',
    'settings-toggle','settings-close','drawer-backdrop','settings-drawer',
@@ -2316,6 +2348,7 @@
     el['cosmetics-popup'].classList.remove('open');
     el['account-popup'].classList.remove('open');
     el['rank-popup'].classList.remove('open');
+    el['coupon-popup'].classList.remove('open');
     el['tot-popup'].classList.remove('open');
   }
   function openAccountPopup(){
@@ -2327,6 +2360,29 @@
     closeAllPopups();
     renderRankPopup();
     el['rank-popup'].classList.add('open');
+  }
+  // ---- Coupons ----
+  // Map of CODE -> function(){ ...grant reward...; return 'Message shown on success'; }.
+  // Codes are matched case-insensitively. None are redeemable yet.
+  var COUPON_CODES = {};
+  function setCouponMessage(text, kind){
+    el['coupon-message'].textContent = text;
+    el['coupon-message'].className = 'coupon-message' + (kind ? ' ' + kind : '');
+  }
+  function openCouponPopup(){
+    closeAllPopups();
+    el['coupon-code-input'].value = '';
+    setCouponMessage('');
+    el['coupon-popup'].classList.add('open');
+    setTimeout(function(){ el['coupon-code-input'].focus(); }, 0);
+  }
+  function redeemCoupon(){
+    var code = el['coupon-code-input'].value.trim().toUpperCase();
+    if (!code){ setCouponMessage('Enter a code first', 'error'); return; }
+    var reward = Object.prototype.hasOwnProperty.call(COUPON_CODES, code) ? COUPON_CODES[code] : null;
+    if (!reward){ setCouponMessage('Invalid code', 'error'); return; }
+    setCouponMessage(reward() || 'Code redeemed!', 'success');
+    el['coupon-code-input'].value = '';
   }
   function openTrickOrTreatPopup(){
     closeAllPopups();
@@ -2394,6 +2450,11 @@
   el['rank-popup-btn'].addEventListener('click', openRankPopup);
   el['rank-popup-close'].addEventListener('click', closeAllPopups);
   el['rank-popup'].addEventListener('click', function(e){ if (e.target === el['rank-popup']) closeAllPopups(); });
+  el['coupon-popup-btn'].addEventListener('click', openCouponPopup);
+  el['coupon-popup-close'].addEventListener('click', closeAllPopups);
+  el['coupon-popup'].addEventListener('click', function(e){ if (e.target === el['coupon-popup']) closeAllPopups(); });
+  el['coupon-redeem-btn'].addEventListener('click', redeemCoupon);
+  el['coupon-code-input'].addEventListener('keydown', function(e){ if (e.key === 'Enter') redeemCoupon(); });
   el['tot-popup-btn'].addEventListener('click', openTrickOrTreatPopup);
   el['tot-popup-close'].addEventListener('click', closeAllPopups);
   el['tot-popup'].addEventListener('click', function(e){ if (e.target === el['tot-popup']) closeAllPopups(); });
