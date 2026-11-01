@@ -1201,7 +1201,11 @@
     {id:'uni_shadow', category:'uniform', label:'Uniform', name:'Shadow Black', cost:100, color:'#1c1d1a'},
     {id:'uni_gold', category:'uniform', label:'Uniform', name:'Gold Elite', cost:220, color:'#c9a227'},
     {id:'uni_pumpkin', category:'uniform', label:'Uniform', name:'Pumpkin Skin', cost:0, color:'#2a1e3a', earnedOnly:true,
+      rewardLabel:'Halloween 2026 reward',
       swatch:'linear-gradient(135deg,#F36B21 0%,#F36B21 50%,#2a1e3a 50%,#2a1e3a 100%)'},
+    {id:'uni_discord', category:'uniform', label:'Uniform', name:'Discord Skin', cost:0, color:'#2b3bd1', earnedOnly:true,
+      rewardLabel:'Coupon reward',
+      swatch:'radial-gradient(ellipse 22% 38% at 50% 50%,#ffffff 0 96%,transparent 100%),#5865F2'},
     {id:'helm_none', category:'helmet', label:'Helmet', name:'No Helmet', cost:0},
     {id:'helm_combat', category:'helmet', label:'Helmet', name:'Combat Helmet', cost:70},
     {id:'helm_beret', category:'helmet', label:'Helmet', name:'Tactical Beret', cost:50},
@@ -1318,10 +1322,13 @@
 
   function applyCloudProfile(row){
     PROFILE.credits = row.credits;
-    // Keep the Halloween 2026 Pumpkin skin if it was earned on this device before signing in
-    var hadPumpkin = PROFILE.owned.indexOf('uni_pumpkin') !== -1;
+    // Keep reward-only skins (Halloween 2026 Pumpkin, coupon rewards) earned on this device before signing in
+    var earnedHere = PROFILE.owned.filter(function(id){
+      var c = COSMETICS.find(function(x){ return x.id === id; });
+      return c && c.earnedOnly;
+    });
     PROFILE.owned = row.owned;
-    if (hadPumpkin && PROFILE.owned.indexOf('uni_pumpkin') === -1) PROFILE.owned.push('uni_pumpkin');
+    earnedHere.forEach(function(id){ if (PROFILE.owned.indexOf(id) === -1) PROFILE.owned.push(id); });
     PROFILE.equipped = row.equipped;
     PROFILE.matchWins = typeof row.match_wins === 'number' ? row.match_wins : 0;
     try { localStorage.setItem('octakill_profile', JSON.stringify(PROFILE)); } catch(e){}
@@ -1514,7 +1521,7 @@
         if (equipped) btn = '<button disabled>Equipped</button>';
         else if (owned) btn = '<button class="equip-btn" data-action="equip" data-id="'+item.id+'" data-cat="'+cat+'">Equip</button>';
         else btn = '<button data-action="buy" data-id="'+item.id+'" data-cat="'+cat+'" data-cost="'+item.cost+'"'+(PROFILE.credits<item.cost?' disabled':'')+'>Buy — '+item.cost+'</button>';
-        var priceLine = item.earnedOnly ? 'Halloween 2026 reward' : (item.cost>0 ? item.cost+' credits' : 'Starter item');
+        var priceLine = item.earnedOnly ? (item.rewardLabel || 'Reward') : (item.cost>0 ? item.cost+' credits' : 'Starter item');
         html += '<div class="cosmetic-item'+(equipped?' equipped':'')+'">'+swatch+'<h4>'+item.name+'</h4><p>'+priceLine+'</p>'+btn+'</div>';
       });
       html += '</div>';
@@ -1629,10 +1636,14 @@
     var eyeMat = new THREE.MeshStandardMaterial({color:'#171816', flatShading:true, emissive:(visor&&visor.color)||'#ffd23f', emissiveIntensity:0.85});
     var bootMat = new THREE.MeshStandardMaterial({color:'#232420', flatShading:true, roughness:0.7});
     var isPumpkin = uni.id === 'uni_pumpkin';
+    var isDiscord = uni.id === 'uni_discord';
     var headMat = skinMat;
     if (isPumpkin){
       headMat = new THREE.MeshStandardMaterial({color:'#a8400a', flatShading:true, roughness:0.6});
       eyeMat = new THREE.MeshStandardMaterial({color:'#2a1405', flatShading:true, emissive:'#ffb020', emissiveIntensity:1.4});
+    }
+    if (isDiscord){
+      headMat = new THREE.MeshStandardMaterial({color:'#2b3bd1', flatShading:true, roughness:0.55});
     }
 
     function part(geo,x,y,z,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); charModel.add(m); return m; }
@@ -1652,8 +1663,31 @@
       part(new THREE.BoxGeometry(0.02,0.30,0.17), 0.11,0.70,0, ridgeMat);
       part(new THREE.BoxGeometry(0.15,0.035,0.045), 0,0.635,0.135, eyeMat);
     }
-    part(new THREE.BoxGeometry(0.05,0.05,0.045), -0.07,0.72,0.135, eyeMat);
-    part(new THREE.BoxGeometry(0.05,0.05,0.045), 0.07,0.72,0.135, eyeMat);
+    if (isDiscord){
+      // White Discord face plate on the front of the head; the eye holes show the blue head behind
+      var face = new THREE.Shape();
+      face.moveTo(-0.30,0.36);
+      face.quadraticCurveTo(0,0.25, 0.30,0.36);
+      face.quadraticCurveTo(0.43,0.18, 0.50,-0.20);
+      face.quadraticCurveTo(0.51,-0.36, 0.40,-0.38);
+      face.quadraticCurveTo(0.31,-0.35, 0.26,-0.25);
+      face.quadraticCurveTo(0,-0.31, -0.26,-0.25);
+      face.quadraticCurveTo(-0.31,-0.35, -0.40,-0.38);
+      face.quadraticCurveTo(-0.51,-0.36, -0.50,-0.20);
+      face.quadraticCurveTo(-0.43,0.18, -0.30,0.36);
+      [-0.17, 0.17].forEach(function(x){
+        var eye = new THREE.Path();
+        eye.absellipse(x, -0.03, 0.085, 0.10, 0, Math.PI*2, false, 0);
+        face.holes.push(eye);
+      });
+      var faceGeo = new THREE.ExtrudeGeometry(face, {depth:0.02, bevelEnabled:false, curveSegments:10});
+      var faceMat = new THREE.MeshStandardMaterial({color:'#ffffff', flatShading:true, roughness:0.45});
+      var facePlate = part(faceGeo, 0,0.70,0.075, faceMat);
+      facePlate.scale.set(0.30,0.30,1);
+    } else {
+      part(new THREE.BoxGeometry(0.05,0.05,0.045), -0.07,0.72,0.135, eyeMat);
+      part(new THREE.BoxGeometry(0.05,0.05,0.045), 0.07,0.72,0.135, eyeMat);
+    }
     angledPart(new THREE.BoxGeometry(0.115,0.24,0.115), -0.24,0.36,0.09, -0.55, uniMat);
     angledPart(new THREE.BoxGeometry(0.115,0.24,0.115), 0.24,0.36,0.09, -0.55, uniMat);
     part(new THREE.BoxGeometry(0.17,0.6,0.17), -0.11,-0.44,0, uniMat);
@@ -2212,8 +2246,19 @@
   // ---- Coupons ----
   // Map of CODE -> function(){ ...grant reward...; return 'Message shown on success'; }.
   // Codes are matched case-insensitively and can only be redeemed once per profile
-  // (tracked in PROFILE.redeemedCoupons). None are redeemable yet.
-  var COUPON_CODES = {};
+  // (tracked in PROFILE.redeemedCoupons).
+  var COUPON_CODES = {
+    'DISCORD99': function(){ return grantRewardSkin('uni_discord') + ' unlocked and equipped!'; }
+  };
+  // Unlocks a reward-only cosmetic, equips it and refreshes the menu. Returns its name.
+  function grantRewardSkin(id){
+    var item = COSMETICS.find(function(c){ return c.id === id; });
+    if (PROFILE.owned.indexOf(id) === -1) PROFILE.owned.push(id);
+    PROFILE.equipped[item.category] = id;
+    buildCharModel();
+    if (el['cosmetics-popup'].classList.contains('open')) renderCosmeticsShop();
+    return item.name;
+  }
   function setCouponMessage(text, kind){
     el['coupon-message'].textContent = text;
     el['coupon-message'].className = 'coupon-message' + (kind ? ' ' + kind : '');
