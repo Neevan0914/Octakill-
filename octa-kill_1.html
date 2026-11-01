@@ -2359,10 +2359,10 @@
     el['coupon-popup'].classList.add('open');
     setTimeout(function(){ el['coupon-code-input'].focus(); }, 0);
   }
-  // Ignores case, spaces, dashes and other punctuation, and treats the letter O as zero,
-  // so "dmod 50", "DMOD-50" and "DMOD5O" all match DMOD50.
+  // Ignores case and spaces before or after the code, and treats the letter O as zero,
+  // so "dmod50" and "DMOD5O" match DMOD50. Spaces or dashes inside a code don't match.
   function normalizeCouponCode(text){
-    return String(text).toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0');
+    return String(text).trim().toUpperCase().replace(/O/g, '0');
   }
   function redeemCoupon(){
     var typed = normalizeCouponCode(el['coupon-code-input'].value);
