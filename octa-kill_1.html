@@ -31,6 +31,33 @@
   #menu.screen{position:relative;inset:auto;min-height:100vh;min-height:100dvh;}
   .hidden{display:none !important;}
   button{border-radius:10px;cursor:pointer;font-family:inherit;}
+
+  /* ===== Start screen: "Press any button" picks keyboard+mouse, touch or controller ===== */
+  #start-screen{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;padding:24px;text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+    background:radial-gradient(circle at 78% 62%, rgba(243,107,33,.34) 0%, rgba(243,107,33,0) 55%),
+      radial-gradient(circle at 14% 16%, rgba(66,217,232,.14) 0%, rgba(66,217,232,0) 50%),
+      linear-gradient(180deg,#0c1424 0%,#17243B 58%,#2a2632 100%);
+    transition:opacity 320ms ease;}
+  #start-screen.leaving{opacity:0;}
+  #start-logo-canvas{width:min(84vw,620px);height:auto;display:block;}
+  #start-prompt{margin:10px 0 0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:clamp(15px,2.6vw,22px);font-weight:800;
+    letter-spacing:.24em;text-transform:uppercase;color:var(--foreground);animation:start-pulse 1500ms ease-in-out infinite;}
+  #start-screen.detected #start-prompt{animation:none;color:var(--primary);}
+  #start-sub{margin:0;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted-foreground);}
+  @keyframes start-pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  @media (prefers-reduced-motion:reduce){ #start-prompt{animation:none;} }
+
+  /* Control hints follow the active input device */
+  body:not(.input-kbm) .hint-kbm, body:not(.input-mobile) .hint-mobile, body:not(.input-controller) .hint-controller{display:none !important;}
+  .menu-footer .hint-device{color:var(--accent);font-weight:700;}
+  .pad-bind{display:inline-block;min-width:64px;padding:5px 10px;border-radius:8px;text-align:center;font-size:11px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em;
+    color:var(--foreground);background:rgba(244,244,240,.06);border:1px solid rgba(244,244,240,.14);}
+  .pause-hint{margin:14px 0 0;text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground);}
+  /* Controller menu cursor */
+  .pad-focus{outline:2px solid var(--accent) !important;outline-offset:3px;box-shadow:0 0 0 6px var(--accent-soft) !important;}
+  body.input-controller #three-canvas{cursor:none;}
   canvas{display:block;outline:none;}
 
   #menu{display:flex;overflow:hidden;background:var(--background);}
@@ -393,7 +420,7 @@
   .pause-card h2{margin:4px 0 1.5rem;text-align:center;font-size:22px;font-weight:900;text-transform:uppercase;
     letter-spacing:-.02em;font-family:ui-sans-serif,system-ui,sans-serif;}
   .pause-card button{margin-bottom:10px;}
-  .pause-card button:last-child{margin-bottom:0;}
+  .pause-card button:last-of-type{margin-bottom:0;}
 
   #mobile-controls{position:absolute;inset:0;z-index:25;pointer-events:auto;}
   #look-zone{position:absolute;inset:0;touch-action:none;}
@@ -443,6 +470,12 @@
   .play-btn.menu-btn:hover{--line:#ffc9a6;}
   .play-btn.menu-btn:hover::before{background:var(--primary-hover);}
   .logo-canvas{margin-left:-4px;}
+  /* clip-path hides outlines on the angled buttons, so the controller cursor restyles them instead */
+  .menu-btn.pad-focus{--line:var(--accent);transform:translateX(6px);}
+  .menu-btn.pad-focus::before{inset:2px;background:rgba(23,36,59,.92);}
+  .menu-btn.pad-focus::after{transform:scaleY(1);}
+  .play-btn.menu-btn.pad-focus{--line:var(--foreground);}
+  .play-btn.menu-btn.pad-focus::before{background:var(--primary-hover);}
 
   .feedback-line{display:flex;flex-wrap:wrap;align-items:center;gap:14px;}
   .discord-pill{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:8px 14px;border:1px solid rgba(66,217,232,.35);
@@ -540,6 +573,12 @@
 <body>
 <div id="root">
 
+  <div id="start-screen" role="button" aria-label="Press any button to continue">
+    <canvas id="start-logo-canvas" width="720" height="240"></canvas>
+    <p id="start-prompt">Press Any Button To Continue</p>
+    <p id="start-sub">Keyboard + Mouse &middot; Touch &middot; Controller</p>
+  </div>
+
   <button id="music-toggle" title="Toggle music">
     <svg class="icon-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
     <svg class="icon-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
@@ -584,6 +623,20 @@
             </div>
             <p class="set-group-label">Keybinds</p>
             <div id="keybinds-list"></div>
+            <p class="set-group-label">Controller</p>
+            <div id="controller-binds-list">
+              <div class="keybind-row"><span>Move</span><span class="pad-bind">Left Stick</span></div>
+              <div class="keybind-row"><span>Look</span><span class="pad-bind">Right Stick</span></div>
+              <div class="keybind-row"><span>Shoot</span><span class="pad-bind">RT</span></div>
+              <div class="keybind-row"><span>Aim</span><span class="pad-bind">LT</span></div>
+              <div class="keybind-row"><span>Jump</span><span class="pad-bind">A</span></div>
+              <div class="keybind-row"><span>Crouch</span><span class="pad-bind">B</span></div>
+              <div class="keybind-row"><span>Sprint</span><span class="pad-bind">Hold / Click Left Stick</span></div>
+              <div class="keybind-row"><span>Previous / Next Weapon</span><span class="pad-bind">LB / RB</span></div>
+              <div class="keybind-row"><span>Reload</span><span class="pad-bind">X</span></div>
+              <div class="keybind-row"><span>Pause</span><span class="pad-bind">Start</span></div>
+              <div class="keybind-row"><span>Menus</span><span class="pad-bind">D-Pad / Left Stick, A, B, Right Stick scrolls</span></div>
+            </div>
           </div>
 
           <div id="settings-view-graphics" class="settings-view">
@@ -737,7 +790,9 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           8-player lobby
         </span>
-        <span>Mouse aim</span><span>LMB fire</span><span>RMB aim down sights</span><span>Scroll cycle weapons + tactical</span><span>Click to throw/use tactical</span><span>Move/jump/crouch/reload — customizable in Settings</span>
+        <span class="hint-kbm hint-device">Keyboard + Mouse</span><span class="hint-kbm">Mouse aim</span><span class="hint-kbm">LMB fire</span><span class="hint-kbm">RMB aim down sights</span><span class="hint-kbm">Scroll cycle weapons + tactical</span><span class="hint-kbm">Click to throw/use tactical</span><span class="hint-kbm">Move/jump/crouch/reload — customizable in Settings</span>
+        <span class="hint-controller hint-device">Controller</span><span class="hint-controller">Left stick move</span><span class="hint-controller">Right stick look</span><span class="hint-controller">RT shoot</span><span class="hint-controller">LT aim</span><span class="hint-controller">A jump</span><span class="hint-controller">B crouch</span><span class="hint-controller">Hold/click left stick sprint</span><span class="hint-controller">LB/RB switch weapons</span><span class="hint-controller">X reload</span><span class="hint-controller">Start pause</span>
+        <span class="hint-mobile hint-device">Touch</span><span class="hint-mobile">Left stick move</span><span class="hint-mobile">Drag to look</span><span class="hint-mobile">On-screen buttons fire, aim, jump, reload and swap</span>
         <span class="feedback-line">
           <a href="https://discord.gg/PSzK3uv349" target="_blank" rel="noopener" class="discord-pill">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.9-9.7-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>
@@ -841,7 +896,7 @@
           <div class="hp-bar-top" style="margin:0 0 12px;"><div class="hp-bar-fill" id="hp-bar" style="width:100%;"></div></div>
           <div id="tactical-indicator" class="tactical-indicator">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-            <span id="tactical-name">Frag Grenade</span><span class="key-hint">[Q]</span>
+            <span id="tactical-name">Frag Grenade</span><span class="key-hint" id="tactical-key-hint">[Q]</span>
           </div>
         </div>
         <div class="ammo-block">
@@ -869,6 +924,7 @@
           <button class="btn-ghost" id="pause-music-btn" style="width:100%;">Music: On</button>
           <button class="btn-ghost" id="pause-restart-btn" style="width:100%;">Restart match</button>
           <button class="btn-ghost" id="pause-quit-btn" style="width:100%;">Main menu</button>
+          <p class="pause-hint hint-controller">A select &middot; B / Start resume</p>
         </div>
       </div>
 
@@ -1891,27 +1947,32 @@
    'ammo-num','reserve-num','reload-indicator','eliminated','eliminated-sub','crouch-badge','spawn-protection-badge',
    'weapon-name-text','weapon-slot-hint','tactical-indicator','tactical-name','shield-badge',
    'pause-overlay','pause-resume-btn','pause-music-btn','pause-restart-btn','pause-quit-btn',
-   'mobile-controls','look-zone','joystick-base','joystick-knob','mb-jump','mb-reload','mb-aim','mb-swap','mb-fire','mb-pause'
+   'mobile-controls','look-zone','joystick-base','joystick-knob','mb-jump','mb-reload','mb-aim','mb-swap','mb-fire','mb-pause',
+   'start-screen','start-prompt','tactical-key-hint'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
-  var isTouchDeviceGlobal = (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
-    window.matchMedia && window.matchMedia('(pointer: coarse)').matches &&
-    window.matchMedia('(hover: none)').matches;
-  if (isTouchDeviceGlobal) el['mobile-controls'].classList.remove('hidden');
+  // Input device in use: 'kbm' (keyboard + mouse), 'mobile' (touch) or 'controller'.
+  // Chosen on the "Press any button" start screen, then follows whichever device was used last.
+  var INPUT = {mode:null, started:false, readyAt:0};
+  function isTouchMode(){ return INPUT.mode === 'mobile'; }
+  function isPadMode(){ return INPUT.mode === 'controller'; }
 
   var DEFAULT_NAME_NUMS = ['7308','8143','6439','4623','3294','0798','0928','9831','3902','3098'];
   var defaultPlayerName = 'Player_' + DEFAULT_NAME_NUMS[Math.floor(Math.random()*DEFAULT_NAME_NUMS.length)];
   el['callsign'].value = defaultPlayerName;
 
   function drawLogo(){
-    var cv = document.getElementById('logo-canvas');
+    drawLogoOn(document.getElementById('logo-canvas'));
+    drawLogoOn(document.getElementById('start-logo-canvas'), true);
+  }
+  function drawLogoOn(cv, centered){
     if (!cv) return;
     var ctx = cv.getContext('2d');
     ctx.clearRect(0,0,cv.width,cv.height);
     ctx.textBaseline = 'alphabetic';
     ctx.font = '110px "Black Ops One", ui-sans-serif, system-ui, sans-serif';
     var octaW = ctx.measureText('OCTA').width;
-    var startX = 4;
+    var startX = centered ? Math.max(4, (cv.width - octaW - ctx.measureText('KILL').width)/2) : 4;
     var baseY = cv.height/2 + 38;
     ctx.fillStyle = '#F4F4F0';
     ctx.fillText('OCTA', startX, baseY);
@@ -2399,11 +2460,13 @@
     el['clock'].textContent = mins+':'+secs;
   }
 
+  function slotCycleHint(){ return isPadMode() ? '[LB / RB]' : (isTouchMode() ? '[SWAP]' : '[Scroll]'); }
+
   function updateAmmoDisplay(){
     if (S.slot === 'tactical'){
       var lo0 = getLoadout();
       el['weapon-name-text'].textContent = lo0.tactical.name.toUpperCase();
-      el['weapon-slot-hint'].textContent = '[Scroll]';
+      el['weapon-slot-hint'].textContent = slotCycleHint();
       el['ammo-num'].firstChild.textContent = S.tacticalReady ? '1' : '0';
       el['reserve-num'].textContent = ' / 1';
       el['reload-indicator'].classList.add('hidden');
@@ -2411,7 +2474,7 @@
     }
     var w = currentWeapon(), ws = S.weaponState[S.slot];
     el['weapon-name-text'].textContent = w.name.toUpperCase();
-    el['weapon-slot-hint'].textContent = '[Scroll]';
+    el['weapon-slot-hint'].textContent = slotCycleHint();
     el['ammo-num'].firstChild.textContent = String(ws.ammo).padStart(2,'0');
     el['reserve-num'].textContent = ' / ' + Math.min(w.mag, ws.ammo + ws.reserve);
     el['reload-indicator'].classList.toggle('hidden', !S.reloading);
@@ -4048,17 +4111,38 @@
     var yaw = 0, pitch = 0;
     var euler = new THREE.Euler(0,0,0,'YXZ');
 
+    // Player actions shared by keyboard, touch and controller input.
+    function tryJump(){
+      var player = S.fighters[0];
+      if (player && player.alive && !S.crouching && camera.position.y <= EYE_HEIGHT_STAND + 0.01) velocityY = 6;
+    }
+    function toggleCrouch(){
+      var player = S.fighters[0];
+      if (!player || !player.alive) return;
+      S.crouching = !S.crouching;
+      el['crouch-badge'].classList.toggle('hidden', !S.crouching);
+    }
+    function cycleSlot(dir){
+      var order = getSlotOrder();
+      var idx = order.indexOf(S.slot);
+      if (idx === -1) idx = 0;
+      switchSlot(order[(idx + dir + order.length) % order.length]);
+    }
+    function applyLook(dYaw, dPitch){
+      yaw += dYaw;
+      pitch = clamp(pitch + dPitch, -Math.PI/2 + 0.01, Math.PI/2 - 0.01);
+      euler.set(pitch, yaw, 0);
+      camera.quaternion.setFromEuler(euler);
+    }
+
     function onKeyDown(e){
       keys[e.code] = true;
       if (S.screen !== 'game' || S.paused) return;
       var player = S.fighters[0];
       var kb = SETTINGS.keybinds;
       if (player && player.alive && e.code === kb.reload && S.slot !== 'tactical') reload();
-      if (player && player.alive && e.code === kb.jump && !S.crouching && camera.position.y <= EYE_HEIGHT_STAND + 0.01) velocityY = 6;
-      if (player && player.alive && e.code === kb.crouch){
-        S.crouching = !S.crouching;
-        el['crouch-badge'].classList.toggle('hidden', !S.crouching);
-      }
+      if (e.code === kb.jump) tryJump();
+      if (e.code === kb.crouch) toggleCrouch();
       if (player && player.alive && e.code === kb.slot1) switchSlot('primary');
       if (player && player.alive && e.code === kb.slot2) switchSlot('secondary');
       if (player && player.alive && e.code === kb.slot3 && S.tacticalReady) switchSlot('tactical');
@@ -4284,18 +4368,15 @@
       if (S.screen === 'game') e.preventDefault();
     }
     function onMouseMove(e){
-      if (!S.locked || S.paused) return;
+      if (!S.locked || S.paused || INPUT.mode !== 'kbm') return;
       var mx = e.movementX || 0, my = e.movementY || 0;
-      yaw -= mx * 0.0022 * SETTINGS.sensitivity;
-      pitch -= my * 0.0022 * SETTINGS.sensitivity;
-      pitch = clamp(pitch, -Math.PI/2 + 0.01, Math.PI/2 - 0.01);
-      euler.set(pitch, yaw, 0);
-      camera.quaternion.setFromEuler(euler);
+      applyLook(-mx * 0.0022 * SETTINGS.sensitivity, -my * 0.0022 * SETTINGS.sensitivity);
     }
     function onPointerLockChange(){
       if (document.pointerLockElement === canvas){
         setLocked(true);
-      } else if (S.screen === 'game' && !S.paused){
+      } else if (S.screen === 'game' && !S.paused && INPUT.mode === 'kbm'){
+        // Touch and controller play don't use pointer lock, so only the mouse pauses here.
         pauseGame();
       }
     }
@@ -4313,11 +4394,7 @@
       var player = S.fighters[0];
       if (!player || !player.alive) return;
       e.preventDefault();
-      var order = getSlotOrder();
-      var idx = order.indexOf(S.slot);
-      if (idx === -1) idx = 0;
-      var dir = e.deltaY > 0 ? 1 : -1;
-      switchSlot(order[(idx + dir + order.length) % order.length]);
+      cycleSlot(e.deltaY > 0 ? 1 : -1);
     }
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keydown', onEscape);
@@ -4329,8 +4406,9 @@
     canvas.addEventListener('contextmenu', onContextMenu);
     document.addEventListener('pointerlockchange', onPointerLockChange);
 
+    // Touch controls are always wired up; the overlay is only visible in mobile input mode.
     var touchMove = {x:0, y:0};
-    if (isTouchDeviceGlobal){
+    {
       var joystickTouchId = null, lookTouchId = null, lookLastX = 0, lookLastY = 0, joyBaseRect = null;
       var joyCenterX = 0, joyCenterY = 0, joyRadiusPx = 60;
 
@@ -4345,7 +4423,13 @@
         return false;
       }
 
+      function measureJoystick(){
+        var r = el['joystick-base'].getBoundingClientRect();
+        joyCenterX = r.left + r.width/2; joyCenterY = r.top + r.height/2; joyRadiusPx = r.width/2;
+      }
+
       function handleTouchStart(e){
+        measureJoystick();
         for (var i=0;i<e.changedTouches.length;i++){
           var t = e.changedTouches[i];
           if (isOnButton(t.clientX, t.clientY)) continue;
@@ -4374,10 +4458,7 @@
             var mdx = t.clientX-lookLastX, mdy = t.clientY-lookLastY;
             lookLastX = t.clientX; lookLastY = t.clientY;
             if (S.paused || S.screen !== 'game') continue;
-            yaw -= mdx*0.0034*SETTINGS.sensitivity; pitch -= mdy*0.0034*SETTINGS.sensitivity;
-            pitch = clamp(pitch, -Math.PI/2+0.01, Math.PI/2-0.01);
-            euler.set(pitch, yaw, 0);
-            camera.quaternion.setFromEuler(euler);
+            applyLook(-mdx*0.0034*SETTINGS.sensitivity, -mdy*0.0034*SETTINGS.sensitivity);
           }
         }
         e.preventDefault();
@@ -4395,14 +4476,8 @@
       el['mobile-controls'].addEventListener('touchmove', handleTouchMove, {passive:false});
       el['mobile-controls'].addEventListener('touchend', handleTouchEnd, {passive:true});
       el['mobile-controls'].addEventListener('touchcancel', handleTouchEnd, {passive:true});
-      window.addEventListener('resize', function(){
-        var r = el['joystick-base'].getBoundingClientRect();
-        joyCenterX = r.left + r.width/2; joyCenterY = r.top + r.height/2; joyRadiusPx = r.width/2;
-      });
-      setTimeout(function(){
-        var r = el['joystick-base'].getBoundingClientRect();
-        joyCenterX = r.left + r.width/2; joyCenterY = r.top + r.height/2; joyRadiusPx = r.width/2;
-      }, 50);
+      window.addEventListener('resize', measureJoystick);
+      setTimeout(measureJoystick, 50);
 
       var fireTouchId = null, fireLastX = 0, fireLastY = 0;
       el['mb-fire'].addEventListener('touchstart', function(e){
@@ -4418,10 +4493,7 @@
           var mdx = t.clientX-fireLastX, mdy = t.clientY-fireLastY;
           fireLastX = t.clientX; fireLastY = t.clientY;
           if (S.paused || S.screen !== 'game') continue;
-          yaw -= mdx*0.0034*SETTINGS.sensitivity; pitch -= mdy*0.0034*SETTINGS.sensitivity;
-          pitch = clamp(pitch, -Math.PI/2+0.01, Math.PI/2-0.01);
-          euler.set(pitch, yaw, 0);
-          camera.quaternion.setFromEuler(euler);
+          applyLook(-mdx*0.0034*SETTINGS.sensitivity, -mdy*0.0034*SETTINGS.sensitivity);
         }
         e.preventDefault();
       }, {passive:false});
@@ -4438,8 +4510,7 @@
       });
       el['mb-jump'].addEventListener('touchstart', function(e){
         e.preventDefault();
-        var player = S.fighters[0];
-        if (player && player.alive && !S.crouching && camera.position.y <= EYE_HEIGHT_STAND + 0.01) velocityY = 6;
+        tryJump();
       }, {passive:false});
       el['mb-reload'].addEventListener('touchstart', function(e){
         e.preventDefault();
@@ -4454,10 +4525,7 @@
       }, {passive:false});
       el['mb-swap'].addEventListener('touchstart', function(e){
         e.preventDefault();
-        var order = getSlotOrder();
-        var idx = order.indexOf(S.slot);
-        if (idx === -1) idx = 0;
-        switchSlot(order[(idx+1) % order.length]);
+        cycleSlot(1);
       }, {passive:false});
       el['mb-pause'].addEventListener('touchstart', function(e){
         e.preventDefault();
@@ -4483,15 +4551,18 @@
       performShot:performShot, explodeAt:explodeAt, spawnSmoke:spawnSmoke, triggerFlash:triggerFlash,
       blindBots:blindBots, alertBotsNearShot:alertBotsNearShot,
       updateWeaponVisual:updateWeaponVisual, buildEnvironment:buildEnvironment, currentMapId:S.mapId,
-      applyGraphicsMode:applyGraphicsMode, renderFrame:renderFrame, touchMove:touchMove, armGroup:armGroup, leftArmGroup:leftArmGroup, checkLineOfSight:checkLineOfSight
+      applyGraphicsMode:applyGraphicsMode, renderFrame:renderFrame, touchMove:touchMove, armGroup:armGroup, leftArmGroup:leftArmGroup, checkLineOfSight:checkLineOfSight,
+      // Hooks for controller input
+      applyLook:applyLook, jump:tryJump, toggleCrouch:toggleCrouch, cycleSlot:cycleSlot,
+      pressFire:function(){ onMouseDown({button:0}); }, releaseFire:function(){ onMouseUp({button:0}); }
     };
   }
 
   function requestLock(){
     if (!three) return;
     var canvas = three.canvasEl;
-    // Touch devices have no pointer lock; there "locked" just means playing.
-    if (isTouchDeviceGlobal || !canvas.requestPointerLock || document.pointerLockElement === canvas){
+    // Touch and controller play have no pointer lock; there "locked" just means playing.
+    if (INPUT.mode !== 'kbm' || !canvas.requestPointerLock || document.pointerLockElement === canvas){
       three.setLockedFn(true);
       return;
     }
@@ -4544,6 +4615,390 @@
   el['pause-music-btn'].addEventListener('click', toggleMusic);
   el['pause-restart-btn'].addEventListener('click', restartMatch);
   el['pause-quit-btn'].addEventListener('click', quitToMenu);
+
+  // ===================== Input devices: start screen + controller support =====================
+  var INPUT_LABELS = {kbm:'Keyboard + Mouse', mobile:'Touch Controls', controller:'Controller'};
+
+  function updateInputHints(){
+    el['tactical-key-hint'].textContent = isPadMode() ? '[LB / RB]' : (isTouchMode() ? '[SWAP]' : '[Q]');
+    el['weapon-slot-hint'].textContent = slotCycleHint();
+  }
+
+  function setInputMode(mode){
+    if (INPUT.mode === mode) return;
+    INPUT.mode = mode;
+    document.body.classList.toggle('input-kbm', mode === 'kbm');
+    document.body.classList.toggle('input-mobile', mode === 'mobile');
+    document.body.classList.toggle('input-controller', mode === 'controller');
+    el['mobile-controls'].classList.toggle('hidden', mode !== 'mobile');
+    el['mb-aim'].classList.remove('active');
+    if (mode !== 'controller'){ padSetFocus(null); padRelease(); }
+    if (three){
+      three.touchMove.x = 0; three.touchMove.y = 0;
+      el['joystick-knob'].style.transform = '';
+    }
+    updateInputHints();
+    if (S.screen === 'game' && !S.paused && three){
+      S.mouseHeld = false; S.aiming = false;
+      // Mouse look needs pointer lock (the click or key press that switched us asks for it);
+      // touch and controller play don't.
+      if (mode !== 'kbm') three.setLockedFn(true);
+      else if (document.pointerLockElement !== three.canvasEl) three.setLockedFn(false);
+    }
+  }
+
+  function dismissStartScreen(mode){
+    if (INPUT.started) return;
+    INPUT.started = true;
+    INPUT.readyAt = performance.now() + 900;
+    setInputMode(mode);
+    el['start-prompt'].textContent = INPUT_LABELS[mode] + ' detected';
+    el['start-screen'].classList.add('detected');
+    setTimeout(function(){ el['start-screen'].classList.add('leaving'); }, 550);
+    setTimeout(function(){ el['start-screen'].classList.add('hidden'); }, 900);
+  }
+
+  // Any key, click or tap: the first one leaves the start screen, later ones swap devices.
+  function onDeviceInput(mode, e){
+    if (!INPUT.started){ dismissStartScreen(mode); return; }
+    if (INPUT.mode === mode) return;
+    setInputMode(mode);
+    if (mode === 'kbm' && e.type === 'keydown' && e.code !== 'Escape' && S.screen === 'game' && !S.paused) requestLock();
+  }
+  function isTypingTarget(t){
+    return !!(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable));
+  }
+  document.addEventListener('pointerdown', function(e){
+    onDeviceInput((e.pointerType === 'touch' || e.pointerType === 'pen') ? 'mobile' : 'kbm', e);
+  }, true);
+  document.addEventListener('touchstart', function(e){ onDeviceInput('mobile', e); }, {capture:true, passive:true});
+  document.addEventListener('keydown', function(e){
+    // Browser shortcuts, and on-screen keyboards typing into a field, say nothing about the device.
+    if (e.ctrlKey || e.metaKey || e.altKey || /^F\d+$/.test(e.key || '')) return;
+    if (INPUT.started && isTypingTarget(e.target)) return;
+    onDeviceInput('kbm', e);
+  }, true);
+
+  // ---- Controller (Gamepad API, standard mapping) ----
+  var PAD_BTN = {A:0, B:1, X:2, Y:3, LB:4, RB:5, LT:6, RT:7, BACK:8, START:9, L3:10, R3:11, UP:12, DOWN:13, LEFT:14, RIGHT:15};
+  var PAD_YAW_SPEED = 3.4, PAD_PITCH_SPEED = 2.3;   // radians per second at full tilt, sensitivity 1.00x
+  var PAD_MOVE_DEADZONE = 0.18, PAD_LOOK_DEADZONE = 0.14, PAD_TRIGGER_THRESHOLD = 0.3;
+  var PAD = {
+    index:-1, prev:{},
+    lx:0, ly:0, rx:0, ry:0,                 // sticks after deadzone, -1..1
+    sprint:false, sprintLatched:false, l3DownAt:0,
+    fireHeld:false, aimHeld:false, upHeld:false, downHeld:false,
+    navDir:null, navNext:0, activateAfter:0, waitRelease:false, lastPollAt:0, dt:0,
+    focusEl:null, focusPt:null, fromPt:null, scopeRoot:null, mainFocus:null
+  };
+
+  function padList(){
+    try { return (navigator.getGamepads && navigator.getGamepads()) || []; } catch(e){ return []; }
+  }
+  function padButtonDown(gp, i){
+    var b = gp.buttons[i];
+    if (b === undefined || b === null) return false;
+    if (typeof b === 'number') return b > PAD_TRIGGER_THRESHOLD;
+    return !!b.pressed || b.value > PAD_TRIGGER_THRESHOLD;
+  }
+  // Radial deadzone, rescaled so the output starts from zero right at its edge.
+  function padStick(x, y, deadzone, curve){
+    x = x || 0; y = y || 0;
+    var m = Math.sqrt(x*x + y*y);
+    if (m < deadzone) return [0, 0];
+    var t = Math.min(1, (m - deadzone) / (1 - deadzone));
+    var k = Math.pow(t, curve) / m;
+    return [x*k, y*k];
+  }
+  function padRelease(){
+    PAD.lx = PAD.ly = PAD.rx = PAD.ry = 0;
+    PAD.sprint = PAD.sprintLatched = false;
+    PAD.aimHeld = PAD.upHeld = PAD.downHeld = false;
+    PAD.navDir = null;
+    if (PAD.fireHeld){ PAD.fireHeld = false; if (three) three.releaseFire(); }
+  }
+
+  function padPoll(){
+    requestAnimationFrame(padPoll);
+    var pollAt = performance.now();
+    PAD.dt = Math.min(0.05, (pollAt - PAD.lastPollAt) / 1000);
+    PAD.lastPollAt = pollAt;
+    var pads = padList(), frames = {}, i, j;
+    for (i=0; i<pads.length; i++){
+      var gp = pads[i];
+      if (!gp || gp.connected === false) continue;
+      var prev = PAD.prev[gp.index] || [];
+      var down = [], fresh = false;
+      for (j=0; j<gp.buttons.length; j++){
+        down[j] = padButtonDown(gp, j);
+        if (down[j] && !prev[j]) fresh = true;
+      }
+      frames[gp.index] = {gp:gp, down:down, prev:prev, fresh:fresh};
+      PAD.prev[gp.index] = down;
+      if (fresh) PAD.index = gp.index;   // the controller pressed most recently is the one in use
+    }
+    var cur = frames[PAD.index];
+    if (!cur){ if (isPadMode()) padRelease(); return; }
+
+    // Browsers that count a controller press as a user gesture let it start the audio too.
+    if (cur.fresh && (!audioCtx || audioCtx.state === 'suspended') &&
+        navigator.userActivation && navigator.userActivation.hasBeenActive) unlockAudioOnce();
+
+    if (!INPUT.started){
+      if (cur.fresh){ dismissStartScreen('controller'); PAD.waitRelease = true; }
+      return;
+    }
+    var inGame = S.screen === 'game' && !S.paused && !!three;
+    if (!isPadMode()){
+      if (!cur.fresh) return;
+      setInputMode('controller');
+      // In menus the press that woke the controller only brings up the cursor.
+      if (!inGame){ padSyncFocus(); PAD.waitRelease = true; return; }
+    }
+    if (performance.now() < INPUT.readyAt) return;
+    if (PAD.waitRelease){
+      if (!inGame && cur.down.indexOf(true) !== -1) return;
+      PAD.waitRelease = false;
+    }
+
+    function pressed(b){ return cur.down[b] && !cur.prev[b]; }
+    var axes = cur.gp.axes || [];
+    if (inGame){
+      var ls = padStick(axes[0], axes[1], PAD_MOVE_DEADZONE, 1);
+      var rs = padStick(axes[2], axes[3], PAD_LOOK_DEADZONE, 1.7);   // curved for fine aim near the centre
+      PAD.lx = ls[0]; PAD.ly = ls[1]; PAD.rx = rs[0]; PAD.ry = rs[1];
+      padGameInput(cur, pressed);
+    } else {
+      padMenuInput(cur, pressed, axes);
+    }
+  }
+
+  function padGameInput(cur, pressed){
+    var down = cur.down;
+    var player = S.fighters[0];
+    var alive = !!(player && player.alive);
+    PAD.navDir = null;
+
+    // Sprint: hold the left stick in, or click it to keep sprinting until you stop moving.
+    var moving = PAD.lx !== 0 || PAD.ly !== 0;
+    var l3 = down[PAD_BTN.L3];
+    if (pressed(PAD_BTN.L3)){ PAD.sprintLatched = true; PAD.l3DownAt = performance.now(); }
+    else if (!l3 && cur.prev[PAD_BTN.L3] && performance.now() - PAD.l3DownAt > 350) PAD.sprintLatched = false;
+    if (!moving && !l3) PAD.sprintLatched = false;
+    PAD.sprint = l3 || PAD.sprintLatched;
+
+    // RT shoots (hold for automatic weapons), LT aims while held.
+    var rt = down[PAD_BTN.RT], lt = down[PAD_BTN.LT];
+    if (rt && !PAD.fireHeld){ PAD.fireHeld = true; three.pressFire(); }
+    else if (!rt && PAD.fireHeld){ PAD.fireHeld = false; three.releaseFire(); }
+    var canAim = alive && S.slot !== 'tactical' && !!currentWeapon().aimable;
+    if (lt && !PAD.aimHeld && alive && !canAim) showNoAimToast();
+    PAD.aimHeld = lt;
+    S.aiming = lt && canAim;
+
+    PAD.upHeld = down[PAD_BTN.A]; PAD.downHeld = down[PAD_BTN.B];
+    if (pressed(PAD_BTN.A)) three.jump();
+    if (pressed(PAD_BTN.B)) three.toggleCrouch();
+    if (alive && pressed(PAD_BTN.LB)) three.cycleSlot(-1);
+    if (alive && pressed(PAD_BTN.RB)) three.cycleSlot(1);
+    if (alive && pressed(PAD_BTN.X) && S.slot !== 'tactical') reload();
+    if (pressed(PAD_BTN.START)) pauseGame();
+  }
+
+  // ---- Controller menus: D-pad / left stick moves a cursor, A selects, B goes back ----
+  var PAD_FOCUSABLE = 'button, input, a[href], .loadout-card, .map-card, .mode-item, #char-preview-canvas';
+
+  function padScope(){
+    if (S.screen === 'menu'){
+      var popup = el['menu'].querySelector('.popup-overlay.open');
+      if (popup) return {root:popup};
+      if (el['settings-drawer'].classList.contains('open')) return {root:el['settings-drawer']};
+      return {root:el['menu'], main:true};
+    }
+    if (S.screen === 'results') return {root:el['results']};
+    if (S.screen === 'game' && S.paused) return {root:el['pause-overlay']};
+    return null;
+  }
+  function padVisible(n){
+    if (n.disabled) return false;
+    var r = n.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return false;
+    if (n.checkVisibility) return n.checkVisibility({checkOpacity:true, checkVisibilityCSS:true, opacityProperty:true, visibilityProperty:true});
+    return true;
+  }
+  function padCandidates(scope){
+    var list = Array.prototype.slice.call(scope.root.querySelectorAll(PAD_FOCUSABLE));
+    if (scope.main){
+      list = list.filter(function(n){ return !n.closest('.popup-overlay') && !n.closest('#settings-drawer'); });
+      list.push(el['music-toggle']);
+    }
+    return list.filter(padVisible);
+  }
+  function padCenter(n){
+    var r = n.getBoundingClientRect();
+    return {x:r.left + r.width/2, y:r.top + r.height/2};
+  }
+  function padSetFocus(n){
+    n = n || null;
+    if (PAD.focusEl === n) return;
+    PAD.fromPt = null;
+    if (PAD.focusEl) PAD.focusEl.classList.remove('pad-focus');
+    var active = document.activeElement;
+    if (n && active && active !== n && isTypingTarget(active)) active.blur();
+    PAD.focusEl = n;
+    if (!n) return;
+    n.classList.add('pad-focus');
+    if (n.scrollIntoView) n.scrollIntoView({block:'nearest', inline:'nearest'});
+    PAD.focusPt = padCenter(n);
+    if (S.screen === 'menu' && !n.closest('.popup-overlay') && !n.closest('#settings-drawer')) PAD.mainFocus = n;
+    markMenuInteraction();
+  }
+  function padDefaultFocus(scope, list){
+    // Closing a popup puts the cursor back on the button that opened it.
+    if (scope.main && PAD.mainFocus && list.indexOf(PAD.mainFocus) !== -1) return PAD.mainFocus;
+    var preferred = scope.main ? el['play-btn'] :
+      scope.root === el['pause-overlay'] ? el['pause-resume-btn'] :
+      scope.root === el['results'] ? el['rematch-btn'] : null;
+    if (preferred && list.indexOf(preferred) !== -1) return preferred;
+    var i;
+    for (i=0; i<list.length; i++){ if (list[i].classList.contains('selected') || list[i].classList.contains('active')) return list[i]; }
+    for (i=0; i<list.length; i++){ if (!list[i].classList.contains('drawer-close-btn')) return list[i]; }
+    return list[0] || null;
+  }
+  // Keeps the cursor on something selectable in the current screen or popup; returns the options.
+  function padSyncFocus(){
+    var scope = padScope();
+    if (!scope){ padSetFocus(null); PAD.scopeRoot = null; return null; }
+    var list = padCandidates(scope);
+    var sameScope = PAD.scopeRoot === scope.root;
+    if (!sameScope) PAD.activateAfter = performance.now() + 350;   // don't let a mashed A hit a screen that just appeared
+    PAD.scopeRoot = scope.root;
+    if (sameScope && PAD.focusEl && list.indexOf(PAD.focusEl) !== -1) return {scope:scope, list:list};
+    var target = null;
+    if (sameScope && PAD.focusEl && PAD.focusPt){
+      // The list was redrawn (e.g. after buying an item): stay where the cursor was.
+      var bestD = Infinity;
+      list.forEach(function(n){
+        var c = padCenter(n), ddx = c.x - PAD.focusPt.x, ddy = c.y - PAD.focusPt.y, d = ddx*ddx + ddy*ddy;
+        if (d < bestD){ bestD = d; target = n; }
+      });
+    }
+    padSetFocus(target || padDefaultFocus(scope, list));
+    return {scope:scope, list:list};
+  }
+  function padNavigate(dir){
+    var ctx = padSyncFocus();
+    var cur = PAD.focusEl;
+    if (!ctx || !cur) return;
+    var vx = dir === 'left' ? -1 : dir === 'right' ? 1 : 0;
+    var vy = dir === 'up' ? -1 : dir === 'down' ? 1 : 0;
+    if (cur.tagName === 'INPUT' && cur.type === 'range' && vx){
+      // Sliders: left / right changes the value.
+      var step = parseFloat(cur.step) || 1;
+      cur.value = clamp(parseFloat(cur.value) + vx*step, parseFloat(cur.min), parseFloat(cur.max));
+      cur.dispatchEvent(new Event('input', {bubbles:true}));
+      return;
+    }
+    // Leaving a big element (the character preview) continues from the row or column the cursor
+    // came in on, so going back lands on the button you left rather than whatever is closest.
+    var full = cur.getBoundingClientRect();
+    var cr = {left:full.left, right:full.right, top:full.top, bottom:full.bottom};
+    if (PAD.fromPt && full.height > 160){
+      cr.top = clamp(PAD.fromPt.y, full.top + 20, full.bottom - 20) - 20; cr.bottom = cr.top + 40;
+    }
+    if (PAD.fromPt && full.width > 480){
+      cr.left = clamp(PAD.fromPt.x, full.left + 20, full.right - 20) - 20; cr.right = cr.left + 40;
+    }
+    var cc = {x:(cr.left + cr.right)/2, y:(cr.top + cr.bottom)/2};
+    var best = null, bestScore = Infinity;
+    ctx.list.forEach(function(n){
+      if (n === cur) return;
+      var r = n.getBoundingClientRect(), c = padCenter(n);
+      var dx = c.x - cc.x, dy = c.y - cc.y;
+      if (dx*vx + dy*vy < 4) return;   // not in that direction
+      var gap, across;
+      if (vx){
+        gap = vx > 0 ? r.left - cr.right : cr.left - r.right;
+        across = r.bottom < cr.top ? cr.top - r.bottom : (r.top > cr.bottom ? r.top - cr.bottom : 0);
+      } else {
+        gap = vy > 0 ? r.top - cr.bottom : cr.top - r.bottom;
+        across = r.right < cr.left ? cr.left - r.right : (r.left > cr.right ? r.left - cr.right : 0);
+      }
+      var score = Math.max(0, gap) + across*3 + Math.sqrt(dx*dx + dy*dy)*0.02;
+      if (score < bestScore){ bestScore = score; best = n; }
+    });
+    if (best){ padSetFocus(best); PAD.fromPt = cc; }
+  }
+  function padActivate(){
+    var hadFocus = PAD.focusEl;
+    padSyncFocus();
+    var cur = PAD.focusEl;
+    if (!cur || cur !== hadFocus || performance.now() < PAD.activateAfter) return;
+    if (cur.tagName === 'INPUT'){ if (cur.type !== 'range') cur.focus(); return; }
+    cur.click();
+    padSyncFocus();
+  }
+  function padBack(){
+    var active = document.activeElement;
+    if (rebindingAction){ rebindingAction = null; renderKeybinds(); }
+    else if (active && isTypingTarget(active)) active.blur();
+    else if (S.screen === 'menu') closeAllPopups();
+    else if (S.screen === 'game' && S.paused) resumeGame();
+    padSyncFocus();
+  }
+  function padScrollTarget(scope){
+    if (scope.root === el['settings-drawer']) return scope.root.querySelector('.settings-body');
+    var n = scope.main ? null : (PAD.focusEl || scope.root.firstElementChild);
+    for (; n && n !== document.body; n = n.parentElement){
+      var overflow = getComputedStyle(n).overflowY;
+      if ((overflow === 'auto' || overflow === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n;
+    }
+    return window;
+  }
+  function padMenuInput(cur, pressed, axes){
+    var down = cur.down;
+    // Nothing from the match stays held while a menu is up.
+    PAD.lx = PAD.ly = PAD.rx = PAD.ry = 0;
+    PAD.sprint = PAD.sprintLatched = false;
+    PAD.aimHeld = PAD.upHeld = PAD.downHeld = false;
+    if (PAD.fireHeld && !down[PAD_BTN.RT]){ PAD.fireHeld = false; if (three) three.releaseFire(); }
+
+    var scope = padScope();
+    var focusGone = PAD.focusEl && !document.documentElement.contains(PAD.focusEl);
+    if ((scope ? scope.root : null) !== PAD.scopeRoot || focusGone || (scope && !PAD.focusEl)) padSyncFocus();
+    if (!scope) return;
+
+    var ax = axes[0] || 0, ay = axes[1] || 0, dir = null;
+    if (down[PAD_BTN.UP]) dir = 'up';
+    else if (down[PAD_BTN.DOWN]) dir = 'down';
+    else if (down[PAD_BTN.LEFT]) dir = 'left';
+    else if (down[PAD_BTN.RIGHT]) dir = 'right';
+    else if (Math.abs(ax) > 0.6 || Math.abs(ay) > 0.6) dir = Math.abs(ax) > Math.abs(ay) ? (ax > 0 ? 'right' : 'left') : (ay > 0 ? 'down' : 'up');
+    var now = performance.now();
+    if (dir !== PAD.navDir){ PAD.navDir = dir; PAD.navNext = now + 380; if (dir) padNavigate(dir); }
+    else if (dir && now >= PAD.navNext){ PAD.navNext = now + 140; padNavigate(dir); }
+
+    // Right stick scrolls long lists (settings, cosmetics, the menu on small screens).
+    var scrollY = axes[3] || 0;
+    if (Math.abs(scrollY) > 0.25){
+      var scroller = padScrollTarget(scope);
+      if (scroller) scroller.scrollBy(0, scrollY * 900 * PAD.dt);
+    }
+
+    if (pressed(PAD_BTN.A)) padActivate();
+    else if (pressed(PAD_BTN.B)) padBack();
+    else if (pressed(PAD_BTN.START) && S.screen === 'game' && S.paused){ resumeGame(); padSyncFocus(); }
+  }
+
+  window.addEventListener('gamepaddisconnected', function(e){
+    delete PAD.prev[e.gamepad.index];
+    if (e.gamepad.index !== PAD.index) return;
+    PAD.index = -1;
+    padRelease();
+    // Losing the controller mid-match pauses instead of leaving you standing in the open.
+    if (isPadMode() && S.screen === 'game' && !S.paused) pauseGame();
+  });
+  if (navigator.getGamepads) requestAnimationFrame(padPoll);
 
   function setBotVisibility(id, visible){
     if (!three || id === 'player') return;
@@ -5133,8 +5588,17 @@
     el['scope-overlay'].classList.toggle('active', scopedNow);
     el['crosshair-wrap'].classList.toggle('hidden', scopedNow);
 
+    // Controller sticks: the right one looks (slower while zoomed in), the left one moves.
+    var padActive = isPadMode() && S.locked && !S.paused;
+    var padMoving = padActive && (PAD.lx !== 0 || PAD.ly !== 0);
+    if (padActive && (PAD.rx !== 0 || PAD.ry !== 0) && three.applyLook){
+      var lookScale = SETTINGS.sensitivity * (camera.fov/72) * delta;
+      three.applyLook(-PAD.rx * PAD_YAW_SPEED * lookScale, -PAD.ry * PAD_PITCH_SPEED * lookScale);
+    }
+
     if (playerAlive && S.locked){
-      var speed = (keys[SETTINGS.keybinds.sprint] ? 7.5 : 5.2) * (aimingNow ? 0.55 : 1) * (S.crouching ? 0.5 : 1);
+      var sprinting = keys[SETTINGS.keybinds.sprint] || (padMoving && PAD.sprint);
+      var speed = (sprinting ? 7.5 : 5.2) * (aimingNow ? 0.55 : 1) * (S.crouching ? 0.5 : 1);
       var forward = new THREE.Vector3(); camera.getWorldDirection(forward); forward.y = 0; forward.normalize();
       var right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
       var move = new THREE.Vector3();
@@ -5146,8 +5610,15 @@
         move.add(forward.clone().multiplyScalar(-three.touchMove.y));
         move.add(right.clone().multiplyScalar(three.touchMove.x));
       }
+      var moveScale = 1;
+      if (padMoving){
+        // A half-tilted stick walks at half speed (unless a key is held too).
+        if (!move.lengthSq()) moveScale = Math.min(1, Math.sqrt(PAD.lx*PAD.lx + PAD.ly*PAD.ly));
+        move.add(forward.clone().multiplyScalar(-PAD.ly));
+        move.add(right.clone().multiplyScalar(PAD.lx));
+      }
       if (move.lengthSq()){
-        move.normalize().multiplyScalar(speed*delta);
+        move.normalize().multiplyScalar(speed*delta*moveScale);
         slideMove(camera.position, move.x, move.z, PLAYER_RADIUS);
       }
       var standHeight = S.crouching ? EYE_HEIGHT_CROUCH : EYE_HEIGHT_STAND;
@@ -5166,6 +5637,13 @@
       if (keys[SETTINGS.keybinds.moveLeft]) flyMove.sub(flyRight);
       if (keys[SETTINGS.keybinds.jump]) flyMove.y += 1;
       if (keys[SETTINGS.keybinds.sprint]) flyMove.y -= 1;
+      if (padActive){
+        // Spectator camera on a controller: left stick flies, A rises, B descends.
+        flyMove.add(flyForward.clone().multiplyScalar(-PAD.ly));
+        flyMove.add(flyRight.clone().multiplyScalar(PAD.lx));
+        if (PAD.upHeld) flyMove.y += 1;
+        if (PAD.downHeld) flyMove.y -= 1;
+      }
       if (flyMove.lengthSq()){
         flyMove.normalize().multiplyScalar(flySpeed*delta);
         camera.position.add(flyMove);
