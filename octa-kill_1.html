@@ -642,7 +642,7 @@
             <div id="keybinds-list"></div>
             <p class="set-group-label">Controller</p>
             <div class="set-row">
-              <span class="set-label">Swap A / B</span>
+              <span class="set-label" id="pad-swap-label">Swap A / B</span>
               <div class="toggle-row">
                 <button class="toggle-btn selected" id="pad-swap-auto">Auto</button>
                 <button class="toggle-btn" id="pad-swap-on">On</button>
@@ -4869,6 +4869,8 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-pad-text]'), function(n){
       n.textContent = padText(n.getAttribute('data-pad-text'));
     });
+    var onPlayStation = PAD.family === 'playstation' || PAD.family === 'dualsense';
+    document.getElementById('pad-swap-label').textContent = onPlayStation ? 'Swap Cross / Circle' : 'Swap A / B';
     renderPadBinds();
   }
 
@@ -4933,10 +4935,19 @@
   // round, which is why Switch controllers get the A / B swap by default.
   var PAD_NAMES = {
     xbox:     ['A','B','X','Y','LB','RB','LT','RT','Back','Start','Left Stick Click','Right Stick Click','D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right'],
-    'switch': ['B','A','Y','X','L','R','ZL','ZR','-','+','Left Stick Click','Right Stick Click','D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right']
+    'switch': ['B','A','Y','X','L','R','ZL','ZR','-','+','Left Stick Click','Right Stick Click','D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right'],
+    // PlayStation: DualShock calls button 8 Share, DualSense calls it Create.
+    playstation: ['Cross','Circle','Square','Triangle','L1','R1','L2','R2','Share','Options','L3','R3','D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right'],
+    dualsense:   ['Cross','Circle','Square','Triangle','L1','R1','L2','R2','Create','Options','L3','R3','D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right']
   };
+  // Works out the family from the name the browser reports. Anything unrecognised gets Xbox names.
   function padFamily(id){
-    return /nintendo|switch|joy-?con|pro controller|057e/i.test(id || '') ? 'switch' : 'xbox';
+    id = id || '';
+    if (/nintendo|switch|joy-?con|pro controller|057e/i.test(id)) return 'switch';
+    if (/dualsense|054c.{0,24}(0ce6|0df2)/i.test(id)) return 'dualsense';
+    // A DualShock 4 reports itself as plain "Wireless Controller"; Xbox pads say "Xbox Wireless Controller".
+    if (/playstation|dualshock|054c|\bps[345]\b|^wireless controller/i.test(id)) return 'playstation';
+    return 'xbox';
   }
   function padSwapAB(){
     return SETTINGS.padSwapAB === 'on' || (SETTINGS.padSwapAB !== 'off' && PAD.family === 'switch');
