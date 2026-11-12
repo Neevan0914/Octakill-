@@ -107,6 +107,20 @@
     letter-spacing:.1em;}
   .rank-progress-track{height:8px;width:100%;background:var(--card);border:1px solid var(--border);}
   .rank-progress-fill{height:100%;width:0%;background:var(--muted-foreground);transition:width 200ms ease,background 160ms ease;}
+  .coupon-popup-card{width:min(360px,94vw);text-align:center;}
+  .coupon-icon-display{margin:4px auto 10px;color:var(--primary);}
+  .coupon-prompt{margin:0 0 14px;font-size:12px;line-height:1.6;color:var(--muted-foreground);
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  #coupon-code-input{height:44px;width:100%;border:1px solid var(--border);background:var(--card);padding:0 14px;
+    border-radius:10px;font-family:inherit;font-size:14px;color:var(--foreground);outline:none;text-align:center;
+    text-transform:uppercase;letter-spacing:.15em;}
+  #coupon-code-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  #coupon-redeem-btn{justify-content:center;max-width:none;margin-top:12px;background:var(--primary);
+    color:var(--primary-foreground);border:none;font-weight:800;}
+  .coupon-message{min-height:1.2em;margin:10px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--muted-foreground);}
+  .coupon-message.error{color:var(--primary);}
+  .coupon-message.success{color:#4ade80;}
   .brand-row{display:flex;align-items:center;gap:12px;}
   .brand-badge{display:flex;align-items:center;justify-content:center;width:40px;height:40px;
     border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);}
@@ -595,6 +609,9 @@
     <button id="rank-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 52px);" title="Rank: Iron">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
     </button>
+    <button id="coupon-popup-btn" class="drawer-toggle-btn drawer-toggle-right icon-only-btn" style="top:calc(2.5rem + 104px);" title="Coupons">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M12 8.4l.88 2.39 2.54.1-2 1.57.69 2.45L12 13.5l-2.12 1.41.69-2.45-2-1.57 2.54-.1z" fill="currentColor" stroke-width="1"/></svg>
+    </button>
     <div id="drawer-backdrop"></div>
 
     <div id="settings-drawer" class="settings-modal" role="dialog" aria-label="Settings">
@@ -736,6 +753,20 @@
         <p id="rank-name" class="rank-name-display">Iron</p>
         <p id="rank-progress" class="rank-progress-text">Win 10 matches to rank up</p>
         <div class="rank-progress-track"><div id="rank-progress-fill" class="rank-progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div id="coupon-popup" class="popup-overlay">
+      <div class="popup-card coupon-popup-card">
+        <div class="drawer-head">
+          <span class="section-label" style="margin:0;">Coupons</span>
+          <button id="coupon-popup-close" class="drawer-close-btn">&times;</button>
+        </div>
+        <div class="coupon-icon-display"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M12 8.4l.88 2.39 2.54.1-2 1.57.69 2.45L12 13.5l-2.12 1.41.69-2.45-2-1.57 2.54-.1z" fill="currentColor" stroke-width="1"/></svg></div>
+        <p class="coupon-prompt">Got a code? Enter it below to redeem your reward.</p>
+        <input id="coupon-code-input" maxlength="24" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Enter code" aria-label="Coupon code" />
+        <button id="coupon-redeem-btn" class="popup-trigger-btn">Redeem</button>
+        <p id="coupon-message" class="coupon-message" role="status" aria-live="polite"></p>
       </div>
     </div>
 
@@ -1217,6 +1248,16 @@
   }
 
   // ---- Cosmetics / Currency ----
+  // Official Discord logo (127.14 x 96.36), used for the Discord Skin's shop swatch
+  var DISCORD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36"><path fill="#ffffff" fill-rule="evenodd" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>';
+  // Robot head icon for the Admin Skin's shop swatch
+  var ROBOT_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 64">' +
+    '<line x1="50" y1="5" x2="50" y2="14" stroke="#c9d1da" stroke-width="3"/><circle cx="50" cy="6" r="4" fill="#ff4d4d"/>' +
+    '<rect x="25" y="25" width="5" height="14" rx="1.5" fill="#8b949e"/><rect x="70" y="25" width="5" height="14" rx="1.5" fill="#8b949e"/>' +
+    '<rect x="30" y="14" width="40" height="38" rx="6" fill="#c9d1da"/>' +
+    '<rect x="36" y="24" width="10" height="8" rx="1.5" fill="#3ff0ff"/><rect x="54" y="24" width="10" height="8" rx="1.5" fill="#3ff0ff"/>' +
+    '<rect x="39" y="40" width="22" height="6" rx="1" fill="#2b3037"/>' +
+    '<rect x="44" y="40" width="2" height="6" fill="#c9d1da"/><rect x="49" y="40" width="2" height="6" fill="#c9d1da"/><rect x="54" y="40" width="2" height="6" fill="#c9d1da"/></svg>';
   var COSMETICS = [
     {id:'uni_default', category:'uniform', label:'Uniform', name:'Standard Olive', cost:0, color:'#5c5f3f'},
     {id:'uni_crimson', category:'uniform', label:'Uniform', name:'Crimson Ops', cost:60, color:'#8a2f10'},
@@ -1224,7 +1265,14 @@
     {id:'uni_shadow', category:'uniform', label:'Uniform', name:'Shadow Black', cost:100, color:'#1c1d1a'},
     {id:'uni_gold', category:'uniform', label:'Uniform', name:'Gold Elite', cost:220, color:'#c9a227'},
     {id:'uni_pumpkin', category:'uniform', label:'Uniform', name:'Pumpkin Skin', cost:0, color:'#2a1e3a', earnedOnly:true,
+      rewardLabel:'Halloween 2026 reward',
       swatch:'linear-gradient(135deg,#F36B21 0%,#F36B21 50%,#2a1e3a 50%,#2a1e3a 100%)'},
+    {id:'uni_discord', category:'uniform', label:'Uniform', name:'Discord Skin', cost:0, color:'#2b3bd1', earnedOnly:true,
+      rewardLabel:'Coupon reward',
+      swatch:"url('data:image/svg+xml," + encodeURIComponent(DISCORD_LOGO_SVG) + "') center/auto 72% no-repeat,#5865F2"},
+    {id:'uni_robot', category:'uniform', label:'Uniform', name:'Admin Skin', cost:0, color:'#6b7480', earnedOnly:true,
+      rewardLabel:'Coupon reward',
+      swatch:"url('data:image/svg+xml," + encodeURIComponent(ROBOT_ICON_SVG) + "') center/auto 86% no-repeat,linear-gradient(135deg,#4b535d,#22262c)"},
     {id:'helm_none', category:'helmet', label:'Helmet', name:'No Helmet', cost:0},
     {id:'helm_combat', category:'helmet', label:'Helmet', name:'Combat Helmet', cost:70},
     {id:'helm_beret', category:'helmet', label:'Helmet', name:'Tactical Beret', cost:50},
@@ -1237,7 +1285,8 @@
     credits:0,
     owned:['uni_default','helm_none','visor_amber'],
     equipped:{uniform:'uni_default', helmet:'helm_none', visor:'visor_amber'},
-    matchWins:0
+    matchWins:0,
+    redeemedCoupons:[]
   };
 
   function loadProfile(){
@@ -1247,6 +1296,7 @@
         var p = JSON.parse(raw);
         if (p && p.owned && p.equipped && typeof p.credits === 'number'){
           if (typeof p.matchWins !== 'number') p.matchWins = 0;
+          if (!Array.isArray(p.redeemedCoupons)) p.redeemedCoupons = [];
           return p;
         }
       }
@@ -1339,10 +1389,13 @@
 
   function applyCloudProfile(row){
     PROFILE.credits = row.credits;
-    // Keep the Halloween 2026 Pumpkin skin if it was earned on this device before signing in
-    var hadPumpkin = PROFILE.owned.indexOf('uni_pumpkin') !== -1;
+    // Keep reward-only skins (Halloween 2026 Pumpkin, coupon rewards) earned on this device before signing in
+    var earnedHere = PROFILE.owned.filter(function(id){
+      var c = COSMETICS.find(function(x){ return x.id === id; });
+      return c && c.earnedOnly;
+    });
     PROFILE.owned = row.owned;
-    if (hadPumpkin && PROFILE.owned.indexOf('uni_pumpkin') === -1) PROFILE.owned.push('uni_pumpkin');
+    earnedHere.forEach(function(id){ if (PROFILE.owned.indexOf(id) === -1) PROFILE.owned.push(id); });
     PROFILE.equipped = row.equipped;
     PROFILE.matchWins = typeof row.match_wins === 'number' ? row.match_wins : 0;
     try { localStorage.setItem('octakill_profile', JSON.stringify(PROFILE)); } catch(e){}
@@ -1557,7 +1610,7 @@
         if (equipped) btn = '<button disabled>Equipped</button>';
         else if (owned) btn = '<button class="equip-btn" data-action="equip" data-id="'+item.id+'" data-cat="'+cat+'">Equip</button>';
         else btn = '<button data-action="buy" data-id="'+item.id+'" data-cat="'+cat+'" data-cost="'+item.cost+'"'+(PROFILE.credits<item.cost?' disabled':'')+'>Buy — '+item.cost+'</button>';
-        var priceLine = item.earnedOnly ? 'Halloween 2026 reward' : (item.cost>0 ? item.cost+' credits' : 'Starter item');
+        var priceLine = item.earnedOnly ? (item.rewardLabel || 'Reward') : (item.cost>0 ? item.cost+' credits' : 'Starter item');
         html += '<div class="cosmetic-item'+(equipped?' equipped':'')+'">'+swatch+'<h4>'+item.name+'</h4><p>'+priceLine+'</p>'+btn+'</div>';
       });
       html += '</div>';
@@ -1657,11 +1710,49 @@
   function markMenuInteraction(){ lastMenuInteraction = performance.now(); }
 
 
+  function makeDiscordNametagTexture(){
+    var c = document.createElement('canvas'); c.width = 256; c.height = 72;
+    var g = c.getContext('2d');
+    g.fillStyle = '#5865F2'; g.fillRect(0, 0, 256, 72);
+    g.fillStyle = '#ffffff'; g.fillRect(6, 6, 244, 60);
+    var size = 40;
+    g.font = '800 ' + size + 'px ui-monospace, Menlo, Consolas, monospace';
+    while (g.measureText('[DISCORD]').width > 224 && size > 12){ size -= 2; g.font = '800 ' + size + 'px ui-monospace, Menlo, Consolas, monospace'; }
+    g.fillStyle = '#1e1f22'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('[DISCORD]', 128, 38);
+    return new THREE.CanvasTexture(c);
+  }
+  function makeControllerLogoTexture(){
+    var c = document.createElement('canvas'); c.width = 128; c.height = 96;
+    var g = c.getContext('2d');
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    g.moveTo(34, 18); g.lineTo(94, 18);
+    g.quadraticCurveTo(118, 18, 122, 46);
+    g.quadraticCurveTo(128, 84, 108, 84);
+    g.quadraticCurveTo(96, 84, 88, 66);
+    g.lineTo(40, 66);
+    g.quadraticCurveTo(32, 84, 20, 84);
+    g.quadraticCurveTo(0, 84, 6, 46);
+    g.quadraticCurveTo(10, 18, 34, 18);
+    g.fill();
+    // Punch out the d-pad and buttons so the jersey shows through
+    g.globalCompositeOperation = 'destination-out';
+    g.fillRect(24, 38, 24, 8); g.fillRect(32, 30, 8, 24);
+    [[94, 31], [94, 53], [83, 42], [105, 42]].forEach(function(b){
+      g.beginPath(); g.arc(b[0], b[1], 5.5, 0, Math.PI*2); g.fill();
+    });
+    return new THREE.CanvasTexture(c);
+  }
+
   function buildCharModel(){
     if (!charScene) return;
     if (charModel){
       charScene.remove(charModel);
-      charModel.traverse(function(o){ if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+      charModel.traverse(function(o){
+        if (o.geometry) o.geometry.dispose();
+        if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+      });
     }
     charModel = new THREE.Group();
     var uni = COSMETICS.find(function(c){return c.id===PROFILE.equipped.uniform;}) || COSMETICS[0];
@@ -1672,20 +1763,37 @@
     var eyeMat = new THREE.MeshStandardMaterial({color:'#171816', flatShading:true, emissive:(visor&&visor.color)||'#ffd23f', emissiveIntensity:0.85});
     var bootMat = new THREE.MeshStandardMaterial({color:'#232420', flatShading:true, roughness:0.7});
     var isPumpkin = uni.id === 'uni_pumpkin';
+    var isDiscord = uni.id === 'uni_discord';
+    var isRobot = uni.id === 'uni_robot';
     var headMat = skinMat;
     if (isPumpkin){
       headMat = new THREE.MeshStandardMaterial({color:'#a8400a', flatShading:true, roughness:0.6});
       eyeMat = new THREE.MeshStandardMaterial({color:'#2a1405', flatShading:true, emissive:'#ffb020', emissiveIntensity:1.4});
+    }
+    if (isDiscord){
+      headMat = new THREE.MeshStandardMaterial({color:'#2b3bd1', flatShading:true, roughness:0.55});
+      bootMat = new THREE.MeshStandardMaterial({color:'#3a10a0', flatShading:true, roughness:0.6});
+    }
+    if (isRobot){
+      uniMat = new THREE.MeshStandardMaterial({color:'#4f5761', flatShading:true, roughness:0.4, metalness:0.35});
+      headMat = new THREE.MeshStandardMaterial({color:'#5f6873', flatShading:true, roughness:0.35, metalness:0.35});
+      skinMat = new THREE.MeshStandardMaterial({color:'#3a3f46', flatShading:true, roughness:0.5, metalness:0.3});
+      bootMat = new THREE.MeshStandardMaterial({color:'#2b2f35', flatShading:true, roughness:0.5, metalness:0.3});
+      eyeMat = new THREE.MeshStandardMaterial({color:'#0b3a40', flatShading:true, emissive:'#3ff0ff', emissiveIntensity:1.5});
     }
 
     function part(geo,x,y,z,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); charModel.add(m); return m; }
     function angledPart(geo,x,y,z,rx,mat){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.x = rx; charModel.add(m); return m; }
     part(new THREE.BoxGeometry(0.34,0.2,0.22), 0,-0.12,0, uniMat);
     part(new THREE.BoxGeometry(0.4,0.5,0.24), 0,0.23,0, uniMat);
-    var headGeo = new THREE.CylinderGeometry(0.20,0.20,0.16,8);
-    headGeo.rotateY(Math.PI/8);
-    var head = part(headGeo, 0,0.70,0, headMat);
-    head.rotateX(Math.PI/2);
+    if (isRobot){
+      part(new THREE.BoxGeometry(0.32,0.28,0.24), 0,0.70,0, headMat);
+    } else {
+      var headGeo = new THREE.CylinderGeometry(0.20,0.20,0.16,8);
+      headGeo.rotateY(Math.PI/8);
+      var head = part(headGeo, 0,0.70,0, headMat);
+      head.rotateX(Math.PI/2);
+    }
     if (isPumpkin){
       var stemMat = new THREE.MeshStandardMaterial({color:'#3d6b2f', flatShading:true, roughness:0.8});
       var stem = part(new THREE.CylinderGeometry(0.022,0.034,0.09,5), 0.01,0.93,0, stemMat);
@@ -1695,8 +1803,55 @@
       part(new THREE.BoxGeometry(0.02,0.30,0.17), 0.11,0.70,0, ridgeMat);
       part(new THREE.BoxGeometry(0.15,0.035,0.045), 0,0.635,0.135, eyeMat);
     }
-    part(new THREE.BoxGeometry(0.05,0.05,0.045), -0.07,0.72,0.135, eyeMat);
-    part(new THREE.BoxGeometry(0.05,0.05,0.045), 0.07,0.72,0.135, eyeMat);
+    if (isDiscord){
+      // White Discord logo on the front of the head, traced from the official logo outline
+      // (x,y pairs, 1 unit wide, centred). The eye holes show the blue head behind.
+      var LOGO = [.347,.315,.302,.335,.256,.351,.209,.364,.161,.375,.128,.354,.098,.328,.049,.332,0,.334,-.049,.332,-.098,.328,-.128,.354,-.161,.375,-.209,.364,-.256,.351,-.302,.334,-.347,.315,-.374,.275,-.398,.232,-.42,.189,-.44,.144,-.457,.098,-.471,.051,-.483,.004,-.491,-.044,-.497,-.093,-.5,-.142,-.5,-.191,-.497,-.239,-.466,-.273,-.425,-.299,-.382,-.323,-.338,-.344,-.293,-.362,-.246,-.378,-.217,-.342,-.193,-.299,-.225,-.276,-.269,-.254,-.238,-.242,-.192,-.26,-.145,-.274,-.097,-.284,-.049,-.29,0,-.292,.049,-.29,.097,-.284,.145,-.274,.192,-.26,.238,-.242,.269,-.254,.225,-.276,.192,-.3,.217,-.342,.246,-.378,.293,-.362,.338,-.344,.382,-.323,.425,-.299,.466,-.273,.497,-.239,.5,-.191,.5,-.142,.497,-.093,.491,-.044,.483,.004,.471,.051,.457,.098,.44,.144,.42,.189,.398,.232,.374,.274];
+      var face = new THREE.Shape();
+      face.moveTo(LOGO[0], LOGO[1]);
+      for (var li = 2; li < LOGO.length; li += 2) face.lineTo(LOGO[li], LOGO[li+1]);
+      face.closePath();
+      [-0.166, 0.166].forEach(function(x){
+        var eye = new THREE.Path();
+        eye.absellipse(x, -0.038, 0.09, 0.1, 0, Math.PI*2, true, 0);
+        face.holes.push(eye);
+      });
+      var faceGeo = new THREE.ExtrudeGeometry(face, {depth:0.02, bevelEnabled:false, curveSegments:10});
+      var faceMat = new THREE.MeshStandardMaterial({color:'#ffffff', flatShading:true, roughness:0.45});
+      var facePlate = part(faceGeo, 0,0.70,0.075, faceMat);
+      facePlate.scale.set(0.30,0.30,1);
+      // [DISCORD] nametag over the heart (character's left) and a controller logo on the right side
+      part(new THREE.PlaneGeometry(0.13,0.0366), 0.103,0.452,0.121,
+        new THREE.MeshBasicMaterial({map:makeDiscordNametagTexture()}));
+      part(new THREE.PlaneGeometry(0.056,0.042), -0.09,0.452,0.121,
+        new THREE.MeshBasicMaterial({map:makeControllerLogoTexture(), transparent:true}));
+    } else if (isRobot){
+      var darkMat = new THREE.MeshStandardMaterial({color:'#1d2126', flatShading:true, roughness:0.6});
+      // Glowing eyes and a mouth grille
+      part(new THREE.BoxGeometry(0.075,0.045,0.02), -0.07,0.735,0.125, eyeMat);
+      part(new THREE.BoxGeometry(0.075,0.045,0.02), 0.07,0.735,0.125, eyeMat);
+      part(new THREE.BoxGeometry(0.16,0.05,0.012), 0,0.63,0.122, darkMat);
+      [-0.045,-0.015,0.015,0.045].forEach(function(x){ part(new THREE.BoxGeometry(0.012,0.05,0.016), x,0.63,0.124, headMat); });
+      // Ear bolts and an antenna with a red light
+      [-0.175,0.175].forEach(function(x){
+        var bolt = part(new THREE.CylinderGeometry(0.045,0.045,0.035,8), x,0.70,0, skinMat);
+        bolt.rotation.z = Math.PI/2;
+      });
+      part(new THREE.CylinderGeometry(0.01,0.01,0.11,6), 0,0.89,0, skinMat);
+      part(new THREE.SphereGeometry(0.03,8,6), 0,0.955,0,
+        new THREE.MeshStandardMaterial({color:'#5a0c0c', flatShading:true, emissive:'#ff3b3b', emissiveIntensity:1.4}));
+      // Status lights over the heart and a vent on the other side, above the arms
+      part(new THREE.BoxGeometry(0.11,0.036,0.008), 0.118,0.452,0.122, darkMat);
+      [['#ff3b3b',0.088],['#ffc23b',0.118],['#3bff6a',0.148]].forEach(function(l){
+        part(new THREE.BoxGeometry(0.018,0.018,0.012), l[1],0.452,0.127,
+          new THREE.MeshStandardMaterial({color:'#111111', flatShading:true, emissive:l[0], emissiveIntensity:1}));
+      });
+      part(new THREE.BoxGeometry(0.08,0.036,0.008), -0.10,0.452,0.122, darkMat);
+      [0.441,0.452,0.463].forEach(function(y){ part(new THREE.BoxGeometry(0.066,0.004,0.012), -0.10,y,0.126, headMat); });
+    } else {
+      part(new THREE.BoxGeometry(0.05,0.05,0.045), -0.07,0.72,0.135, eyeMat);
+      part(new THREE.BoxGeometry(0.05,0.05,0.045), 0.07,0.72,0.135, eyeMat);
+    }
     angledPart(new THREE.BoxGeometry(0.115,0.24,0.115), -0.24,0.36,0.09, -0.55, uniMat);
     angledPart(new THREE.BoxGeometry(0.115,0.24,0.115), 0.24,0.36,0.09, -0.55, uniMat);
     part(new THREE.BoxGeometry(0.17,0.6,0.17), -0.11,-0.44,0, uniMat);
@@ -1957,6 +2112,7 @@
    'account-guest-view','account-logged-in-view','account-username','account-password','account-error',
    'account-signup-btn','account-login-btn','account-logout-btn','account-current-username',
    'rank-popup','rank-popup-btn','rank-popup-close','rank-trophy-display','rank-name','rank-progress','rank-progress-fill',
+   'coupon-popup','coupon-popup-btn','coupon-popup-close','coupon-code-input','coupon-redeem-btn','coupon-message',
    'settings-toggle','settings-close','drawer-backdrop','settings-drawer',
    'loadout-popup','loadout-popup-btn','loadout-popup-close','loadout-current-name',
    'maps-popup','maps-popup-btn','maps-popup-close','maps-current-name',
@@ -2259,6 +2415,7 @@
     el['cosmetics-popup'].classList.remove('open');
     el['account-popup'].classList.remove('open');
     el['rank-popup'].classList.remove('open');
+    el['coupon-popup'].classList.remove('open');
   }
   function openAccountPopup(){
     closeAllPopups();
@@ -2269,6 +2426,52 @@
     closeAllPopups();
     renderRankPopup();
     el['rank-popup'].classList.add('open');
+  }
+  // ---- Coupons ----
+  // Map of CODE -> function(){ ...grant reward...; return 'Message shown on success'; }.
+  // Codes are matched forgivingly (see normalizeCouponCode) and can only be redeemed
+  // once per profile (tracked in PROFILE.redeemedCoupons by their key below).
+  var COUPON_CODES = {
+    'DISCORD99': function(){ return grantRewardSkin('uni_discord') + ' unlocked and equipped!'; },
+    'DMOD50': function(){ return grantRewardSkin('uni_robot') + ' unlocked and equipped!'; }
+  };
+  // Unlocks a reward-only cosmetic, equips it and refreshes the menu. Returns its name.
+  function grantRewardSkin(id){
+    var item = COSMETICS.find(function(c){ return c.id === id; });
+    if (PROFILE.owned.indexOf(id) === -1) PROFILE.owned.push(id);
+    PROFILE.equipped[item.category] = id;
+    buildCharModel();
+    if (el['cosmetics-popup'].classList.contains('open')) renderCosmeticsShop();
+    return item.name;
+  }
+  function setCouponMessage(text, kind){
+    el['coupon-message'].textContent = text;
+    el['coupon-message'].className = 'coupon-message' + (kind ? ' ' + kind : '');
+  }
+  function openCouponPopup(){
+    closeAllPopups();
+    el['coupon-code-input'].value = '';
+    setCouponMessage('');
+    el['coupon-popup'].classList.add('open');
+    setTimeout(function(){ el['coupon-code-input'].focus(); }, 0);
+  }
+  // Ignores case and spaces before or after the code, and treats the letter O as zero,
+  // so "dmod50" and "DMOD5O" match DMOD50. Spaces or dashes inside a code don't match.
+  function normalizeCouponCode(text){
+    return String(text).trim().toUpperCase().replace(/O/g, '0');
+  }
+  function redeemCoupon(){
+    var typed = normalizeCouponCode(el['coupon-code-input'].value);
+    if (!typed){ setCouponMessage('Enter a code first', 'error'); return; }
+    var code = Object.keys(COUPON_CODES).find(function(key){ return normalizeCouponCode(key) === typed; });
+    var reward = code ? COUPON_CODES[code] : null;
+    if (!reward){ setCouponMessage('Invalid code', 'error'); return; }
+    if (PROFILE.redeemedCoupons.indexOf(code) !== -1){ setCouponMessage('Code already redeemed', 'error'); return; }
+    PROFILE.redeemedCoupons.push(code);
+    var msg = reward();
+    saveProfile();
+    setCouponMessage(msg || 'Code redeemed!', 'success');
+    el['coupon-code-input'].value = '';
   }
   function showSettingsView(name){
     if (name !== 'customization' && rebindingAction){ rebindingAction = null; renderKeybinds(); }
@@ -2332,6 +2535,11 @@
   el['rank-popup-btn'].addEventListener('click', openRankPopup);
   el['rank-popup-close'].addEventListener('click', closeAllPopups);
   el['rank-popup'].addEventListener('click', function(e){ if (e.target === el['rank-popup']) closeAllPopups(); });
+  el['coupon-popup-btn'].addEventListener('click', openCouponPopup);
+  el['coupon-popup-close'].addEventListener('click', closeAllPopups);
+  el['coupon-popup'].addEventListener('click', function(e){ if (e.target === el['coupon-popup']) closeAllPopups(); });
+  el['coupon-redeem-btn'].addEventListener('click', redeemCoupon);
+  el['coupon-code-input'].addEventListener('keydown', function(e){ if (e.key === 'Enter') redeemCoupon(); });
   el['account-signup-btn'].addEventListener('click', handleSignUp);
   el['account-login-btn'].addEventListener('click', handleLogIn);
   el['account-logout-btn'].addEventListener('click', handleLogOut);
