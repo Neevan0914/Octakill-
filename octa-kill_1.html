@@ -633,19 +633,8 @@
               </div>
             </div>
             <p class="settings-hint">Swaps the bottom and right face buttons, in matches and in menus. Auto turns it on for Nintendo Switch controllers, so A jumps and B crouches as labelled.</p>
-            <div id="controller-binds-list">
-              <div class="keybind-row"><span>Move</span><span class="pad-bind">Left Stick</span></div>
-              <div class="keybind-row"><span>Look</span><span class="pad-bind">Right Stick</span></div>
-              <div class="keybind-row"><span>Shoot</span><span class="pad-bind" data-pad-text="{rt}">RT</span></div>
-              <div class="keybind-row"><span>Aim</span><span class="pad-bind" data-pad-text="{lt}">LT</span></div>
-              <div class="keybind-row"><span>Jump</span><span class="pad-bind" data-pad-text="{jump}">A</span></div>
-              <div class="keybind-row"><span>Crouch</span><span class="pad-bind" data-pad-text="{crouch}">B</span></div>
-              <div class="keybind-row"><span>Sprint</span><span class="pad-bind">Hold / Click Left Stick</span></div>
-              <div class="keybind-row"><span>Previous / Next Weapon</span><span class="pad-bind" data-pad-text="{lb} / {rb}">LB / RB</span></div>
-              <div class="keybind-row"><span>Reload</span><span class="pad-bind" data-pad-text="{reload}">X</span></div>
-              <div class="keybind-row"><span>Pause</span><span class="pad-bind" data-pad-text="{start}">Start</span></div>
-              <div class="keybind-row"><span>Menus</span><span class="pad-bind" data-pad-text="D-Pad / Left Stick, {jump} select, {crouch} back, Right Stick scrolls">D-Pad / Left Stick, A select, B back, Right Stick scrolls</span></div>
-            </div>
+            <div id="controller-binds-list"></div>
+            <p class="settings-hint">Select an action, then press the controller button you want for it. If that button is already used, the two actions trade places. Press Esc or wait a few seconds to cancel. Sprint works held, or tapped to keep sprinting until you stop moving.</p>
           </div>
 
           <div id="settings-view-graphics" class="settings-view">
@@ -800,7 +789,7 @@
           8-player lobby
         </span>
         <span class="hint-kbm hint-device">Keyboard + Mouse</span><span class="hint-kbm">Mouse aim</span><span class="hint-kbm">LMB fire</span><span class="hint-kbm">RMB aim down sights</span><span class="hint-kbm">Scroll cycle weapons + tactical</span><span class="hint-kbm">Click to throw/use tactical</span><span class="hint-kbm">Move/jump/crouch/reload — customizable in Settings</span>
-        <span class="hint-controller hint-device">Controller</span><span class="hint-controller">Left stick move</span><span class="hint-controller">Right stick look</span><span class="hint-controller" data-pad-text="{rt} shoot">RT shoot</span><span class="hint-controller" data-pad-text="{lt} aim">LT aim</span><span class="hint-controller" data-pad-text="{jump} jump">A jump</span><span class="hint-controller" data-pad-text="{crouch} crouch">B crouch</span><span class="hint-controller">Hold/click left stick sprint</span><span class="hint-controller" data-pad-text="{lb}/{rb} switch weapons">LB/RB switch weapons</span><span class="hint-controller" data-pad-text="{reload} reload">X reload</span><span class="hint-controller" data-pad-text="{start} pause">Start pause</span>
+        <span class="hint-controller hint-device">Controller</span><span class="hint-controller">Left stick move</span><span class="hint-controller">Right stick look</span><span class="hint-controller" data-pad-text="{shoot} shoot">RT shoot</span><span class="hint-controller" data-pad-text="{aim} aim">LT aim</span><span class="hint-controller" data-pad-text="{jump} jump">A jump</span><span class="hint-controller" data-pad-text="{crouch} crouch">B crouch</span><span class="hint-controller" data-pad-text="{sprint} sprint">Left Stick Click sprint</span><span class="hint-controller" data-pad-text="{prevWeapon} / {nextWeapon} switch weapons">LB / RB switch weapons</span><span class="hint-controller" data-pad-text="{reload} reload">X reload</span><span class="hint-controller" data-pad-text="{pause} pause">Start pause</span><span class="hint-controller">Buttons customizable in Settings</span>
         <span class="hint-mobile hint-device">Touch</span><span class="hint-mobile">Left stick move</span><span class="hint-mobile">Drag to look</span><span class="hint-mobile">On-screen buttons fire, aim, jump, reload and swap</span>
         <span class="feedback-line">
           <a href="https://discord.gg/PSzK3uv349" target="_blank" rel="noopener" class="discord-pill">
@@ -933,7 +922,7 @@
           <button class="btn-ghost" id="pause-music-btn" style="width:100%;">Music: On</button>
           <button class="btn-ghost" id="pause-restart-btn" style="width:100%;">Restart match</button>
           <button class="btn-ghost" id="pause-quit-btn" style="width:100%;">Main menu</button>
-          <p class="pause-hint hint-controller" data-pad-text="{jump} select · {crouch} / {start} resume">A select &middot; B / Start resume</p>
+          <p class="pause-hint hint-controller" data-pad-text="{select} select · {back} / {pause} resume">A select &middot; B / Start resume</p>
         </div>
       </div>
 
@@ -1471,6 +1460,25 @@
     slot1:'Weapon Slot 1', slot2:'Weapon Slot 2', slot3:'Tactical Slot'
   };
 
+  // Controller buttons by position (standard layout): 0 bottom face, 1 right face, 2 left face, 3 top face,
+  // 4/5 bumpers, 6/7 triggers, 8 back, 9 start, 10/11 stick clicks, 12-15 D-pad.
+  var DEFAULT_PAD_BINDS = {shoot:7, aim:6, jump:0, crouch:1, sprint:10, prevWeapon:4, nextWeapon:5, reload:2, pause:9};
+  var PAD_BIND_LABELS = {shoot:'Shoot', aim:'Aim', jump:'Jump', crouch:'Crouch', sprint:'Sprint',
+    prevWeapon:'Previous Weapon', nextWeapon:'Next Weapon', reload:'Reload', pause:'Pause'};
+  function loadPadBinds(saved){
+    var binds = {}, used = {}, ok = !!saved;
+    Object.keys(DEFAULT_PAD_BINDS).forEach(function(action){
+      var b = saved ? saved[action] : null;
+      if (typeof b !== 'number' || b !== Math.floor(b) || b < 0 || b > 15 || used[b]) ok = false;
+      else { binds[action] = b; used[b] = true; }
+    });
+    if (ok) return binds;
+    // Missing or damaged: fall back to the standard layout rather than a half-working one.
+    binds = {};
+    Object.keys(DEFAULT_PAD_BINDS).forEach(function(action){ binds[action] = DEFAULT_PAD_BINDS[action]; });
+    return binds;
+  }
+
   function loadSettings(){
     try {
       var raw = localStorage.getItem('octakill_settings');
@@ -1480,12 +1488,13 @@
         Object.keys(DEFAULT_KEYBINDS).forEach(function(k){ kb[k] = (s.keybinds && s.keybinds[k]) || DEFAULT_KEYBINDS[k]; });
         return {sensitivity: typeof s.sensitivity === 'number' ? s.sensitivity : 1.0, keybinds: kb,
           damageIndicator: typeof s.damageIndicator === 'boolean' ? s.damageIndicator : true,
-          padSwapAB: (s.padSwapAB === 'on' || s.padSwapAB === 'off') ? s.padSwapAB : 'auto'};
+          padSwapAB: (s.padSwapAB === 'on' || s.padSwapAB === 'off') ? s.padSwapAB : 'auto',
+          padBinds: loadPadBinds(s.padBinds)};
       }
     } catch(e){}
     var defKb = {};
     Object.keys(DEFAULT_KEYBINDS).forEach(function(k){ defKb[k] = DEFAULT_KEYBINDS[k]; });
-    return {sensitivity: 1.0, keybinds: defKb, damageIndicator: true, padSwapAB: 'auto'};
+    return {sensitivity: 1.0, keybinds: defKb, damageIndicator: true, padSwapAB: 'auto', padBinds: loadPadBinds(null)};
   }
   function saveSettings(){ try { localStorage.setItem('octakill_settings', JSON.stringify(SETTINGS)); } catch(e){} }
   var SETTINGS = loadSettings();
@@ -1510,6 +1519,7 @@
     Array.prototype.forEach.call(el['keybinds-list'].querySelectorAll('.keybind-btn'), function(btn){
       btn.addEventListener('click', function(){
         if (rebindingAction) return;
+        cancelPadRebind();
         rebindingAction = btn.getAttribute('data-action');
         renderKeybinds();
       });
@@ -1958,7 +1968,7 @@
    'weapon-name-text','weapon-slot-hint','tactical-indicator','tactical-name','shield-badge',
    'pause-overlay','pause-resume-btn','pause-music-btn','pause-restart-btn','pause-quit-btn',
    'mobile-controls','look-zone','joystick-base','joystick-knob','mb-jump','mb-reload','mb-aim','mb-swap','mb-fire','mb-pause',
-   'start-screen','start-prompt','tactical-key-hint','pad-swap-auto','pad-swap-on','pad-swap-off'
+   'start-screen','start-prompt','tactical-key-hint','pad-swap-auto','pad-swap-on','pad-swap-off','controller-binds-list'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   // Input device in use: 'kbm' (keyboard + mouse), 'mobile' (touch) or 'controller'.
@@ -2211,6 +2221,8 @@
     el['sensitivity-slider'].value = SETTINGS.sensitivity;
     el['sensitivity-value'].textContent = SETTINGS.sensitivity.toFixed(2) + 'x';
     setDamageIndicatorEnabled(true);
+    cancelPadRebind();
+    SETTINGS.padBinds = loadPadBinds(null);
     setPadSwapSetting('auto');
     setGraphicsMode('standard');
     saveSettings();
@@ -2238,6 +2250,7 @@
   el['gfx-high'].addEventListener('click', function(){ setGraphicsMode('high'); });
 
   function closeAllPopups(){
+    cancelPadRebind();
     el['settings-drawer'].classList.remove('open');
     el['drawer-backdrop'].classList.remove('open');
     el['loadout-popup'].classList.remove('open');
@@ -2259,6 +2272,7 @@
   }
   function showSettingsView(name){
     if (name !== 'customization' && rebindingAction){ rebindingAction = null; renderKeybinds(); }
+    cancelPadRebind();
     Array.prototype.forEach.call(el['settings-drawer'].querySelectorAll('.settings-view'), function(v){
       v.classList.toggle('active', v.id === 'settings-view-' + name);
     });
@@ -2482,7 +2496,7 @@
     el['clock'].textContent = mins+':'+secs;
   }
 
-  function slotCycleHint(){ return isPadMode() ? padText('[{lb} / {rb}]') : (isTouchMode() ? '[SWAP]' : '[Scroll]'); }
+  function slotCycleHint(){ return isPadMode() ? padText('[{prevWeapon} / {nextWeapon}]') : (isTouchMode() ? '[SWAP]' : '[Scroll]'); }
 
   function updateAmmoDisplay(){
     if (S.slot === 'tactical'){
@@ -4642,11 +4656,12 @@
   var INPUT_LABELS = {kbm:'Keyboard + Mouse', mobile:'Touch Controls', controller:'Controller'};
 
   function updateInputHints(){
-    el['tactical-key-hint'].textContent = isPadMode() ? padText('[{lb} / {rb}]') : (isTouchMode() ? '[SWAP]' : '[Q]');
+    el['tactical-key-hint'].textContent = isPadMode() ? padText('[{prevWeapon} / {nextWeapon}]') : (isTouchMode() ? '[SWAP]' : '[Q]');
     el['weapon-slot-hint'].textContent = slotCycleHint();
     Array.prototype.forEach.call(document.querySelectorAll('[data-pad-text]'), function(n){
       n.textContent = padText(n.getAttribute('data-pad-text'));
     });
+    renderPadBinds();
   }
 
   function setInputMode(mode){
@@ -4706,11 +4721,11 @@
 
   // ---- Controller (Gamepad API, standard mapping) ----
   var PAD_BTN = {A:0, B:1, X:2, Y:3, LB:4, RB:5, LT:6, RT:7, BACK:8, START:9, L3:10, R3:11, UP:12, DOWN:13, LEFT:14, RIGHT:15};
-  // Button names by controller family. Positions are the same everywhere; Nintendo prints A and B
-  // the other way round, which is why Switch controllers get the A / B swap by default.
+  // Button names by position for each controller family. Nintendo prints A/B and X/Y the other way
+  // round, which is why Switch controllers get the A / B swap by default.
   var PAD_NAMES = {
-    xbox:   {south:'A', east:'B', west:'X', lb:'LB', rb:'RB', lt:'LT', rt:'RT', start:'Start'},
-    'switch': {south:'B', east:'A', west:'Y', lb:'L', rb:'R', lt:'ZL', rt:'ZR', start:'+'}
+    xbox:     ['A','B','X','Y','LB','RB','LT','RT','Back','Start','Left Stick Click','Right Stick Click','D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right'],
+    'switch': ['B','A','Y','X','L','R','ZL','ZR','-','+','Left Stick Click','Right Stick Click','D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right']
   };
   function padFamily(id){
     return /nintendo|switch|joy-?con|pro controller|057e/i.test(id || '') ? 'switch' : 'xbox';
@@ -4718,16 +4733,76 @@
   function padSwapAB(){
     return SETTINGS.padSwapAB === 'on' || (SETTINGS.padSwapAB !== 'off' && PAD.family === 'switch');
   }
-  // Jump / menu select, and crouch / menu back.
-  function padConfirmBtn(){ return padSwapAB() ? PAD_BTN.B : PAD_BTN.A; }
-  function padCancelBtn(){ return padSwapAB() ? PAD_BTN.A : PAD_BTN.B; }
-  // Fills {jump}, {rt}... in a hint with what the buttons are called on the controller in use.
-  function padText(template){
-    var names = PAD_NAMES[PAD.family] || PAD_NAMES.xbox, swap = padSwapAB();
-    var map = {jump: swap ? names.east : names.south, crouch: swap ? names.south : names.east, reload: names.west,
-      lb: names.lb, rb: names.rb, lt: names.lt, rt: names.rt, start: names.start};
-    return template.replace(/\{(\w+)\}/g, function(m, key){ return map[key] || m; });
+  // Bindings and menus refer to buttons by slot. Slots are the standard positions, except that
+  // Swap A / B trades the bottom and right face buttons underneath everything else.
+  var PAD_SELECT = 0, PAD_BACK = 1;   // menu select / back slots
+  function padPhys(slot){ return (slot < 2 && padSwapAB()) ? 1 - slot : slot; }
+  function padBtn(action){ return padPhys(SETTINGS.padBinds[action]); }
+  function padSlotName(slot){
+    var names = PAD_NAMES[PAD.family] || PAD_NAMES.xbox;
+    return names[padPhys(slot)] || ('Button ' + slot);
   }
+  // Fills {jump}, {shoot}... in a hint with the name of the button currently bound to it.
+  function padText(template){
+    return template.replace(/\{(\w+)\}/g, function(m, key){
+      if (key === 'select') return padSlotName(PAD_SELECT);
+      if (key === 'back') return padSlotName(PAD_BACK);
+      return SETTINGS.padBinds.hasOwnProperty(key) ? padSlotName(SETTINGS.padBinds[key]) : m;
+    });
+  }
+
+  // ---- Rebinding controller buttons (Settings > Controls) ----
+  var padRebindAction = null, padRebindTimer = null, padBindsHtml = '';
+  function renderPadBinds(){
+    var fixed = function(label, value){ return '<div class="keybind-row"><span>'+label+'</span><span class="pad-bind">'+value+'</span></div>'; };
+    var html = fixed('Move', 'Left Stick') + fixed('Look', 'Right Stick') +
+      Object.keys(DEFAULT_PAD_BINDS).map(function(action){
+        var capturing = padRebindAction === action;
+        return '<div class="keybind-row"><span>'+PAD_BIND_LABELS[action]+'</span>'+
+          '<button class="keybind-btn'+(capturing?' rebinding':'')+'" data-pad-action="'+action+'">'+
+          (capturing ? 'Press a button…' : padSlotName(SETTINGS.padBinds[action]))+'</button></div>';
+      }).join('') +
+      fixed('Menus', padText('D-Pad / Left Stick, {select} select, {back} back, Right Stick scrolls'));
+    // Only touch the DOM when something changed: redrawing under the pointer would swallow the click.
+    if (html === padBindsHtml) return;
+    padBindsHtml = html;
+    el['controller-binds-list'].innerHTML = html;
+  }
+  function startPadRebind(action){
+    if (rebindingAction){ rebindingAction = null; renderKeybinds(); }
+    padRebindAction = action;
+    clearTimeout(padRebindTimer);
+    padRebindTimer = setTimeout(cancelPadRebind, 6000);
+    renderPadBinds();
+  }
+  function cancelPadRebind(){
+    if (!padRebindAction) return;
+    padRebindAction = null;
+    clearTimeout(padRebindTimer);
+    renderPadBinds();
+  }
+  // `physical` is the button that was pressed. Whatever used it before takes this action's old button.
+  function finishPadRebind(physical){
+    var action = padRebindAction, slot = padPhys(physical), old = SETTINGS.padBinds[action];
+    Object.keys(SETTINGS.padBinds).forEach(function(other){
+      if (other !== action && SETTINGS.padBinds[other] === slot) SETTINGS.padBinds[other] = old;
+    });
+    SETTINGS.padBinds[action] = slot;
+    saveSettings();
+    padRebindAction = null;
+    clearTimeout(padRebindTimer);
+    updateInputHints();
+  }
+  el['controller-binds-list'].addEventListener('click', function(e){
+    var btn = e.target.closest ? e.target.closest('[data-pad-action]') : null;
+    if (!btn) return;
+    var action = btn.getAttribute('data-pad-action');
+    if (padRebindAction === action) cancelPadRebind(); else startPadRebind(action);
+  });
+  document.addEventListener('keydown', function(e){
+    if (padRebindAction && e.code === 'Escape'){ e.preventDefault(); cancelPadRebind(); }
+  }, true);
+
   var PAD_YAW_SPEED = 3.4, PAD_PITCH_SPEED = 2.3;   // radians per second at full tilt, sensitivity 1.00x
   var PAD_MOVE_DEADZONE = 0.18, PAD_LOOK_DEADZONE = 0.14, PAD_TRIGGER_THRESHOLD = 0.3;
   var PAD = {
@@ -4797,6 +4872,14 @@
       if (cur.fresh){ dismissStartScreen('controller'); PAD.waitRelease = true; }
       return;
     }
+    if (padRebindAction){
+      // Settings is waiting for a button: the next one pressed becomes the binding.
+      if (cur.fresh){
+        for (j=0; j<16; j++){ if (cur.down[j] && !cur.prev[j]){ finishPadRebind(j); break; } }
+        PAD.waitRelease = true;
+      }
+      return;
+    }
     var inGame = S.screen === 'game' && !S.paused && !!three;
     if (!isPadMode()){
       if (!cur.fresh) return;
@@ -4828,16 +4911,17 @@
     var alive = !!(player && player.alive);
     PAD.navDir = null;
 
-    // Sprint: hold the left stick in, or click it to keep sprinting until you stop moving.
+    // Sprint (left stick click by default): hold it, or tap it to keep sprinting until you stop moving.
     var moving = PAD.lx !== 0 || PAD.ly !== 0;
-    var l3 = down[PAD_BTN.L3];
-    if (pressed(PAD_BTN.L3)){ PAD.sprintLatched = true; PAD.l3DownAt = performance.now(); }
-    else if (!l3 && cur.prev[PAD_BTN.L3] && performance.now() - PAD.l3DownAt > 350) PAD.sprintLatched = false;
+    var sprintBtn = padBtn('sprint');
+    var l3 = down[sprintBtn];
+    if (pressed(sprintBtn)){ PAD.sprintLatched = true; PAD.l3DownAt = performance.now(); }
+    else if (!l3 && cur.prev[sprintBtn] && performance.now() - PAD.l3DownAt > 350) PAD.sprintLatched = false;
     if (!moving && !l3) PAD.sprintLatched = false;
     PAD.sprint = l3 || PAD.sprintLatched;
 
-    // RT shoots (hold for automatic weapons), LT aims while held.
-    var rt = down[PAD_BTN.RT], lt = down[PAD_BTN.LT];
+    // Shoot (RT by default, hold for automatic weapons) and aim while held (LT by default).
+    var rt = down[padBtn('shoot')], lt = down[padBtn('aim')];
     if (rt && !PAD.fireHeld){ PAD.fireHeld = true; three.pressFire(); }
     else if (!rt && PAD.fireHeld){ PAD.fireHeld = false; three.releaseFire(); }
     var canAim = alive && S.slot !== 'tactical' && !!currentWeapon().aimable;
@@ -4845,14 +4929,14 @@
     PAD.aimHeld = lt;
     S.aiming = lt && canAim;
 
-    var jumpBtn = padConfirmBtn(), crouchBtn = padCancelBtn();
+    var jumpBtn = padBtn('jump'), crouchBtn = padBtn('crouch');
     PAD.upHeld = down[jumpBtn]; PAD.downHeld = down[crouchBtn];
     if (pressed(jumpBtn)) three.jump();
     if (pressed(crouchBtn)) three.toggleCrouch();
-    if (alive && pressed(PAD_BTN.LB)) three.cycleSlot(-1);
-    if (alive && pressed(PAD_BTN.RB)) three.cycleSlot(1);
-    if (alive && pressed(PAD_BTN.X) && S.slot !== 'tactical') reload();
-    if (pressed(PAD_BTN.START)) pauseGame();
+    if (alive && pressed(padBtn('prevWeapon'))) three.cycleSlot(-1);
+    if (alive && pressed(padBtn('nextWeapon'))) three.cycleSlot(1);
+    if (alive && pressed(padBtn('reload')) && S.slot !== 'tactical') reload();
+    if (pressed(padBtn('pause'))) pauseGame();
   }
 
   // ---- Controller menus: D-pad / left stick moves a cursor, A selects, B goes back ----
@@ -4960,8 +5044,24 @@
       cr.left = clamp(PAD.fromPt.x, full.left + 20, full.right - 20) - 20; cr.right = cr.left + 40;
     }
     var cc = {x:(cr.left + cr.right)/2, y:(cr.top + cr.bottom)/2};
+    // Inside a scrolling list (settings, cosmetics) keep moving through the list, including rows
+    // scrolled out of view, and only leave it when it runs out in that direction. From outside,
+    // rows that are scrolled out of view can't be jumped to.
+    var root = ctx.scope.root, home = padScrollParent(cur, root);
     var best = null, bestScore = Infinity;
-    ctx.list.forEach(function(n){
+    if (home) ctx.list.forEach(function(n){ if (home.contains(n)) consider(n); });
+    if (!best) ctx.list.forEach(function(n){
+      if (home && home.contains(n)) return;
+      var box = padScrollParent(n, root);
+      if (box){
+        var br = box.getBoundingClientRect(), nr = n.getBoundingClientRect();
+        if (nr.bottom < br.top + 2 || nr.top > br.bottom - 2) return;
+      }
+      consider(n);
+    });
+    if (best){ padSetFocus(best); PAD.fromPt = cc; }
+
+    function consider(n){
       if (n === cur) return;
       var r = n.getBoundingClientRect(), c = padCenter(n);
       var dx = c.x - cc.x, dy = c.y - cc.y;
@@ -4976,8 +5076,15 @@
       }
       var score = Math.max(0, gap) + across*3 + Math.sqrt(dx*dx + dy*dy)*0.02;
       if (score < bestScore){ bestScore = score; best = n; }
-    });
-    if (best){ padSetFocus(best); PAD.fromPt = cc; }
+    }
+  }
+  // Nearest ancestor inside `root` that scrolls vertically and has something to scroll.
+  function padScrollParent(n, root){
+    for (n = n.parentElement; n && root.contains(n); n = n.parentElement){
+      var overflow = getComputedStyle(n).overflowY;
+      if ((overflow === 'auto' || overflow === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n;
+    }
+    return null;
   }
   function padActivate(){
     var hadFocus = PAD.focusEl;
@@ -5011,7 +5118,7 @@
     PAD.lx = PAD.ly = PAD.rx = PAD.ry = 0;
     PAD.sprint = PAD.sprintLatched = false;
     PAD.aimHeld = PAD.upHeld = PAD.downHeld = false;
-    if (PAD.fireHeld && !down[PAD_BTN.RT]){ PAD.fireHeld = false; if (three) three.releaseFire(); }
+    if (PAD.fireHeld && !down[padBtn('shoot')]){ PAD.fireHeld = false; if (three) three.releaseFire(); }
 
     var scope = padScope();
     var focusGone = PAD.focusEl && !document.documentElement.contains(PAD.focusEl);
@@ -5035,9 +5142,11 @@
       if (scroller) scroller.scrollBy(0, scrollY * 900 * PAD.dt);
     }
 
-    if (pressed(padConfirmBtn())) padActivate();
-    else if (pressed(padCancelBtn())) padBack();
-    else if (pressed(PAD_BTN.START) && S.screen === 'game' && S.paused){ resumeGame(); padSyncFocus(); }
+    // The pause button also resumes, unless it is bound to something the menu itself uses.
+    var pauseBtn = padBtn('pause');
+    if (pressed(padPhys(PAD_SELECT))) padActivate();
+    else if (pressed(padPhys(PAD_BACK))) padBack();
+    else if (pauseBtn < PAD_BTN.UP && pressed(pauseBtn) && S.screen === 'game' && S.paused){ resumeGame(); padSyncFocus(); }
   }
 
   window.addEventListener('gamepaddisconnected', function(e){
@@ -5048,6 +5157,7 @@
     // Losing the controller mid-match pauses instead of leaving you standing in the open.
     if (isPadMode() && S.screen === 'game' && !S.paused) pauseGame();
   });
+  renderPadBinds();
   if (navigator.getGamepads) requestAnimationFrame(padPoll);
 
   function setBotVisibility(id, visible){
