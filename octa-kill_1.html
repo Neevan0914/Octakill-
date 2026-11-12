@@ -54,7 +54,11 @@
   .pad-bind{display:inline-block;min-width:64px;padding:5px 10px;border-radius:8px;text-align:center;font-size:11px;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em;
     color:var(--foreground);background:rgba(244,244,240,.06);border:1px solid rgba(244,244,240,.14);}
-  .pause-hint{margin:14px 0 0;text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground);}
+  /* PlayStation face-button symbols, drawn inline so they never depend on a font having them */
+  .ps-glyph{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.22em;fill:none;stroke:currentColor;
+    stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+  .keybind-btn .ps-glyph, .pad-bind .ps-glyph, .set-label .ps-glyph{width:1.45em;height:1.45em;vertical-align:-.32em;}
+  .pause-hint{margin:14px 0 0;text-align:center;font-size:10px;letter-spacing:.05em;text-wrap:balance;text-transform:uppercase;color:var(--muted-foreground);}
   /* Controller menu cursor */
   .pad-focus{outline:2px solid var(--accent) !important;outline-offset:3px;box-shadow:0 0 0 6px var(--accent-soft) !important;}
   body.input-controller #three-canvas{cursor:none;}
@@ -2704,13 +2708,14 @@
     el['clock'].textContent = mins+':'+secs;
   }
 
-  function slotCycleHint(){ return isPadMode() ? padText('[{prevWeapon} / {nextWeapon}]') : (isTouchMode() ? '[SWAP]' : '[Scroll]'); }
+  // HTML, because PlayStation buttons can be symbols.
+  function slotCycleHint(){ return isPadMode() ? padHtml('[{prevWeapon} / {nextWeapon}]') : (isTouchMode() ? '[SWAP]' : '[Scroll]'); }
 
   function updateAmmoDisplay(){
     if (S.slot === 'tactical'){
       var lo0 = getLoadout();
       el['weapon-name-text'].textContent = lo0.tactical.name.toUpperCase();
-      el['weapon-slot-hint'].textContent = slotCycleHint();
+      el['weapon-slot-hint'].innerHTML = slotCycleHint();
       el['ammo-num'].firstChild.textContent = S.tacticalReady ? '1' : '0';
       el['reserve-num'].textContent = ' / 1';
       el['reload-indicator'].classList.add('hidden');
@@ -2718,7 +2723,7 @@
     }
     var w = currentWeapon(), ws = S.weaponState[S.slot];
     el['weapon-name-text'].textContent = w.name.toUpperCase();
-    el['weapon-slot-hint'].textContent = slotCycleHint();
+    el['weapon-slot-hint'].innerHTML = slotCycleHint();
     el['ammo-num'].firstChild.textContent = String(ws.ammo).padStart(2,'0');
     el['reserve-num'].textContent = ' / ' + Math.min(w.mag, ws.ammo + ws.reserve);
     el['reload-indicator'].classList.toggle('hidden', !S.reloading);
@@ -4864,13 +4869,13 @@
   var INPUT_LABELS = {kbm:'Keyboard + Mouse', mobile:'Touch Controls', controller:'Controller'};
 
   function updateInputHints(){
-    el['tactical-key-hint'].textContent = isPadMode() ? padText('[{prevWeapon} / {nextWeapon}]') : (isTouchMode() ? '[SWAP]' : '[Q]');
-    el['weapon-slot-hint'].textContent = slotCycleHint();
+    el['tactical-key-hint'].innerHTML = isPadMode() ? padHtml('[{prevWeapon} / {nextWeapon}]') : (isTouchMode() ? '[SWAP]' : '[Q]');
+    el['weapon-slot-hint'].innerHTML = slotCycleHint();
     Array.prototype.forEach.call(document.querySelectorAll('[data-pad-text]'), function(n){
-      n.textContent = padText(n.getAttribute('data-pad-text'));
+      n.innerHTML = padHtml(n.getAttribute('data-pad-text'));
     });
     var onPlayStation = PAD.family === 'playstation' || PAD.family === 'dualsense';
-    document.getElementById('pad-swap-label').textContent = onPlayStation ? 'Swap Cross / Circle' : 'Swap A / B';
+    document.getElementById('pad-swap-label').innerHTML = onPlayStation ? 'Swap ' + padGlyph(0) + ' / ' + padGlyph(1) : 'Swap A / B';
     renderPadBinds();
   }
 
@@ -4961,12 +4966,27 @@
     var names = PAD_NAMES[PAD.family] || PAD_NAMES.xbox;
     return names[padPhys(slot)] || ('Button ' + slot);
   }
-  // Fills {jump}, {shoot}... in a hint with the name of the button currently bound to it.
-  function padText(template){
+  // PlayStation face buttons are shown as their symbols: cross, circle, square, triangle.
+  var PS_GLYPHS = [
+    '<path d="M3.6 3.6 12.4 12.4M12.4 3.6 3.6 12.4"/>',
+    '<circle cx="8" cy="8" r="5.4"/>',
+    '<rect x="3.1" y="3.1" width="9.8" height="9.8"/>',
+    '<path d="M8 2.9 13.7 12.7H2.3Z"/>'
+  ];
+  // The symbol for a physical button position, or '' when this controller has none for it.
+  function padGlyph(physical){
+    if ((PAD.family !== 'playstation' && PAD.family !== 'dualsense') || !PS_GLYPHS[physical]) return '';
+    var name = PAD_NAMES[PAD.family][physical];
+    return '<svg class="ps-glyph" viewBox="0 0 16 16" role="img" aria-label="'+name+'"><title>'+name+'</title>'+PS_GLYPHS[physical]+'</svg>';
+  }
+  function padSlotHtml(slot){ return padGlyph(padPhys(slot)) || padSlotName(slot); }
+  // Fills {jump}, {shoot}... in a hint with the button currently bound to it. Returns HTML; the
+  // templates and button names are all fixed strings from this file.
+  function padHtml(template){
     return template.replace(/\{(\w+)\}/g, function(m, key){
-      if (key === 'select') return padSlotName(PAD_SELECT);
-      if (key === 'back') return padSlotName(PAD_BACK);
-      return SETTINGS.padBinds.hasOwnProperty(key) ? padSlotName(SETTINGS.padBinds[key]) : m;
+      if (key === 'select') return padSlotHtml(PAD_SELECT);
+      if (key === 'back') return padSlotHtml(PAD_BACK);
+      return SETTINGS.padBinds.hasOwnProperty(key) ? padSlotHtml(SETTINGS.padBinds[key]) : m;
     });
   }
 
@@ -4979,9 +4999,9 @@
         var capturing = padRebindAction === action;
         return '<div class="keybind-row"><span>'+PAD_BIND_LABELS[action]+'</span>'+
           '<button class="keybind-btn'+(capturing?' rebinding':'')+'" data-pad-action="'+action+'">'+
-          (capturing ? 'Press a button…' : padSlotName(SETTINGS.padBinds[action]))+'</button></div>';
+          (capturing ? 'Press a button…' : padSlotHtml(SETTINGS.padBinds[action]))+'</button></div>';
       }).join('') +
-      fixed('Menus', padText('D-Pad / Left Stick, {select} select, {back} back, Right Stick scrolls'));
+      fixed('Menus', padHtml('D-Pad / Left Stick, {select} select, {back} back, Right Stick scrolls'));
     // Only touch the DOM when something changed: redrawing under the pointer would swallow the click.
     if (html === padBindsHtml) return;
     padBindsHtml = html;
